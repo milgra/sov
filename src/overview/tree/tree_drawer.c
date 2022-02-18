@@ -95,7 +95,7 @@ void tree_drawer_draw(bm_t*       bm,
     {
       i3_window_t* wi = ws->windows->data[wii];
 
-      if (strstr(wi->class, "overview") == NULL && strstr(wi->class, "i3bar") == NULL)
+      if (strstr(wi->appid, "overview") == NULL)
       {
         int wiw = roundf((float)wi->width / scale);
         int wih = roundf((float)wi->height / scale);
@@ -110,13 +110,13 @@ void tree_drawer_draw(bm_t*       bm,
 
         if (wiw > 5 && wih > 5)
         {
-          /* draw class */
+          /* draw appid */
 
           bm_t* tbm = bm_new(wiw - 4, wih - 4); // REL 0
 
           str_t* str = str_new(); // REL 1
 
-          str_add_bytearray(str, wi->class);
+          str_add_bytearray(str, wi->appid);
 
           int grey = 0xFF - rand() % 0x55;
 

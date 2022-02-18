@@ -25,7 +25,7 @@
 
 #define CFG_PATH_LOC "~/.config/i3-overview/config"
 #define CFG_PATH_GLO "/usr/share/i3-overview/config"
-#define WIN_CLASS "sway-overview"
+#define WIN_APPID "sway-overview"
 #define WIN_TITLE "sway-overview"
 #define GET_WORKSPACES_CMD "swaymsg -t get_workspaces"
 #define GET_TREE_CMD "swaymsg -t get_tree"
@@ -388,6 +388,7 @@ int main(int argc, char* argv[])
   xdg_surface_add_listener(state.xdg_surface, &xdg_surface_listener, &state);
   state.xdg_toplevel = xdg_surface_get_toplevel(state.xdg_surface);
   xdg_toplevel_set_title(state.xdg_toplevel, WIN_TITLE);
+  xdg_toplevel_set_app_id(state.xdg_toplevel, WIN_APPID);
   wl_surface_commit(state.wl_surface);
 
   while (wl_display_dispatch(state.wl_display))

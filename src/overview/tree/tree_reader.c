@@ -10,7 +10,7 @@ typedef struct _i3_window_t
   int   width;
   int   height;
   char* title;
-  char* class;
+  char* appid;
 } i3_window_t;
 
 typedef struct _i3_workspace_t
@@ -59,7 +59,7 @@ i3_workspace_t* i3_workspace_new()
 void i3_window_del(void* p)
 {
   i3_window_t* wi = p;
-  REL(wi->class);
+  REL(wi->appid);
   REL(wi->title);
 }
 
@@ -208,7 +208,7 @@ void tree_reader_extract(char* ws_json, char* tree_json, vec_t* workspaces)
       wi->y      = atoi(ry);
       wi->width  = atoi(rw);
       wi->height = atoi(rh);
-      wi->class  = cstr_new_cstring(c);
+      wi->appid  = cstr_new_cstring(c);
       wi->title  = cstr_new_cstring(t);
 
       for (int wsi = 0; wsi < workspaces->length; wsi++)
