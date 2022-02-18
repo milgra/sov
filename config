@@ -1,0 +1,57 @@
+# activator key code
+# get wanted key code with 'xinput test-xi2 --root' the wanted number is the 'detail' field  
+meta_code 133
+
+# secondary key ( TAB by default ), uncomment it if you want to use it
+# secondary_code 23
+
+# distance between workspaces
+gap 25
+
+# columns
+columns 5
+
+# thumbnail to workspace ratio
+ratio 8
+
+# font face, use any string that is output by fc-list
+font_face Terminus (TTF):style=Bold
+
+# margin size around text
+text_margin_size 7
+
+# margin top size over text
+text_margin_top_size 4
+
+# title text size
+text_title_size 14
+
+# title text color
+text_title_color #FFFFFFFF
+
+# description text size
+text_description_size 12
+
+# description text color
+text_description_color #AADDFFFF
+
+# workspace number text size
+text_workspace_size 20
+
+# workspace number text color
+text_workspace_color #FFFFFFFF
+
+# workspace number x shift
+text_workspace_xshift 11
+
+# workspace number y shift
+text_workspace_yshift -17
+
+# border color
+border_color #AADDFF6FF
+
+# background color
+background_color #000022FF
+
+# focused background color
+background_color_focused #222266FF

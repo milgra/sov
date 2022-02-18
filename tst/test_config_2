@@ -1,0 +1,54 @@
+# activator key code
+# get wanted key code with 'xinput test-xi2 --root' the wanted number is the 'detail' field  
+meta_code 133
+
+# distance between workspaces
+gap 5
+
+# columns
+columns 4
+
+# thumbnail to workspace ratio
+ratio 7
+
+# font face, use any string that is output by fc-list
+font_face Ubuntu:style=Bold
+
+# margin size around text
+text_margin_size 5
+
+# margin top size over text
+text_margin_top_size 5
+
+# title text size
+text_title_size 16
+
+# title text color
+text_title_color #FF0000FF
+
+# description text size
+text_description_size 16
+
+# description text color
+text_description_color #FFAAEEFF
+
+# workspace number text size
+text_workspace_size 25
+
+# workspace number text color
+text_workspace_color #DD4455FF
+
+# workspace number x shift
+text_workspace_xshift -4
+
+# workspace number y shift
+text_workspace_yshift -5
+
+# border color
+border_color #FFFFFFFF
+
+# background color
+background_color #445522FF
+
+# focused background color
+background_color_focused #662222FF

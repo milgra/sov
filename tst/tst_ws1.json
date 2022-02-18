@@ -1,0 +1,62 @@
+[
+  {
+    "id": 93931364668016,
+    "num": 1,
+    "name": "1",
+    "visible": true,
+    "focused": true,
+    "rect": {
+      "x": 0,
+      "y": 23,
+      "width": 1920,
+      "height": 1057
+    },
+    "output": "eDP-1",
+    "urgent": false
+  },
+  {
+    "id": 93931364674368,
+    "num": 2,
+    "name": "2",
+    "visible": false,
+    "focused": false,
+    "rect": {
+      "x": 0,
+      "y": 23,
+      "width": 1920,
+      "height": 1057
+    },
+    "output": "eDP-1",
+    "urgent": false
+  },
+  {
+    "id": 93931364686928,
+    "num": 3,
+    "name": "3",
+    "visible": false,
+    "focused": false,
+    "rect": {
+      "x": 0,
+      "y": 23,
+      "width": 1920,
+      "height": 1057
+    },
+    "output": "eDP-1",
+    "urgent": false
+  },
+  {
+    "id": 93931364693424,
+    "num": 4,
+    "name": "4",
+    "visible": false,
+    "focused": false,
+    "rect": {
+      "x": 0,
+      "y": 23,
+      "width": 1920,
+      "height": 1057
+    },
+    "output": "eDP-1",
+    "urgent": false
+  }
+]
