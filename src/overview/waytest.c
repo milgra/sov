@@ -23,8 +23,8 @@
 #include "zc_cstrpath.c"
 #include "zc_vector.c"
 
-#define CFG_PATH_LOC "~/.config/i3-overview/config"
-#define CFG_PATH_GLO "/usr/share/i3-overview/config"
+#define CFG_PATH_LOC "~/.config/sway-overview/config"
+#define CFG_PATH_GLO "/usr/share/sway-overview/config"
 #define WIN_APPID "sway-overview"
 #define WIN_TITLE "sway-overview"
 #define GET_WORKSPACES_CMD "swaymsg -t get_workspaces"
@@ -302,10 +302,8 @@ int main(int argc, char* argv[])
 
   read_tree(workspaces);
 
-  i3_workspace_t* ws  = workspaces->data[0];
-  i3_workspace_t* wsl = workspaces->data[workspaces->length - 1];
-
-  mem_describe(ws, 0);
+  sway_workspace_t* ws  = workspaces->data[0];
+  sway_workspace_t* wsl = workspaces->data[workspaces->length - 1];
 
   if (ws->width > 0 && ws->height > 0)
   {

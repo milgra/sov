@@ -41,8 +41,8 @@ void tree_drawer_draw(bm_t*       bm,
                       int         wsnum_dx,
                       int         wsnum_dy)
 {
-  i3_workspace_t* ws0 = workspaces->data[0];
-  i3_workspace_t* wsl = workspaces->data[workspaces->length - 1];
+  sway_workspace_t* ws0 = workspaces->data[0];
+  sway_workspace_t* wsl = workspaces->data[workspaces->length - 1];
 
   int max = ceilf((float)wsl->number / cols) * cols;
 
@@ -53,7 +53,7 @@ void tree_drawer_draw(bm_t*       bm,
 
   for (int wsi = 0; wsi < workspaces->length; wsi++)
   {
-    i3_workspace_t* ws = workspaces->data[wsi];
+    sway_workspace_t* ws = workspaces->data[wsi];
 
     if (ws->width > wsw)
     {
@@ -78,7 +78,7 @@ void tree_drawer_draw(bm_t*       bm,
 
   for (int wsi = 0; wsi < workspaces->length; wsi++)
   {
-    i3_workspace_t* ws = workspaces->data[wsi];
+    sway_workspace_t* ws = workspaces->data[wsi];
 
     int num = ws->number;
 
@@ -93,7 +93,7 @@ void tree_drawer_draw(bm_t*       bm,
 
     for (int wii = 0; wii < ws->windows->length; wii++)
     {
-      i3_window_t* wi = ws->windows->data[wii];
+      sway_window_t* wi = ws->windows->data[wii];
 
       if (strstr(wi->appid, "overview") == NULL)
       {

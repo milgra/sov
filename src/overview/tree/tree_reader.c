@@ -3,7 +3,7 @@
 
 #include "zc_vector.c"
 
-typedef struct _i3_window_t
+typedef struct _sway_window_t
 {
   int   x;
   int   y;
@@ -11,9 +11,9 @@ typedef struct _i3_window_t
   int   height;
   char* title;
   char* appid;
-} i3_window_t;
+} sway_window_t;
 
-typedef struct _i3_workspace_t
+typedef struct _sway_workspace_t
 {
   int    x;
   int    y;
@@ -23,7 +23,7 @@ typedef struct _i3_workspace_t
   int    focused;
   char*  output;
   vec_t* windows;
-} i3_workspace_t;
+} sway_workspace_t;
 
 void tree_reader_extract(char* ws_json, char* tree_json, vec_t* workspaces);
 
@@ -35,48 +35,48 @@ void tree_reader_extract(char* ws_json, char* tree_json, vec_t* workspaces);
 #include "zc_cstring.c"
 #include "zc_cstrpath.c"
 
-void i3_workspace_del(void* p)
+void sway_workspace_del(void* p)
 {
-  i3_workspace_t* ws = p;
+  sway_workspace_t* ws = p;
   REL(ws->windows);
   REL(ws->output);
 }
 
-void i3_workspace_desc(void* p, int level)
+void sway_workspace_desc(void* p, int level)
 {
-  i3_workspace_t* ws = p;
+  sway_workspace_t* ws = p;
   printf("workspace num %i w %i h %i focus %i output %s\n", ws->number, ws->width, ws->height, ws->focused, ws->output);
   mem_describe(ws->windows, level);
 }
 
-i3_workspace_t* i3_workspace_new()
+sway_workspace_t* sway_workspace_new()
 {
-  i3_workspace_t* ws = CAL(sizeof(i3_workspace_t), i3_workspace_del, i3_workspace_desc);
-  ws->windows        = VNEW();
+  sway_workspace_t* ws = CAL(sizeof(sway_workspace_t), sway_workspace_del, sway_workspace_desc);
+  ws->windows          = VNEW();
   return ws;
 }
 
-void i3_window_del(void* p)
+void sway_window_del(void* p)
 {
-  i3_window_t* wi = p;
+  sway_window_t* wi = p;
   REL(wi->appid);
   REL(wi->title);
 }
 
-void i3_window_desc(void* p, int level)
+void sway_window_desc(void* p, int level)
 {
-  i3_window_t* wi = p;
+  sway_window_t* wi = p;
   printf("window x %i y %i w %i h %i title %s", wi->x, wi->y, wi->width, wi->height, wi->title);
 }
 
-i3_window_t* i3_window_new()
+sway_window_t* sway_window_new()
 {
-  i3_window_t* wi = CAL(sizeof(i3_window_t), i3_window_del, i3_window_desc);
+  sway_window_t* wi = CAL(sizeof(sway_window_t), sway_window_del, sway_window_desc);
 
   return wi;
 }
 
-char* i3_get_value(vec_t* vec, int pos, char* path)
+char* sway_get_value(vec_t* vec, int pos, char* path)
 {
   for (int index = pos; index < vec->length; index++)
   {
@@ -101,7 +101,7 @@ void tree_reader_extract(char* ws_json, char* tree_json, vec_t* workspaces)
 
     if (type_id != NULL)
     {
-      i3_workspace_t* ws = i3_workspace_new(); // REL 1
+      sway_workspace_t* ws = sway_workspace_new(); // REL 1
 
       char* path    = cstr_new_path_remove_last_component(key); // REL 2
       int   pathlen = strlen(path);
@@ -114,13 +114,13 @@ void tree_reader_extract(char* ws_json, char* tree_json, vec_t* workspaces)
       char* nk = cstr_new_format(pathlen + 20, "%snum", path);         // REL 8
       char* fk = cstr_new_format(pathlen + 20, "%sfocused", path);     // REL 9
 
-      char* x = i3_get_value(json, index, wx);
-      char* y = i3_get_value(json, index, wy);
-      char* w = i3_get_value(json, index, wk);
-      char* h = i3_get_value(json, index, hk);
-      char* o = i3_get_value(json, index, ok);
-      char* n = i3_get_value(json, index, nk);
-      char* f = i3_get_value(json, index, fk);
+      char* x = sway_get_value(json, index, wx);
+      char* y = sway_get_value(json, index, wy);
+      char* w = sway_get_value(json, index, wk);
+      char* h = sway_get_value(json, index, hk);
+      char* o = sway_get_value(json, index, ok);
+      char* n = sway_get_value(json, index, nk);
+      char* f = sway_get_value(json, index, fk);
 
       ws->x       = atoi(x);
       ws->y       = atoi(y);
@@ -155,8 +155,6 @@ void tree_reader_extract(char* ws_json, char* tree_json, vec_t* workspaces)
     char* key      = json->data[index];
     char* type_prt = strstr(key, "type");
 
-    printf("%s : %s\n", key, json->data[index + 1]);
-
     if (type_prt != NULL)
     {
       if (strcmp(json->data[index + 1], "workspace") == 0)
@@ -165,7 +163,7 @@ void tree_reader_extract(char* ws_json, char* tree_json, vec_t* workspaces)
         int   pathlen = strlen(path);
         char* pathkey = cstr_new_format(pathlen + 20, "%snum", path); // REL 2
 
-        char* n = i3_get_value(json, index, pathkey);
+        char* n = sway_get_value(json, index, pathkey);
 
         if (n)
         {
@@ -181,7 +179,7 @@ void tree_reader_extract(char* ws_json, char* tree_json, vec_t* workspaces)
 
     if (wind_prt != NULL && curr_wspc_n > -1)
     {
-      i3_window_t* wi = i3_window_new(); // REL 3c
+      sway_window_t* wi = sway_window_new(); // REL 3c
 
       char* path    = cstr_new_path_remove_last_component(key); // REL 4
       int   pathlen = strlen(path);
@@ -193,16 +191,14 @@ void tree_reader_extract(char* ws_json, char* tree_json, vec_t* workspaces)
       char* wk = cstr_new_format(pathlen + 20, "%srect/width", path);  // REL 10
       char* hk = cstr_new_format(pathlen + 20, "%srect/height", path); // REL 11
 
-      char* c = i3_get_value(json, index, ck);
+      char* c = sway_get_value(json, index, ck);
       // char* i = json->data[index + 1];
-      char* t = i3_get_value(json, index, tk);
+      char* t = sway_get_value(json, index, tk);
 
-      char* rx = i3_get_value(json, index, xk);
-      char* ry = i3_get_value(json, index, yk);
-      char* rw = i3_get_value(json, index, wk);
-      char* rh = i3_get_value(json, index, hk);
-
-      printf("XK %s RX %s\n", xk, rx);
+      char* rx = sway_get_value(json, index, xk);
+      char* ry = sway_get_value(json, index, yk);
+      char* rw = sway_get_value(json, index, wk);
+      char* rh = sway_get_value(json, index, hk);
 
       wi->x      = atoi(rx);
       wi->y      = atoi(ry);
@@ -213,7 +209,7 @@ void tree_reader_extract(char* ws_json, char* tree_json, vec_t* workspaces)
 
       for (int wsi = 0; wsi < workspaces->length; wsi++)
       {
-        i3_workspace_t* ws = workspaces->data[wsi];
+        sway_workspace_t* ws = workspaces->data[wsi];
 
         if (ws->number == curr_wspc_n)
         {
