@@ -4,9 +4,13 @@
 #include <fcntl.h>
 #include <getopt.h>
 #include <limits.h>
+#include <pthread.h>
 #include <stdbool.h>
 #include <string.h>
 #include <sys/mman.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <sys/un.h>
 #include <time.h>
 #include <unistd.h>
 #include <wayland-client.h>
@@ -19,6 +23,7 @@
 #include "tree_reader.c"
 
 #include "zc_bitmap.c"
+#include "zc_channel.c"
 #include "zc_cstring.c"
 #include "zc_cstrpath.c"
 #include "zc_vector.c"
@@ -31,8 +36,26 @@
 #define GET_TREE_CMD "swaymsg -t get_tree"
 
 int alive = 1;
+int show  = 1;
 
 bm_t* bitmap = NULL; // REL 5
+
+/* Wayland code */
+struct client_state
+{
+  /* Globals */
+  struct wl_display*    wl_display;
+  struct wl_registry*   wl_registry;
+  struct wl_shm*        wl_shm;
+  struct wl_compositor* wl_compositor;
+  struct xdg_wm_base*   xdg_wm_base;
+  /* Objects */
+  struct wl_surface*   wl_surface;
+  struct xdg_surface*  xdg_surface;
+  struct xdg_toplevel* xdg_toplevel;
+};
+
+struct client_state state = {0};
 
 void read_tree(vec_t* workspaces)
 {
@@ -55,6 +78,103 @@ void read_tree(vec_t* workspaces)
 
   REL(ws_json);   // REL 0
   REL(tree_json); // REL 1
+}
+
+struct _remote_t
+{
+  int port;
+  int alive;
+} rem;
+
+void* remote_listen_ins(void* p)
+{
+  ch_t* channel = (ch_t*)p;
+
+  int                s  = 0;
+  int                s2 = 0;
+  struct sockaddr_un local, remote;
+  int                len = 0;
+
+  s = socket(AF_UNIX, SOCK_STREAM, 0);
+  if (-1 == s)
+  {
+    printf("Error on socket() call \n");
+    return NULL;
+  }
+
+  local.sun_family = AF_UNIX;
+  strcpy(local.sun_path, "/tmp/sway-overview");
+  unlink(local.sun_path);
+  len = strlen(local.sun_path) + sizeof(local.sun_family);
+
+  if (bind(s, (struct sockaddr*)&local, len) != 0)
+  {
+    printf("Error on binding socket \n");
+    return NULL;
+  }
+
+  if (listen(s, 1) != 0)
+  {
+    printf("Error on listen call \n");
+  }
+
+  bool bWaiting = true;
+  while (bWaiting)
+  {
+    unsigned int sock_len = 0;
+    printf("Waiting for connection.... \n");
+    if ((s2 = accept(s, (struct sockaddr*)&remote, &sock_len)) == -1)
+    {
+      printf("Error on accept() call \n");
+      return NULL;
+    }
+
+    printf("Server connected \n");
+
+    int  data_recv = 0;
+    char recv_buf[100];
+    do {
+      memset(recv_buf, 0, 100 * sizeof(char));
+      data_recv = recv(s2, recv_buf, 1, 0);
+      if (data_recv > 0)
+      {
+        printf("Data received: %d : %s \n", data_recv, recv_buf);
+
+        show = recv_buf[0] == '1';
+
+        wl_surface_commit(state.wl_surface);
+        wl_display_dispatch(state.wl_display);
+      }
+      else
+      {
+        printf("Error on recv() call \n");
+      }
+    } while (data_recv > 0);
+
+    close(s2);
+  }
+
+  return NULL;
+}
+
+void remote_listen(ch_t* channel, int port)
+{
+  pthread_t threadId;
+
+  if (rem.alive == 0)
+  {
+    rem.alive = 1;
+    rem.port  = port;
+
+    int err = pthread_create(&threadId, NULL, &remote_listen_ins, channel);
+
+    if (err) printf("Thread creation failed : %s", strerror(err));
+  }
+}
+
+void remote_close()
+{
+  rem.alive = 0;
 }
 
 /* Shared memory support code */
@@ -107,21 +227,6 @@ allocate_shm_file(size_t size)
   return fd;
 }
 
-/* Wayland code */
-struct client_state
-{
-  /* Globals */
-  struct wl_display*    wl_display;
-  struct wl_registry*   wl_registry;
-  struct wl_shm*        wl_shm;
-  struct wl_compositor* wl_compositor;
-  struct xdg_wm_base*   xdg_wm_base;
-  /* Objects */
-  struct wl_surface*   wl_surface;
-  struct xdg_surface*  xdg_surface;
-  struct xdg_toplevel* xdg_toplevel;
-};
-
 static void
 wl_buffer_release(void* data, struct wl_buffer* wl_buffer)
 {
@@ -135,9 +240,10 @@ static const struct wl_buffer_listener wl_buffer_listener = {
 
 static struct wl_buffer* draw_frame(struct client_state* state)
 {
-  const int width = bitmap->w, height = bitmap->h;
-  int       stride = width * 4;
-  int       size   = stride * height;
+  int width  = bitmap->w;
+  int height = bitmap->h;
+  int stride = width * 4;
+  int size   = stride * height;
 
   int fd = allocate_shm_file(size);
   if (fd == -1)
@@ -157,18 +263,6 @@ static struct wl_buffer* draw_frame(struct client_state* state)
   wl_shm_pool_destroy(pool);
   close(fd);
 
-  /* Draw checkerboxed background */
-  /*  for (int y = 0; y < height; ++y) */
-  /*   { */
-  /*     for (int x = 0; x < width; ++x) */
-  /*     { */
-  /*       if ((x + y / 8 * 8) % 16 < 8) */
-  /*         data[y * width + x] = 0xFF666666; */
-  /*       else */
-  /*         data[y * width + x] = 0xFFEEEEEE; */
-  /*     } */
-  /*   } */
-
   memcpy(data, (uint8_t*)bitmap->data, bitmap->size);
 
   munmap(data, size);
@@ -184,9 +278,19 @@ xdg_surface_configure(void*               data,
   struct client_state* state = data;
   xdg_surface_ack_configure(xdg_surface, serial);
 
-  struct wl_buffer* buffer = draw_frame(state);
-  wl_surface_attach(state->wl_surface, buffer, 0, 0);
-  wl_surface_commit(state->wl_surface);
+  printf("CONFIGURE %i\n", show);
+
+  if (show)
+  {
+    struct wl_buffer* buffer = draw_frame(state);
+    wl_surface_attach(state->wl_surface, buffer, 0, 0);
+    wl_surface_commit(state->wl_surface);
+  }
+  else
+  {
+    wl_surface_attach(state->wl_surface, NULL, 0, 0);
+    wl_surface_commit(state->wl_surface);
+  }
 }
 
 static const struct xdg_surface_listener xdg_surface_listener = {
@@ -375,22 +479,29 @@ int main(int argc, char* argv[])
                      config_get_int("text_workspace_yshift"));
   }
 
-  struct client_state state = {0};
-  state.wl_display          = wl_display_connect(NULL);
-  state.wl_registry         = wl_display_get_registry(state.wl_display);
+  state.wl_display  = wl_display_connect(NULL);
+  state.wl_registry = wl_display_get_registry(state.wl_display);
+
   wl_registry_add_listener(state.wl_registry, &wl_registry_listener, &state);
   wl_display_roundtrip(state.wl_display);
 
   state.wl_surface  = wl_compositor_create_surface(state.wl_compositor);
   state.xdg_surface = xdg_wm_base_get_xdg_surface(state.xdg_wm_base, state.wl_surface);
+
   xdg_surface_add_listener(state.xdg_surface, &xdg_surface_listener, &state);
+
   state.xdg_toplevel = xdg_surface_get_toplevel(state.xdg_surface);
+
   xdg_toplevel_set_title(state.xdg_toplevel, WIN_TITLE);
   xdg_toplevel_set_app_id(state.xdg_toplevel, WIN_APPID);
+
   wl_surface_commit(state.wl_surface);
+
+  remote_listen(NULL, 0);
 
   while (wl_display_dispatch(state.wl_display))
   {
+    printf("**WAYLAND**\n");
     /* This space deliberately left blank */
   }
 

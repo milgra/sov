@@ -17,7 +17,7 @@ SOURCES = \
 	$(wildcard src/modules/storage/*.c)
 
 SOURCES_MAIN = $(SOURCES) \
-	src/overview/waytest.c
+	src/overview/overview.c
 
 SOURCES_TEST = $(SOURCES) \
 	src/overview/overview_test.c
