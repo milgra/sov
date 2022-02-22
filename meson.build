@@ -15,7 +15,6 @@ wayland_client = dependency('wayland-client')
 freetype = dependency('freetype2')
 math = cc.find_library('m')
 rt = cc.find_library('rt')
-seccomp = dependency('libseccomp', required: get_option('seccomp'))
 
 wob_version = '"@0@"'.format(meson.project_version())
 add_project_arguments('-DWOB_VERSION=@0@'.format(wob_version), language: 'c')
@@ -68,10 +67,8 @@ wob_inc = include_directories('include',
 			      'src/modules/zen_text')
 
 wob_sources = ['src/main.c',
-	       'src/parse.c',
 	       'src/buffer.c',
 	       'src/log.c',
-	       'src/color.c',
 
 	       'src/overview/config/config.c',
 	       'src/overview/config/fontconfig.c',
@@ -94,12 +91,6 @@ wob_sources = ['src/main.c',
 	       'src/modules/zen_text/text.c'
 ]
 wob_dependencies = [xdg_output_unstable_v1, wayland_client, wlr_layer_shell_unstable_v1, xdg_shell, rt, freetype, math]
-if seccomp.found()
-  wob_dependencies += seccomp
-  wob_sources += 'src/pledge_seccomp.c'
-else
-  wob_sources += 'src/pledge.c'
-endif
 
 executable(
   'wob',
@@ -111,7 +102,7 @@ executable(
 
 test('parse-input', executable(
   'test-parse-input',
-  ['tests/wob_parse_input.c', 'src/parse.c', 'src/color.c'],
+  ['tests/wob_parse_input.c'],
   include_directories: [wob_inc]
 ))
 

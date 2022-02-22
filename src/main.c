@@ -36,8 +36,6 @@
 #include "buffer.h"
 #include "color.h"
 #include "log.h"
-#include "parse.h"
-#include "pledge.h"
 #include "wlr-layer-shell-unstable-v1-client-protocol.h"
 #include "xdg-output-unstable-v1-client-protocol.h"
 
@@ -577,103 +575,36 @@ void wob_connect(struct wob* app)
   }
 }
 
-/* void wob_draw_background(const struct wob_geom* geom, uint32_t* argb, struct wob_color color) */
-/* { */
-/*   uint32_t argb_color = wob_color_to_argb(wob_color_premultiply_alpha(color)); */
-
-/*   for (size_t i = 0; i < geom->width * geom->height; ++i) */
-/*   { */
-/*     argb[i] = argb_color; */
-/*   } */
-/* } */
-
-/* void wob_draw_border(const struct wob_geom* geom, uint32_t* argb, struct wob_color color) */
-/* { */
-/*   uint32_t argb_color = wob_color_to_argb(wob_color_premultiply_alpha(color)); */
-
-/*   // create top and bottom line */
-/*   size_t i = geom->width * geom->border_offset; */
-/*   size_t k = geom->width * (geom->height - geom->border_offset - geom->border_size); */
-/*   for (size_t line = 0; line < geom->border_size; ++line) */
-/*   { */
-/*     i += geom->border_offset; */
-/*     k += geom->border_offset; */
-/*     for (size_t pixel = 0; pixel < geom->width - 2 * geom->border_offset; ++pixel) */
-/*     { */
-/*       argb[i++] = argb_color; */
-/*       argb[k++] = argb_color; */
-/*     } */
-/*     i += geom->border_offset; */
-/*     k += geom->border_offset; */
-/*   } */
-
-/*   // create left and right horizontal line */
-/*   i = geom->width * (geom->border_offset + geom->border_size); */
-/*   k = geom->width * (geom->border_offset + geom->border_size); */
-/*   for (size_t line = 0; line < geom->height - 2 * (geom->border_size + geom->border_offset); ++line) */
-/*   { */
-/*     i += geom->border_offset; */
-/*     k += geom->width - geom->border_offset - geom->border_size; */
-/*     for (size_t pixel = 0; pixel < geom->border_size; ++pixel) */
-/*     { */
-/*       argb[i++] = argb_color; */
-/*       argb[k++] = argb_color; */
-/*     } */
-/*     i += geom->width - geom->border_offset - geom->border_size; */
-/*     k += geom->border_offset; */
-/*   } */
-/* } */
-
-/* void wob_draw_percentage(const struct wob_geom* geom, uint32_t* argb, struct wob_color bar_color, struct wob_color background_color, unsigned long percentage, unsigned long maximum) */
-/* { */
-/*   uint32_t argb_bar_color        = wob_color_to_argb(wob_color_premultiply_alpha(bar_color)); */
-/*   uint32_t argb_background_color = wob_color_to_argb(wob_color_premultiply_alpha(background_color)); */
-
-/*   size_t offset_border_padding = geom->border_offset + geom->border_size + geom->bar_padding; */
-/*   size_t bar_width             = geom->width - 2 * offset_border_padding; */
-/*   size_t bar_height            = geom->height - 2 * offset_border_padding; */
-/*   size_t bar_colored_width     = (bar_width * percentage) / maximum; */
-
-/*   // draw 1px horizontal line */
-/*   uint32_t *start, *end, *pixel; */
-/*   start = &argb[offset_border_padding * (geom->width + 1)]; */
-/*   end   = start + bar_colored_width; */
-/*   for (pixel = start; pixel < end; ++pixel) */
-/*   { */
-/*     *pixel = argb_bar_color; */
-/*   } */
-/*   for (end = start + bar_width; pixel < end; ++pixel) */
-/*   { */
-/*     *pixel = argb_background_color; */
-/*   } */
-
-/*   // copy it to make full percentage bar */
-/*   uint32_t* source      = &argb[offset_border_padding * geom->width]; */
-/*   uint32_t* destination = source + geom->width; */
-/*   end                   = &argb[geom->width * (bar_height + offset_border_padding)]; */
-/*   while (destination != end) */
-/*   { */
-/*     memcpy(destination, source, MIN(destination - source, end - destination) * sizeof(uint32_t)); */
-/*     destination += MIN(destination - source, end - destination); */
-/*   } */
-/* } */
-
 static char stdin_buffer[STDIN_BUFFER_LENGTH];
+
+bool wob_parse_input(const char* input_buffer, unsigned long* percentage, struct wob_color* background_color, struct wob_color* border_color, struct wob_color* bar_color)
+{
+  char *input_ptr, *newline_position, *str_end;
+
+  newline_position = strchr(input_buffer, '\n');
+  if (newline_position == NULL)
+  {
+    return false;
+  }
+
+  if (newline_position == input_buffer)
+  {
+    return false;
+  }
+
+  *percentage = strtoul(input_buffer, &input_ptr, 10);
+  if (input_ptr == newline_position)
+  {
+    return true;
+  }
+  else
+    return false;
+}
 
 int main(int argc, char** argv)
 {
-
   wob_log_use_colors(isatty(STDERR_FILENO));
   wob_log_level_info();
-
-  // libc is doing fstat syscall to determine the optimal buffer size and that can be problematic to wob_pledge()
-  // to solve this problem we can just pass the optimal buffer ourselves
-  if (setvbuf(stdin, stdin_buffer, _IOFBF, sizeof(stdin_buffer)) != 0)
-  {
-    wob_log_error("Failed to set stdin buffer size to %zu", sizeof(stdin_buffer));
-
-    return EXIT_FAILURE;
-  }
 
   const char* usage =
       "Usage: wob [options]\n"
@@ -729,14 +660,6 @@ int main(int argc, char** argv)
       .bar        = (struct wob_color){.a = 1.0f, .r = 1.0f, .g = 0.0f, .b = 0.0f},
       .border     = (struct wob_color){.a = 1.0f, .r = 1.0f, .g = 1.0f, .b = 1.0f}};
 
-  bool pledge = true;
-
-  char* disable_pledge_env = getenv("WOB_DISABLE_PLEDGE");
-  if (disable_pledge_env != NULL && strcmp(disable_pledge_env, "0") != 0)
-  {
-    pledge = false;
-  }
-
   struct wob_output_config* output_config;
   int                       option_index = 0;
   int                       c;
@@ -768,27 +691,13 @@ int main(int argc, char** argv)
   {
     switch (c)
     {
-    case 1:
-      if (!wob_parse_color(optarg, &strtoul_end, &(colors.border)))
-      {
-        wob_log_error("Border color must be a value between #00000000 and #FFFFFFFF.");
-        return EXIT_FAILURE;
-      }
-      break;
-    case 2:
-      if (!wob_parse_color(optarg, &strtoul_end, &(colors.background)))
-      {
-        wob_log_error("Background color must be a value between #00000000 and #FFFFFFFF.");
-        return EXIT_FAILURE;
-      }
-      break;
-    case 3:
-      if (!wob_parse_color(optarg, &strtoul_end, &(colors.bar)))
-      {
-        wob_log_error("Bar color must be a value between #00000000 and #FFFFFFFF.");
-        return EXIT_FAILURE;
-      }
-      break;
+    /* case 1: */
+    /*   if (!wob_parse_color(optarg, &strtoul_end, &(colors.border))) */
+    /*   { */
+    /*     wob_log_error("Border color must be a value between #00000000 and #FFFFFFFF."); */
+    /*     return EXIT_FAILURE; */
+    /*   } */
+    /*   break; */
     case 'c':
       cfg_path = cstr_new_cstring(optarg);
       if (*strtoul_end != '\0' || errno == ERANGE || cfg_path == NULL)
@@ -911,13 +820,6 @@ int main(int argc, char** argv)
     case 'v':
       wob_log_inc_verbosity();
       break;
-    case 5:
-      if (!wob_parse_color(optarg, &strtoul_end, &(overflow_colors.bar)))
-      {
-        wob_log_error("Overflow bar color must be a value between #00000000 and #FFFFFFFF.");
-        return EXIT_FAILURE;
-      }
-      break;
     case 6:
       if (strcmp(optarg, "none") == 0)
       {
@@ -934,20 +836,6 @@ int main(int argc, char** argv)
       else
       {
         wob_log_error("Invalid argument for overflow-mode. Valid options are none, wrap, and nowrap.");
-        return EXIT_FAILURE;
-      }
-      break;
-    case 7:
-      if (!wob_parse_color(optarg, &strtoul_end, &(overflow_colors.background)))
-      {
-        wob_log_error("Overflow background color must be a value between #00000000 and #FFFFFFFF.");
-        return EXIT_FAILURE;
-      }
-      break;
-    case 8:
-      if (!wob_parse_color(optarg, &strtoul_end, &(overflow_colors.border)))
-      {
-        wob_log_error("Overflow border color must be a value between #00000000 and #FFFFFFFF.");
         return EXIT_FAILURE;
       }
       break;
@@ -1022,14 +910,6 @@ int main(int argc, char** argv)
     wob_log_error("Wayland compositor doesn't support all required protocols");
     return EXIT_FAILURE;
   }
-
-  /* if (pledge) */
-  /* { */
-  /*   if (!wob_pledge()) */
-  /*   { */
-  /*     return EXIT_FAILURE; */
-  /*   } */
-  /* } */
 
   struct wob_colors old_colors;
   struct wob_colors effective_colors = colors;
@@ -1156,35 +1036,10 @@ int main(int argc, char** argv)
           effective_colors = colors;
         }
 
-        wob_log_info(
-            "Rendering bar with { value = %ld, bg = #%08jx, border = #%08jx, bar = #%08jx }",
-            percentage,
-            wob_color_to_rgba(effective_colors.background),
-            wob_color_to_rgba(effective_colors.border),
-            wob_color_to_rgba(effective_colors.bar));
-
         if (hidden)
         {
           wob_show(&app);
         }
-
-        /* bool redraw_background_and_border = false; */
-        /* if (wob_color_to_argb(old_colors.background) != wob_color_to_argb(effective_colors.background)) */
-        /* { */
-        /*   redraw_background_and_border = true; */
-        /* } */
-        /* else if (wob_color_to_argb(old_colors.border) != wob_color_to_argb(effective_colors.border)) */
-        /* { */
-        /*   redraw_background_and_border = true; */
-        /* } */
-
-        /* if (redraw_background_and_border) */
-        /* { */
-        /*   wob_draw_background(app.wob_geom, argb, effective_colors.background); */
-        /*   wob_draw_border(app.wob_geom, argb, effective_colors.border); */
-        /* } */
-
-        /* wob_draw_percentage(app.wob_geom, argb, effective_colors.bar, effective_colors.background, percentage, maximum); */
 
         wob_flush(&app);
         hidden = false;
