@@ -80,7 +80,7 @@ struct wob_output
 
 struct wob
 {
-  void*                          argb;
+  uint8_t*                       argb;
   int                            shmid;
   struct wl_buffer*              wl_buffer;
   struct wl_compositor*          wl_compositor;
@@ -166,6 +166,36 @@ void read_tree(vec_t* workspaces)
   REL(tree_json); // REL 1
 }
 
+void wob_flush(struct wob* app)
+{
+
+  if (wl_list_empty(&(app->wob_outputs)))
+  {
+    wl_surface_attach(app->fallback_wob_surface->wl_surface, app->wl_buffer, 0, 0);
+    wl_surface_damage(app->fallback_wob_surface->wl_surface, 0, 0, app->wob_geom->width, app->wob_geom->height);
+    wl_surface_commit(app->fallback_wob_surface->wl_surface);
+  }
+  else
+  {
+    struct wob_output *output, *tmp;
+    wl_list_for_each_safe(output, tmp, &(app->wob_outputs), link)
+    {
+      wl_surface_attach(output->wob_surface->wl_surface, app->wl_buffer, 0, 0);
+      wl_surface_damage(output->wob_surface->wl_surface, 0, 0, app->wob_geom->width, app->wob_geom->height);
+      wl_surface_commit(output->wob_surface->wl_surface);
+    }
+  }
+
+  wl_buffer_destroy(app->wl_buffer);
+  app->wl_buffer = NULL;
+
+  if (wl_display_dispatch(app->wl_display) == -1)
+  {
+    wob_log_error("wl_display_dispatch failed");
+    exit(EXIT_FAILURE);
+  }
+}
+
 struct wob_surface*
 wob_surface_create(struct wob* app, struct wl_output* wl_output)
 {
@@ -243,8 +273,6 @@ wob_surface_create(struct wob* app, struct wl_output* wl_output)
     app->wob_geom->size   = bitmap->w * bitmap->h * 4;
     app->wob_geom->stride = bitmap->w * 4;
 
-    printf("bitmap %i %i %i\n", bitmap->w, bitmap->h, bitmap->size);
-
     if (app->wl_buffer == NULL)
     {
       struct wl_shm_pool* pool = wl_shm_create_pool(app->wl_shm, app->shmid, app->wob_geom->size);
@@ -273,7 +301,16 @@ wob_surface_create(struct wob* app, struct wl_output* wl_output)
       return EXIT_FAILURE;
     }
 
-    memcpy((uint8_t*)app->argb, bitmap->data, bitmap->size);
+    // memcpy((uint8_t*)app->argb, bitmap->data, bitmap->size);
+    // we have to do this until RGBA8888 is working for buffer format
+
+    for (int i = 0; i < bitmap->size; i += 4)
+    {
+      app->argb[i]     = bitmap->data[i + 2];
+      app->argb[i + 1] = bitmap->data[i + 1];
+      app->argb[i + 2] = bitmap->data[i];
+      app->argb[i + 3] = bitmap->data[i + 3];
+    }
   }
 
   const static struct zwlr_layer_surface_v1_listener zwlr_layer_surface_listener = {
@@ -425,36 +462,6 @@ void handle_global_remove(void* data, struct wl_registry* registry, uint32_t nam
   }
 }
 
-void wob_flush(struct wob* app)
-{
-
-  if (wl_list_empty(&(app->wob_outputs)))
-  {
-    wl_surface_attach(app->fallback_wob_surface->wl_surface, app->wl_buffer, 0, 0);
-    wl_surface_damage(app->fallback_wob_surface->wl_surface, 0, 0, app->wob_geom->width, app->wob_geom->height);
-    wl_surface_commit(app->fallback_wob_surface->wl_surface);
-  }
-  else
-  {
-    struct wob_output *output, *tmp;
-    wl_list_for_each_safe(output, tmp, &(app->wob_outputs), link)
-    {
-      wl_surface_attach(output->wob_surface->wl_surface, app->wl_buffer, 0, 0);
-      wl_surface_damage(output->wob_surface->wl_surface, 0, 0, app->wob_geom->width, app->wob_geom->height);
-      wl_surface_commit(output->wob_surface->wl_surface);
-    }
-  }
-
-  wl_buffer_destroy(app->wl_buffer);
-  app->wl_buffer = NULL;
-
-  if (wl_display_dispatch(app->wl_display) == -1)
-  {
-    wob_log_error("wl_display_dispatch failed");
-    exit(EXIT_FAILURE);
-  }
-}
-
 void wob_hide(struct wob* app)
 {
   if (wl_list_empty(&(app->wob_outputs)))
@@ -564,7 +571,7 @@ void wob_connect(struct wob* app)
   }
 }
 
-bool wob_parse_input(const char* input_buffer, unsigned long* percentage)
+bool wob_parse_input(const char* input_buffer, unsigned long* state)
 {
   char *input_ptr, *newline_position, *str_end;
 
@@ -579,7 +586,7 @@ bool wob_parse_input(const char* input_buffer, unsigned long* percentage)
     return false;
   }
 
-  *percentage = strtoul(input_buffer, &input_ptr, 10);
+  *state = strtoul(input_buffer, &input_ptr, 10);
   if (input_ptr == newline_position)
   {
     return true;
@@ -677,7 +684,7 @@ int main(int argc, char** argv)
     /*   break; */
     case 'c':
       cfg_path = cstr_new_cstring(optarg);
-      if (*strtoul_end != '\0' || errno == ERANGE || cfg_path == NULL)
+      if (errno == ERANGE || cfg_path == NULL)
       {
         wob_log_error("Invalid config path value", ULONG_MAX);
         return EXIT_FAILURE;
@@ -868,8 +875,6 @@ int main(int argc, char** argv)
   char* font_face = config_get("font_face");
   font_path       = fontconfig_new_path(font_face ? font_face : ""); // REL 4
 
-  //////
-
   geom.stride  = geom.width * 4;
   geom.size    = geom.stride * geom.height;
   app.wob_geom = &geom;
@@ -902,11 +907,11 @@ int main(int argc, char** argv)
   bool hidden = true;
   for (;;)
   {
-    unsigned long percentage                        = 0;
+    unsigned long state                             = 0;
     char          input_buffer[INPUT_BUFFER_LENGTH] = {0};
     char*         fgets_rv;
 
-    switch (poll(fds, 2, hidden ? -1 : timeout_msec))
+    switch (poll(fds, 2, -1))
     {
     case -1:
     {
@@ -972,22 +977,28 @@ int main(int argc, char** argv)
           return EXIT_FAILURE;
         }
 
-        if (!wob_parse_input(input_buffer, &percentage))
+        if (!wob_parse_input(input_buffer, &state))
         {
           wob_log_error("Received invalid input");
+
           if (!hidden) wob_hide(&app);
+
           wob_destroy(&app);
 
           return EXIT_FAILURE;
         }
 
-        if (hidden)
+        if (hidden && state == 1)
         {
           wob_show(&app);
+          hidden = false;
+          wob_flush(&app);
         }
-
-        wob_flush(&app);
-        hidden = false;
+        else if (!hidden && state == 0)
+        {
+          wob_hide(&app);
+          hidden = true;
+        }
       }
     }
     }
