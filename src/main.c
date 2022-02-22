@@ -153,9 +153,100 @@ void xdg_output_handle_name(void* data, struct zxdg_output_v1* xdg_output, const
 #define GET_WORKSPACES_CMD "swaymsg -t get_workspaces"
 #define GET_TREE_CMD "swaymsg -t get_tree"
 
+void read_tree(vec_t* workspaces)
+{
+  char  buff[100];
+  char* ws_json   = NULL; // REL 0
+  char* tree_json = NULL; // REL 1
+
+  FILE* pipe = popen(GET_WORKSPACES_CMD, "r"); // CLOSE 0
+  ws_json    = cstr_new_cstring("{\"items\":");
+  while (fgets(buff, sizeof(buff), pipe) != NULL) ws_json = cstr_append(ws_json, buff);
+  ws_json = cstr_append(ws_json, "}");
+  pclose(pipe); // CLOSE 0
+
+  pipe      = popen(GET_TREE_CMD, "r"); // CLOSE 0
+  tree_json = cstr_new_cstring("");
+  while (fgets(buff, sizeof(buff), pipe) != NULL) tree_json = cstr_append(tree_json, buff);
+  pclose(pipe); // CLOSE 0
+
+  tree_reader_extract(ws_json, tree_json, workspaces);
+
+  REL(ws_json);   // REL 0
+  REL(tree_json); // REL 1
+}
+
 struct wob_surface*
 wob_surface_create(struct wob* app, struct wl_output* wl_output)
 {
+  vec_t* workspaces = VNEW(); // REL 6
+
+  read_tree(workspaces);
+
+  sway_workspace_t* ws  = workspaces->data[0];
+  sway_workspace_t* wsl = workspaces->data[workspaces->length - 1];
+
+  if (ws->width > 0 && ws->height > 0)
+  {
+    int gap   = config_get_int("gap");
+    int cols  = config_get_int("columns");
+    int rows  = (int)ceilf((float)wsl->number / cols);
+    int ratio = config_get_int("ratio");
+
+    int lay_wth = cols * (ws->width / ratio) + (cols + 1) * gap;
+    int lay_hth = rows * (ws->height / ratio) + (rows + 1) * gap;
+
+    bitmap = bm_new(lay_wth, lay_hth); // REL 5
+
+    textstyle_t main_style = {
+        .font       = font_path,
+        .margin     = config_get_int("text_margin_size"),
+        .margin_top = config_get_int("text_margin_top_size"),
+        .align      = TA_LEFT,
+        .valign     = VA_TOP,
+        .size       = config_get_int("text_title_size"),
+        .textcolor  = cstr_color_from_cstring(config_get("text_title_color")),
+        .backcolor  = 0,
+        .multiline  = 0,
+    };
+
+    textstyle_t sub_style = {
+        .font        = font_path,
+        .margin      = config_get_int("text_margin_size"),
+        .margin_top  = config_get_int("text_margin_top_size") + config_get_int("text_title_size"),
+        .align       = TA_LEFT,
+        .valign      = VA_TOP,
+        .size        = config_get_int("text_description_size"),
+        .textcolor   = cstr_color_from_cstring(config_get("text_description_color")),
+        .backcolor   = 0,
+        .line_height = config_get_int("text_description_size"),
+        .multiline   = 1,
+    };
+
+    textstyle_t wsnum_style = {
+        .font      = font_path,
+        .margin    = config_get_int("text_margin_size"),
+        .align     = TA_RIGHT,
+        .valign    = VA_TOP,
+        .size      = config_get_int("text_workspace_size"),
+        .textcolor = cstr_color_from_cstring(config_get("text_workspace_color")),
+        .backcolor = 0x00002200,
+    };
+
+    tree_drawer_draw(bitmap,
+                     workspaces,
+                     gap,
+                     cols,
+                     ratio,
+                     main_style,
+                     sub_style,
+                     wsnum_style,
+                     cstr_color_from_cstring(config_get("background_color")),
+                     cstr_color_from_cstring(config_get("background_color_focused")),
+                     cstr_color_from_cstring(config_get("border_color")),
+                     config_get_int("text_workspace_xshift"),
+                     config_get_int("text_workspace_yshift"));
+  }
 
   const static struct zwlr_layer_surface_v1_listener zwlr_layer_surface_listener = {
       .configure = layer_surface_configure,
@@ -540,6 +631,7 @@ static char stdin_buffer[STDIN_BUFFER_LENGTH];
 
 int main(int argc, char** argv)
 {
+
   wob_log_use_colors(isatty(STDERR_FILENO));
   wob_log_level_info();
 
@@ -871,7 +963,7 @@ int main(int argc, char** argv)
   REL(cfg_path_glo); // REL 3
   REL(cfg_path_loc); // REL 2
 
-  if (wob_log_get_level() == 1) config_describe();
+  // if (wob_log_get_level() == 1) config_describe();
 
   /* init text rendeing */
 
@@ -906,13 +998,13 @@ int main(int argc, char** argv)
     return EXIT_FAILURE;
   }
 
-  if (pledge)
-  {
-    if (!wob_pledge())
-    {
-      return EXIT_FAILURE;
-    }
-  }
+  /* if (pledge) */
+  /* { */
+  /*   if (!wob_pledge()) */
+  /*   { */
+  /*     return EXIT_FAILURE; */
+  /*   } */
+  /* } */
 
   struct wob_colors old_colors;
   struct wob_colors effective_colors = colors;
