@@ -18,10 +18,6 @@
 // sizeof already includes NULL byte
 #define INPUT_BUFFER_LENGTH (3 * sizeof(unsigned long) + sizeof(" #000000FF #FFFFFFFF #FFFFFFFF\n"))
 
-#define MIN(a, b) (((a) < (b)) ? (a) : (b))
-
-#define STDIN_BUFFER_LENGTH INPUT_BUFFER_LENGTH
-
 #define _POSIX_C_SOURCE 200809L
 #include <errno.h>
 #include <getopt.h>
@@ -57,13 +53,6 @@ struct wob_geom
   unsigned long size;
   unsigned long anchor;
   unsigned long margin;
-};
-
-struct wob_colors
-{
-  struct wob_color bar;
-  struct wob_color background;
-  struct wob_color border;
 };
 
 struct wob_output_config
@@ -575,9 +564,7 @@ void wob_connect(struct wob* app)
   }
 }
 
-static char stdin_buffer[STDIN_BUFFER_LENGTH];
-
-bool wob_parse_input(const char* input_buffer, unsigned long* percentage, struct wob_color* background_color, struct wob_color* border_color, struct wob_color* bar_color)
+bool wob_parse_input(const char* input_buffer, unsigned long* percentage)
 {
   char *input_ptr, *newline_position, *str_end;
 
@@ -649,16 +636,6 @@ int main(int argc, char** argv)
                       .anchor        = WOB_DEFAULT_ANCHOR,
                       .margin        = WOB_DEFAULT_MARGIN,
   };
-
-  struct wob_colors colors = {
-      .background = (struct wob_color){.a = 1.0f, .r = 0.0f, .g = 0.0f, .b = 0.0f},
-      .bar        = (struct wob_color){.a = 1.0f, .r = 1.0f, .g = 1.0f, .b = 1.0f},
-      .border     = (struct wob_color){.a = 1.0f, .r = 1.0f, .g = 1.0f, .b = 1.0f}};
-
-  struct wob_colors overflow_colors = {
-      .background = (struct wob_color){.a = 1.0f, .r = 0.0f, .g = 0.0f, .b = 0.0f},
-      .bar        = (struct wob_color){.a = 1.0f, .r = 1.0f, .g = 0.0f, .b = 0.0f},
-      .border     = (struct wob_color){.a = 1.0f, .r = 1.0f, .g = 1.0f, .b = 1.0f}};
 
   struct wob_output_config* output_config;
   int                       option_index = 0;
@@ -882,7 +859,7 @@ int main(int argc, char** argv)
   REL(cfg_path_glo); // REL 3
   REL(cfg_path_loc); // REL 2
 
-  // if (wob_log_get_level() == 1) config_describe();
+  if (wob_log_get_level() == 2) config_describe();
 
   /* init text rendeing */
 
@@ -910,13 +887,6 @@ int main(int argc, char** argv)
     wob_log_error("Wayland compositor doesn't support all required protocols");
     return EXIT_FAILURE;
   }
-
-  struct wob_colors old_colors;
-  struct wob_colors effective_colors = colors;
-
-  // Draw these at least once
-  // wob_draw_background(app.wob_geom, argb, colors.background);
-  // wob_draw_border(app.wob_geom, argb, colors.border);
 
   struct pollfd fds[2] = {
       {
@@ -1002,38 +972,13 @@ int main(int argc, char** argv)
           return EXIT_FAILURE;
         }
 
-        if (!wob_parse_input(input_buffer, &percentage, &colors.background, &colors.border, &colors.bar))
+        if (!wob_parse_input(input_buffer, &percentage))
         {
           wob_log_error("Received invalid input");
           if (!hidden) wob_hide(&app);
           wob_destroy(&app);
 
           return EXIT_FAILURE;
-        }
-
-        old_colors = effective_colors;
-        if (percentage > maximum)
-        {
-          switch (overflow_mode)
-          {
-          case OVERFLOW_MODE_NONE:
-            wob_log_error("Received value %ld is above defined maximum %ld", percentage, maximum);
-            if (!hidden) wob_hide(&app);
-            wob_destroy(&app);
-            return EXIT_FAILURE;
-          case OVERFLOW_MODE_WRAP:
-            effective_colors = overflow_colors;
-            percentage %= maximum;
-            break;
-          case OVERFLOW_MODE_NOWRAP:
-            effective_colors = overflow_colors;
-            percentage       = maximum;
-            break;
-          }
-        }
-        else
-        {
-          effective_colors = colors;
         }
 
         if (hidden)
