@@ -12,6 +12,8 @@ wayland_protos = dependency('wayland-protocols', version: '>=1.13')
 wl_protocol_dir = wayland_protos.get_pkgconfig_variable('pkgdatadir')
 wayland_scanner = find_program('wayland-scanner')
 wayland_client = dependency('wayland-client')
+freetype = dependency('freetype2')
+math = cc.find_library('m')
 rt = cc.find_library('rt')
 seccomp = dependency('libseccomp', required: get_option('seccomp'))
 
@@ -57,10 +59,41 @@ foreach p : client_protocols
   set_variable(name, dep)
 endforeach
 
-wob_inc = include_directories('include')
+wob_inc = include_directories('include',
+			      'src/overview/config',
+			      'src/overview/tree',
+			      'src/modules/json',
+			      'src/modules/storage',
+			      'src/modules/zen_core',
+			      'src/modules/zen_text')
 
-wob_sources = ['src/main.c', 'src/parse.c', 'src/buffer.c', 'src/log.c', 'src/color.c']
-wob_dependencies = [xdg_output_unstable_v1, wayland_client, wlr_layer_shell_unstable_v1, xdg_shell, rt]
+wob_sources = ['src/main.c',
+	       'src/parse.c',
+	       'src/buffer.c',
+	       'src/log.c',
+	       'src/color.c',
+
+	       'src/overview/config/config.c',
+	       'src/overview/config/fontconfig.c',
+	       'src/overview/tree/tree_drawer.c',
+	       'src/overview/tree/tree_reader.c',	
+
+	       'src/modules/json/json.c',
+	       'src/modules/json/jsmn.c',
+	       'src/modules/storage/kvlines.c',
+	       'src/modules/zen_core/zc_bitmap.c',
+	       'src/modules/zen_core/zc_channel.c',
+	       'src/modules/zen_core/zc_cstring.c',
+	       'src/modules/zen_core/zc_cstrpath.c',
+	       'src/modules/zen_core/zc_graphics.c',
+	       'src/modules/zen_core/zc_map.c',
+	       'src/modules/zen_core/zc_memory.c',
+	       'src/modules/zen_core/zc_string.c',
+	       'src/modules/zen_core/zc_vector.c',
+	       'src/modules/zen_core/zc_wrapper.c',
+	       'src/modules/zen_text/text.c'
+]
+wob_dependencies = [xdg_output_unstable_v1, wayland_client, wlr_layer_shell_unstable_v1, xdg_shell, rt, freetype, math]
 if seccomp.found()
   wob_dependencies += seccomp
   wob_sources += 'src/pledge_seccomp.c'

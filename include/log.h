@@ -3,16 +3,19 @@
 
 #include <stdbool.h>
 
-typedef enum {
-	WOB_LOG_DEBUG = 0,
-	WOB_LOG_INFO = 1,
-	WOB_LOG_WARN = 2,
-	WOB_LOG_ERROR = 3,
+typedef enum
+{
+  WOB_LOG_DEBUG = 0,
+  WOB_LOG_INFO  = 1,
+  WOB_LOG_WARN  = 2,
+  WOB_LOG_ERROR = 3,
 } wob_log_importance;
 
-void wob_log(wob_log_importance importance, const char *file, int line, const char *fmt, ...);
+void wob_log(wob_log_importance importance, const char* file, int line, const char* fmt, ...);
 
 void wob_log_set_level(wob_log_importance importance);
+
+int wob_log_get_level();
 
 void wob_log_inc_verbosity(void);
 

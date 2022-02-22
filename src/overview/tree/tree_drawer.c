@@ -26,6 +26,7 @@ void tree_drawer_draw(bm_t*       bm,
 #include "config.c"
 #include "tree_reader.c"
 #include "zc_graphics.c"
+#include <math.h>
 
 void tree_drawer_draw(bm_t*       bm,
                       vec_t*      workspaces,
