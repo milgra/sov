@@ -2,9 +2,9 @@
 
 #define WOB_DEFAULT_WIDTH 400
 #define WOB_DEFAULT_HEIGHT 50
-#define WOB_DEFAULT_BORDER_OFFSET 4
-#define WOB_DEFAULT_BORDER_SIZE 4
-#define WOB_DEFAULT_BAR_PADDING 4
+#define WOB_DEFAULT_BORDER_OFFSET 0
+#define WOB_DEFAULT_BORDER_SIZE 0
+#define WOB_DEFAULT_BAR_PADDING 0
 #define WOB_DEFAULT_ANCHOR 0
 #define WOB_DEFAULT_MARGIN 0
 #define WOB_DEFAULT_MAXIMUM 100
@@ -93,6 +93,7 @@ struct wob_output
 
 struct wob
 {
+  void*                          argb;
   int                            shmid;
   struct wl_buffer*              wl_buffer;
   struct wl_compositor*          wl_compositor;
@@ -153,6 +154,8 @@ void xdg_output_handle_name(void* data, struct zxdg_output_v1* xdg_output, const
 #define GET_WORKSPACES_CMD "swaymsg -t get_workspaces"
 #define GET_TREE_CMD "swaymsg -t get_tree"
 
+char* font_path;
+
 void read_tree(vec_t* workspaces)
 {
   char  buff[100];
@@ -180,6 +183,7 @@ struct wob_surface*
 wob_surface_create(struct wob* app, struct wl_output* wl_output)
 {
   vec_t* workspaces = VNEW(); // REL 6
+  bm_t*  bitmap     = NULL;
 
   read_tree(workspaces);
 
@@ -246,6 +250,43 @@ wob_surface_create(struct wob* app, struct wl_output* wl_output)
                      cstr_color_from_cstring(config_get("border_color")),
                      config_get_int("text_workspace_xshift"),
                      config_get_int("text_workspace_yshift"));
+
+    app->wob_geom->width  = bitmap->w;
+    app->wob_geom->height = bitmap->h;
+    app->wob_geom->size   = bitmap->w * bitmap->h * 4;
+    app->wob_geom->stride = bitmap->w * 4;
+
+    printf("bitmap %i %i %i\n", bitmap->w, bitmap->h, bitmap->size);
+
+    if (app->wl_buffer == NULL)
+    {
+      struct wl_shm_pool* pool = wl_shm_create_pool(app->wl_shm, app->shmid, app->wob_geom->size);
+      if (pool == NULL)
+      {
+        wob_log_error("wl_shm_create_pool failed");
+        exit(EXIT_FAILURE);
+      }
+
+      app->wl_buffer = wl_shm_pool_create_buffer(pool, 0, app->wob_geom->width, app->wob_geom->height, app->wob_geom->stride, WL_SHM_FORMAT_ARGB8888);
+      wl_shm_pool_destroy(pool);
+      if (app->wl_buffer == NULL)
+      {
+        wob_log_error("wl_shm_pool_create_buffer failed");
+        exit(EXIT_FAILURE);
+      }
+    }
+
+    if (app->argb == NULL)
+    {
+      app->argb = wob_shm_alloc(app->shmid, app->wob_geom->size);
+    }
+
+    if (app->argb == NULL)
+    {
+      return EXIT_FAILURE;
+    }
+
+    memcpy((uint8_t*)app->argb, bitmap->data, bitmap->size);
   }
 
   const static struct zwlr_layer_surface_v1_listener zwlr_layer_surface_listener = {
@@ -266,12 +307,14 @@ wob_surface_create(struct wob* app, struct wl_output* wl_output)
     wob_log_error("wl_compositor_create_surface failed");
     exit(EXIT_FAILURE);
   }
+
   wob_surface->wlr_layer_surface = zwlr_layer_shell_v1_get_layer_surface(app->wlr_layer_shell, wob_surface->wl_surface, wl_output, ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY, "wob");
   if (wob_surface->wlr_layer_surface == NULL)
   {
     wob_log_error("wlr_layer_shell_v1_get_layer_surface failed");
     exit(EXIT_FAILURE);
   }
+
   zwlr_layer_surface_v1_set_size(wob_surface->wlr_layer_surface, app->wob_geom->width, app->wob_geom->height);
   zwlr_layer_surface_v1_set_anchor(wob_surface->wlr_layer_surface, app->wob_geom->anchor);
   zwlr_layer_surface_v1_set_margin(wob_surface->wlr_layer_surface, app->wob_geom->margin, app->wob_geom->margin, app->wob_geom->margin, app->wob_geom->margin);
@@ -415,6 +458,9 @@ void wob_flush(struct wob* app)
     }
   }
 
+  wl_buffer_destroy(app->wl_buffer);
+  app->wl_buffer = NULL;
+
   if (wl_display_dispatch(app->wl_display) == -1)
   {
     wob_log_error("wl_display_dispatch failed");
@@ -529,103 +575,88 @@ void wob_connect(struct wob* app)
     wob_log_error("wl_display_roundtrip failed");
     exit(EXIT_FAILURE);
   }
-
-  struct wl_shm_pool* pool = wl_shm_create_pool(app->wl_shm, app->shmid, app->wob_geom->size);
-  if (pool == NULL)
-  {
-    wob_log_error("wl_shm_create_pool failed");
-    exit(EXIT_FAILURE);
-  }
-
-  app->wl_buffer = wl_shm_pool_create_buffer(pool, 0, app->wob_geom->width, app->wob_geom->height, app->wob_geom->stride, WL_SHM_FORMAT_ARGB8888);
-  wl_shm_pool_destroy(pool);
-  if (app->wl_buffer == NULL)
-  {
-    wob_log_error("wl_shm_pool_create_buffer failed");
-    exit(EXIT_FAILURE);
-  }
 }
 
-void wob_draw_background(const struct wob_geom* geom, uint32_t* argb, struct wob_color color)
-{
-  uint32_t argb_color = wob_color_to_argb(wob_color_premultiply_alpha(color));
+/* void wob_draw_background(const struct wob_geom* geom, uint32_t* argb, struct wob_color color) */
+/* { */
+/*   uint32_t argb_color = wob_color_to_argb(wob_color_premultiply_alpha(color)); */
 
-  for (size_t i = 0; i < geom->width * geom->height; ++i)
-  {
-    argb[i] = argb_color;
-  }
-}
+/*   for (size_t i = 0; i < geom->width * geom->height; ++i) */
+/*   { */
+/*     argb[i] = argb_color; */
+/*   } */
+/* } */
 
-void wob_draw_border(const struct wob_geom* geom, uint32_t* argb, struct wob_color color)
-{
-  uint32_t argb_color = wob_color_to_argb(wob_color_premultiply_alpha(color));
+/* void wob_draw_border(const struct wob_geom* geom, uint32_t* argb, struct wob_color color) */
+/* { */
+/*   uint32_t argb_color = wob_color_to_argb(wob_color_premultiply_alpha(color)); */
 
-  // create top and bottom line
-  size_t i = geom->width * geom->border_offset;
-  size_t k = geom->width * (geom->height - geom->border_offset - geom->border_size);
-  for (size_t line = 0; line < geom->border_size; ++line)
-  {
-    i += geom->border_offset;
-    k += geom->border_offset;
-    for (size_t pixel = 0; pixel < geom->width - 2 * geom->border_offset; ++pixel)
-    {
-      argb[i++] = argb_color;
-      argb[k++] = argb_color;
-    }
-    i += geom->border_offset;
-    k += geom->border_offset;
-  }
+/*   // create top and bottom line */
+/*   size_t i = geom->width * geom->border_offset; */
+/*   size_t k = geom->width * (geom->height - geom->border_offset - geom->border_size); */
+/*   for (size_t line = 0; line < geom->border_size; ++line) */
+/*   { */
+/*     i += geom->border_offset; */
+/*     k += geom->border_offset; */
+/*     for (size_t pixel = 0; pixel < geom->width - 2 * geom->border_offset; ++pixel) */
+/*     { */
+/*       argb[i++] = argb_color; */
+/*       argb[k++] = argb_color; */
+/*     } */
+/*     i += geom->border_offset; */
+/*     k += geom->border_offset; */
+/*   } */
 
-  // create left and right horizontal line
-  i = geom->width * (geom->border_offset + geom->border_size);
-  k = geom->width * (geom->border_offset + geom->border_size);
-  for (size_t line = 0; line < geom->height - 2 * (geom->border_size + geom->border_offset); ++line)
-  {
-    i += geom->border_offset;
-    k += geom->width - geom->border_offset - geom->border_size;
-    for (size_t pixel = 0; pixel < geom->border_size; ++pixel)
-    {
-      argb[i++] = argb_color;
-      argb[k++] = argb_color;
-    }
-    i += geom->width - geom->border_offset - geom->border_size;
-    k += geom->border_offset;
-  }
-}
+/*   // create left and right horizontal line */
+/*   i = geom->width * (geom->border_offset + geom->border_size); */
+/*   k = geom->width * (geom->border_offset + geom->border_size); */
+/*   for (size_t line = 0; line < geom->height - 2 * (geom->border_size + geom->border_offset); ++line) */
+/*   { */
+/*     i += geom->border_offset; */
+/*     k += geom->width - geom->border_offset - geom->border_size; */
+/*     for (size_t pixel = 0; pixel < geom->border_size; ++pixel) */
+/*     { */
+/*       argb[i++] = argb_color; */
+/*       argb[k++] = argb_color; */
+/*     } */
+/*     i += geom->width - geom->border_offset - geom->border_size; */
+/*     k += geom->border_offset; */
+/*   } */
+/* } */
 
-void wob_draw_percentage(const struct wob_geom* geom, uint32_t* argb, struct wob_color bar_color, struct wob_color background_color, unsigned long percentage, unsigned long maximum)
-{
-  uint32_t argb_bar_color        = wob_color_to_argb(wob_color_premultiply_alpha(bar_color));
-  uint32_t argb_background_color = wob_color_to_argb(wob_color_premultiply_alpha(background_color));
+/* void wob_draw_percentage(const struct wob_geom* geom, uint32_t* argb, struct wob_color bar_color, struct wob_color background_color, unsigned long percentage, unsigned long maximum) */
+/* { */
+/*   uint32_t argb_bar_color        = wob_color_to_argb(wob_color_premultiply_alpha(bar_color)); */
+/*   uint32_t argb_background_color = wob_color_to_argb(wob_color_premultiply_alpha(background_color)); */
 
-  size_t offset_border_padding = geom->border_offset + geom->border_size + geom->bar_padding;
-  size_t bar_width             = geom->width - 2 * offset_border_padding;
-  size_t bar_height            = geom->height - 2 * offset_border_padding;
-  size_t bar_colored_width     = (bar_width * percentage) / maximum;
+/*   size_t offset_border_padding = geom->border_offset + geom->border_size + geom->bar_padding; */
+/*   size_t bar_width             = geom->width - 2 * offset_border_padding; */
+/*   size_t bar_height            = geom->height - 2 * offset_border_padding; */
+/*   size_t bar_colored_width     = (bar_width * percentage) / maximum; */
 
-  // draw 1px horizontal line
-  uint32_t *start, *end, *pixel;
-  start = &argb[offset_border_padding * (geom->width + 1)];
-  end   = start + bar_colored_width;
-  for (pixel = start; pixel < end; ++pixel)
-  {
-    *pixel = argb_bar_color;
-  }
-  for (end = start + bar_width; pixel < end; ++pixel)
-  {
-    *pixel = argb_background_color;
-  }
+/*   // draw 1px horizontal line */
+/*   uint32_t *start, *end, *pixel; */
+/*   start = &argb[offset_border_padding * (geom->width + 1)]; */
+/*   end   = start + bar_colored_width; */
+/*   for (pixel = start; pixel < end; ++pixel) */
+/*   { */
+/*     *pixel = argb_bar_color; */
+/*   } */
+/*   for (end = start + bar_width; pixel < end; ++pixel) */
+/*   { */
+/*     *pixel = argb_background_color; */
+/*   } */
 
-  // copy it to make full percentage bar
-  uint32_t* source      = &argb[offset_border_padding * geom->width];
-  uint32_t* destination = source + geom->width;
-  end                   = &argb[geom->width * (bar_height + offset_border_padding)];
-  while (destination != end)
-  {
-    memcpy(destination, source, MIN(destination - source, end - destination) * sizeof(uint32_t));
-    destination += MIN(destination - source, end - destination);
-  }
-}
+/*   // copy it to make full percentage bar */
+/*   uint32_t* source      = &argb[offset_border_padding * geom->width]; */
+/*   uint32_t* destination = source + geom->width; */
+/*   end                   = &argb[geom->width * (bar_height + offset_border_padding)]; */
+/*   while (destination != end) */
+/*   { */
+/*     memcpy(destination, source, MIN(destination - source, end - destination) * sizeof(uint32_t)); */
+/*     destination += MIN(destination - source, end - destination); */
+/*   } */
+/* } */
 
 static char stdin_buffer[STDIN_BUFFER_LENGTH];
 
@@ -970,7 +1001,7 @@ int main(int argc, char** argv)
   text_init(); // DESTROY 1
 
   char* font_face = config_get("font_face");
-  char* font_path = fontconfig_new_path(font_face ? font_face : ""); // REL 4
+  font_path       = fontconfig_new_path(font_face ? font_face : ""); // REL 4
 
   //////
 
@@ -984,12 +1015,6 @@ int main(int argc, char** argv)
     return EXIT_FAILURE;
   }
   app.shmid = shmid;
-
-  uint32_t* argb = wob_shm_alloc(shmid, app.wob_geom->size);
-  if (argb == NULL)
-  {
-    return EXIT_FAILURE;
-  }
 
   wob_connect(&app);
   if (app.wl_shm == NULL || app.wl_compositor == NULL || app.wlr_layer_shell == NULL)
@@ -1010,8 +1035,8 @@ int main(int argc, char** argv)
   struct wob_colors effective_colors = colors;
 
   // Draw these at least once
-  wob_draw_background(app.wob_geom, argb, colors.background);
-  wob_draw_border(app.wob_geom, argb, colors.border);
+  // wob_draw_background(app.wob_geom, argb, colors.background);
+  // wob_draw_border(app.wob_geom, argb, colors.border);
 
   struct pollfd fds[2] = {
       {
@@ -1143,23 +1168,23 @@ int main(int argc, char** argv)
           wob_show(&app);
         }
 
-        bool redraw_background_and_border = false;
-        if (wob_color_to_argb(old_colors.background) != wob_color_to_argb(effective_colors.background))
-        {
-          redraw_background_and_border = true;
-        }
-        else if (wob_color_to_argb(old_colors.border) != wob_color_to_argb(effective_colors.border))
-        {
-          redraw_background_and_border = true;
-        }
+        /* bool redraw_background_and_border = false; */
+        /* if (wob_color_to_argb(old_colors.background) != wob_color_to_argb(effective_colors.background)) */
+        /* { */
+        /*   redraw_background_and_border = true; */
+        /* } */
+        /* else if (wob_color_to_argb(old_colors.border) != wob_color_to_argb(effective_colors.border)) */
+        /* { */
+        /*   redraw_background_and_border = true; */
+        /* } */
 
-        if (redraw_background_and_border)
-        {
-          wob_draw_background(app.wob_geom, argb, effective_colors.background);
-          wob_draw_border(app.wob_geom, argb, effective_colors.border);
-        }
+        /* if (redraw_background_and_border) */
+        /* { */
+        /*   wob_draw_background(app.wob_geom, argb, effective_colors.background); */
+        /*   wob_draw_border(app.wob_geom, argb, effective_colors.border); */
+        /* } */
 
-        wob_draw_percentage(app.wob_geom, argb, effective_colors.bar, effective_colors.background, percentage, maximum);
+        /* wob_draw_percentage(app.wob_geom, argb, effective_colors.bar, effective_colors.background, percentage, maximum); */
 
         wob_flush(&app);
         hidden = false;
