@@ -218,6 +218,8 @@ wob_surface_create(struct wob* app, struct wl_output* wl_output)
     int lay_hth = rows * (ws->height / ratio) + (rows + 1) * gap;
 
     bitmap = bm_new(lay_wth, lay_hth); // REL 5
+    // TODO set this from config
+    gfx_rect(bitmap, 0, 0, bitmap->w, bitmap->h, 0x00000077, 0);
 
     textstyle_t main_style = {
         .font       = font_path,

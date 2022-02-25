@@ -6,7 +6,7 @@ meta_code 133
 # secondary_code 23
 
 # distance between workspaces
-gap 25
+gap 20
 
 # columns
 columns 5
@@ -33,7 +33,7 @@ text_title_color #FFFFFFFF
 text_description_size 12
 
 # description text color
-text_description_color #AADDFFFF
+text_description_color #999999FF
 
 # workspace number text size
 text_workspace_size 20
@@ -48,10 +48,10 @@ text_workspace_xshift 11
 text_workspace_yshift -17
 
 # border color
-border_color #AADDFF6FF
+border_color #BCBCBCFF
 
 # background color
-background_color #000022FF
+background_color #222222FF
 
 # focused background color
-background_color_focused #222266FF
+background_color_focused #444444FF

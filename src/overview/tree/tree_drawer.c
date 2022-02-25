@@ -73,7 +73,8 @@ void tree_drawer_draw(bm_t*       bm,
     int cx = gap + wsi % cols * (wsw + gap);
     int cy = gap + wsi / cols * (wsh + gap);
 
-    gfx_rect(bm, cx, cy, wsw, wsh, 0x112255FF, 0);
+    // TODO from config
+    gfx_rect(bm, cx, cy, wsw, wsh, 0x434343FF, 0);
     gfx_rect(bm, cx + 1, cy + 1, wsw - 2, wsh - 2, 0x000000FF, 0);
   }
 
