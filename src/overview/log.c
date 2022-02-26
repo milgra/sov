@@ -1,4 +1,4 @@
-#define WOB_FILE "log.c"
+#define SOV_FILE "log.c"
 
 #define _POSIX_C_SOURCE 199506L
 
@@ -32,25 +32,25 @@
 
 #include "log.h"
 
-static wob_log_importance min_importance_to_log = WOB_LOG_WARN;
+static sov_log_importance min_importance_to_log = SOV_LOG_WARN;
 
 static bool use_colors = false;
 
 static const char* verbosity_names[] = {
-    "DEBUG",
-    "INFO",
-    "WARN",
-    "ERROR",
+"DEBUG",
+"INFO",
+"WARN",
+"ERROR",
 };
 
 static const char* verbosity_colors[] = {
-    COLOR_LIGHT_CYAN,
-    COLOR_GREEN,
-    COLOR_YELLOW,
-    COLOR_LIGHT_RED,
+COLOR_LIGHT_CYAN,
+COLOR_GREEN,
+COLOR_YELLOW,
+COLOR_LIGHT_RED,
 };
 
-void wob_log(const wob_log_importance importance, const char* file, const int line, const char* fmt, ...)
+void sov_log(const sov_log_importance importance, const char* file, const int line, const char* fmt, ...)
 {
   if (importance < min_importance_to_log)
   {
@@ -70,17 +70,17 @@ void wob_log(const wob_log_importance importance, const char* file, const int li
   if (use_colors)
   {
     fprintf(
-        stderr,
-        "%jd.%06ld %s%-5s%s %s%s:%d:%s ",
-        (intmax_t)ts.tv_sec,
-        ts.tv_nsec / 1000,
-        verbosity_colors[importance],
-        verbosity_names[importance],
-        COLOR_RESET,
-        COLOR_LIGHT_GRAY,
-        file,
-        line,
-        COLOR_RESET);
+    stderr,
+    "%jd.%06ld %s%-5s%s %s%s:%d:%s ",
+    (intmax_t)ts.tv_sec,
+    ts.tv_nsec / 1000,
+    verbosity_colors[importance],
+    verbosity_names[importance],
+    COLOR_RESET,
+    COLOR_LIGHT_GRAY,
+    file,
+    line,
+    COLOR_RESET);
   }
   else
   {
@@ -94,26 +94,26 @@ void wob_log(const wob_log_importance importance, const char* file, const int li
   fprintf(stderr, "\n");
 }
 
-void wob_log_set_level(const wob_log_importance importance)
+void sov_log_set_level(const sov_log_importance importance)
 {
   min_importance_to_log = importance;
 }
 
-void wob_log_use_colors(const bool colors)
+void sov_log_use_colors(const bool colors)
 {
   use_colors = colors;
 }
 
-void wob_log_inc_verbosity(void)
+void sov_log_inc_verbosity(void)
 {
-  if (min_importance_to_log != WOB_LOG_DEBUG)
+  if (min_importance_to_log != SOV_LOG_DEBUG)
   {
     min_importance_to_log -= 1;
-    wob_log_debug("Set log level to %s", verbosity_names[min_importance_to_log]);
+    sov_log_debug("Set log level to %s", verbosity_names[min_importance_to_log]);
   }
 }
 
-int wob_log_get_level()
+int sov_log_get_level()
 {
   return min_importance_to_log;
 }

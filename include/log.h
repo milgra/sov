@@ -1,34 +1,34 @@
-#ifndef _WOB_LOG_H
-#define _WOB_LOG_H
+#ifndef _SOV_LOG_H
+#define _SOV_LOG_H
 
 #include <stdbool.h>
 
 typedef enum
 {
-  WOB_LOG_DEBUG = 0,
-  WOB_LOG_INFO  = 1,
-  WOB_LOG_WARN  = 2,
-  WOB_LOG_ERROR = 3,
-} wob_log_importance;
+  SOV_LOG_DEBUG = 0,
+  SOV_LOG_INFO  = 1,
+  SOV_LOG_WARN  = 2,
+  SOV_LOG_ERROR = 3,
+} sov_log_importance;
 
-void wob_log(wob_log_importance importance, const char* file, int line, const char* fmt, ...);
+void sov_log(sov_log_importance importance, const char* file, int line, const char* fmt, ...);
 
-void wob_log_set_level(wob_log_importance importance);
+void sov_log_set_level(sov_log_importance importance);
 
-int wob_log_get_level();
+int sov_log_get_level();
 
-void wob_log_inc_verbosity(void);
+void sov_log_inc_verbosity(void);
 
-void wob_log_use_colors(bool use_colors);
+void sov_log_use_colors(bool use_colors);
 
-#define wob_log_debug(...) wob_log(WOB_LOG_DEBUG, WOB_FILE, __LINE__, __VA_ARGS__)
-#define wob_log_info(...) wob_log(WOB_LOG_INFO, WOB_FILE, __LINE__, __VA_ARGS__)
-#define wob_log_warn(...) wob_log(WOB_LOG_WARN, WOB_FILE, __LINE__, __VA_ARGS__)
-#define wob_log_error(...) wob_log(WOB_LOG_ERROR, WOB_FILE, __LINE__, __VA_ARGS__)
+#define sov_log_debug(...) sov_log(SOV_LOG_DEBUG, SOV_FILE, __LINE__, __VA_ARGS__)
+#define sov_log_info(...) sov_log(SOV_LOG_INFO, SOV_FILE, __LINE__, __VA_ARGS__)
+#define sov_log_warn(...) sov_log(SOV_LOG_WARN, SOV_FILE, __LINE__, __VA_ARGS__)
+#define sov_log_error(...) sov_log(SOV_LOG_ERROR, SOV_FILE, __LINE__, __VA_ARGS__)
 
-#define wob_log_level_debug() wob_log_set_level(WOB_LOG_DEBUG);
-#define wob_log_level_info() wob_log_set_level(WOB_LOG_INFO);
-#define wob_log_level_warn() wob_log_set_level(WOB_LOG_WARN);
-#define wob_log_level_error() wob_log_set_level(WOB_LOG_ERROR);
+#define sov_log_level_debug() sov_log_set_level(SOV_LOG_DEBUG);
+#define sov_log_level_info() sov_log_set_level(SOV_LOG_INFO);
+#define sov_log_level_warn() sov_log_set_level(SOV_LOG_WARN);
+#define sov_log_level_error() sov_log_set_level(SOV_LOG_ERROR);
 
 #endif

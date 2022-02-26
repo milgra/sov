@@ -1,8 +1,8 @@
-#ifndef _WOB_PLEDGE_H
-#define _WOB_PLEDGE_H
+#ifndef _SOV_PLEDGE_H
+#define _SOV_PLEDGE_H
 
 #include <stdbool.h>
 
-bool wob_pledge(void);
+bool sov_pledge(void);
 
 #endif

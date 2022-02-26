@@ -1,5 +1,5 @@
 project(
-  'wob',
+  'sov',
   'c',
   version: '0.12',
   license: 'ISC',
@@ -16,8 +16,8 @@ freetype = dependency('freetype2')
 math = cc.find_library('m')
 rt = cc.find_library('rt')
 
-wob_version = '"@0@"'.format(meson.project_version())
-add_project_arguments('-DWOB_VERSION=@0@'.format(wob_version), language: 'c')
+sov_version = '"@0@"'.format(meson.project_version())
+add_project_arguments('-DSOV_VERSION=@0@'.format(sov_version), language: 'c')
 
 wayland_scanner_code = generator(
   wayland_scanner,
@@ -58,7 +58,7 @@ foreach p : client_protocols
   set_variable(name, dep)
 endforeach
 
-wob_inc = include_directories('include',
+sov_inc = include_directories('include',
 			      'src/overview/config',
 			      'src/overview/tree',
 			      'src/modules/json',
@@ -66,7 +66,7 @@ wob_inc = include_directories('include',
 			      'src/modules/zen_core',
 			      'src/modules/zen_text')
 
-wob_sources = ['src/overview/overview.c',
+sov_sources = ['src/overview/overview.c',
 	       'src/overview/buffer.c',
 	       'src/overview/log.c',
 
@@ -90,20 +90,20 @@ wob_sources = ['src/overview/overview.c',
 	       'src/modules/zen_core/zc_wrapper.c',
 	       'src/modules/zen_text/text.c'
 ]
-wob_dependencies = [xdg_output_unstable_v1, wayland_client, wlr_layer_shell_unstable_v1, xdg_shell, rt, freetype, math]
+sov_dependencies = [xdg_output_unstable_v1, wayland_client, wlr_layer_shell_unstable_v1, xdg_shell, rt, freetype, math]
 
 executable(
-  'wob',
-  wob_sources,
-  include_directories: [wob_inc],
-  dependencies: wob_dependencies,
+  'sov',
+  sov_sources,
+  include_directories: [sov_inc],
+  dependencies: sov_dependencies,
   install: true
 )
 
 test('parse-input', executable(
   'test-parse-input',
-  ['tests/wob_parse_input.c'],
-  include_directories: [wob_inc]
+  ['tests/sov_parse_input.c'],
+  include_directories: [sov_inc]
 ))
 
 scdoc = dependency('scdoc', version: '>=1.9.2', native: true, required: get_option('man-pages'))
@@ -111,7 +111,7 @@ if scdoc.found()
   scdoc = find_program(scdoc.get_pkgconfig_variable('scdoc'), native: true)
   sh = find_program('sh', native: true)
   mandir = get_option('mandir')
-  scdfile = 'wob.1.scd'
+  scdfile = 'sov.1.scd'
   manfile = scdfile.split('.scd')[0]
 
   custom_target(
