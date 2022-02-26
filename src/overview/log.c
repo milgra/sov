@@ -74,17 +74,17 @@ static sov_log_importance min_importance_to_log = SOV_LOG_WARN;
 static bool use_colors = false;
 
 static const char* verbosity_names[] = {
-"DEBUG",
-"INFO",
-"WARN",
-"ERROR",
+    "DEBUG",
+    "INFO",
+    "WARN",
+    "ERROR",
 };
 
 static const char* verbosity_colors[] = {
-COLOR_LIGHT_CYAN,
-COLOR_GREEN,
-COLOR_YELLOW,
-COLOR_LIGHT_RED,
+    COLOR_LIGHT_CYAN,
+    COLOR_GREEN,
+    COLOR_YELLOW,
+    COLOR_LIGHT_RED,
 };
 
 void sov_log(const sov_log_importance importance, const char* file, const int line, const char* fmt, ...)
@@ -107,17 +107,17 @@ void sov_log(const sov_log_importance importance, const char* file, const int li
   if (use_colors)
   {
     fprintf(
-    stderr,
-    "%jd.%06ld %s%-5s%s %s%s:%d:%s ",
-    (intmax_t)ts.tv_sec,
-    ts.tv_nsec / 1000,
-    verbosity_colors[importance],
-    verbosity_names[importance],
-    COLOR_RESET,
-    COLOR_LIGHT_GRAY,
-    file,
-    line,
-    COLOR_RESET);
+        stderr,
+        "%jd.%06ld %s%-5s%s %s%s:%d:%s ",
+        (intmax_t)ts.tv_sec,
+        ts.tv_nsec / 1000,
+        verbosity_colors[importance],
+        verbosity_names[importance],
+        COLOR_RESET,
+        COLOR_LIGHT_GRAY,
+        file,
+        line,
+        COLOR_RESET);
   }
   else
   {
