@@ -58,8 +58,7 @@ foreach p : client_protocols
   set_variable(name, dep)
 endforeach
 
-sov_inc = include_directories('include',
-			      'src/overview/config',
+sov_inc = include_directories('src/overview/config',
 			      'src/overview/tree',
 			      'src/modules/json',
 			      'src/modules/storage',

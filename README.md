@@ -133,3 +133,27 @@ systemctl enable --now --user wob.socket
 ## License
 
 ISC, see [LICENSE](/LICENSE).
+
+
+
+bindsym --no-repeat $mod+1 workspace number 1; exec "echo '1' > /tmp/sway-overview"
+bindsym --no-repeat $mod+2 workspace number 2; exec "echo '1' > /tmp/sway-overview"
+bindsym --no-repeat $mod+3 workspace number 3; exec "echo '1' > /tmp/sway-overview"
+bindsym --no-repeat $mod+4 workspace number 4; exec "echo '1' > /tmp/sway-overview"
+bindsym --no-repeat $mod+5 workspace number 5; exec "echo '1' > /tmp/sway-overview"
+bindsym --no-repeat $mod+6 workspace number 6; exec "echo '1' > /tmp/sway-overview"
+bindsym --no-repeat $mod+7 workspace number 7; exec "echo '1' > /tmp/sway-overview"
+bindsym --no-repeat $mod+8 workspace number 8; exec "echo '1' > /tmp/sway-overview"
+bindsym --no-repeat $mod+9 workspace number 9; exec "echo '1' > /tmp/sway-overview"
+bindsym --no-repeat $mod+0 workspace number 10; exec "echo '1' > /tmp/sway-overview"
+
+bindsym --release $mod+1 exec "echo '0' > /tmp/sway-overview"
+bindsym --release $mod+2 exec "echo '0' > /tmp/sway-overview"
+bindsym --release $mod+3 exec "echo '0' > /tmp/sway-overview"
+bindsym --release $mod+4 exec "echo '0' > /tmp/sway-overview"
+bindsym --release $mod+5 exec "echo '0' > /tmp/sway-overview"
+bindsym --release $mod+6 exec "echo '0' > /tmp/sway-overview"
+bindsym --release $mod+7 exec "echo '0' > /tmp/sway-overview"
+bindsym --release $mod+8 exec "echo '0' > /tmp/sway-overview"
+bindsym --release $mod+9 exec "echo '0' > /tmp/sway-overview"
+bindsym --release $mod+0 exec "echo '0' > /tmp/sway-overview"

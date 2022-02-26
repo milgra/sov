@@ -1,3 +1,16 @@
+#ifndef buffer_h
+#define buffer_h
+
+#include <stddef.h>
+
+int sov_shm_create();
+
+void* sov_shm_alloc(int shmid, size_t size);
+
+#endif
+
+#if __INCLUDE_LEVEL__ == 0
+
 #define SOV_FILE "buffer.c"
 
 #define _POSIX_C_SOURCE 200112L
@@ -10,8 +23,7 @@
 #include <sys/mman.h>
 #include <unistd.h>
 
-#include "buffer.h"
-#include "log.h"
+#include "log.c"
 
 int sov_shm_create()
 {
@@ -62,3 +74,5 @@ void* sov_shm_alloc(const int shmid, const size_t size)
 
   return buffer;
 }
+
+#endif

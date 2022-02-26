@@ -32,12 +32,11 @@
 #include <sys/un.h>
 #include <unistd.h>
 
-#include "buffer.h"
-#include "color.h"
+#include "buffer.c"
 #include "config.c"
 #include "fontconfig.c"
 #include "kvlines.c"
-#include "log.h"
+#include "log.c"
 #include "text.c"
 #include "tree_drawer.c"
 #include "tree_reader.c"
@@ -86,13 +85,13 @@ struct sov_output
   char*                  name;
   struct wl_list         link;
   struct wl_output*      wl_output;
-  struct wob*            app;
+  struct sov*            app;
   struct sov_surface*    sov_surface;
   struct zxdg_output_v1* xdg_output;
   uint32_t               wl_name;
 };
 
-struct wob
+struct sov
 {
   uint8_t*                       argb;
   int                            shmid;
@@ -156,9 +155,8 @@ void read_tree(vec_t* workspaces)
   REL(tree_json); // REL 1
 }
 
-void sov_flush(struct wob* app)
+void sov_flush(struct sov* app)
 {
-
   if (wl_list_empty(&(app->sov_outputs)))
   {
     wl_surface_attach(app->fallback_sov_surface->wl_surface, app->wl_buffer, 0, 0);
@@ -187,7 +185,7 @@ void sov_flush(struct wob* app)
 }
 
 struct sov_surface*
-sov_surface_create(struct wob* app, struct wl_output* wl_output)
+sov_surface_create(struct sov* app, struct wl_output* wl_output)
 {
   vec_t* workspaces = VNEW(); // REL 6
   bm_t*  bitmap     = NULL;
@@ -324,7 +322,7 @@ sov_surface_create(struct wob* app, struct wl_output* wl_output)
     exit(EXIT_FAILURE);
   }
 
-  sov_surface->wlr_layer_surface = zwlr_layer_shell_v1_get_layer_surface(app->wlr_layer_shell, sov_surface->wl_surface, wl_output, ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY, "wob");
+  sov_surface->wlr_layer_surface = zwlr_layer_shell_v1_get_layer_surface(app->wlr_layer_shell, sov_surface->wl_surface, wl_output, ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY, "sov");
   if (sov_surface->wlr_layer_surface == NULL)
   {
     sov_log_error("wlr_layer_shell_v1_get_layer_surface failed");
@@ -372,7 +370,7 @@ void sov_output_destroy(struct sov_output* output)
 void xdg_output_handle_done(void* data, struct zxdg_output_v1* xdg_output)
 {
   struct sov_output* output = (struct sov_output*)data;
-  struct wob*        app    = output->app;
+  struct sov*        app    = output->app;
 
   struct sov_output_config *output_config, *tmp;
   wl_list_for_each_safe(output_config, tmp, &app->output_configs, link)
@@ -401,7 +399,7 @@ void handle_global(void* data, struct wl_registry* registry, uint32_t name, cons
   .done             = xdg_output_handle_done,
   };
 
-  struct wob* app = (struct wob*)data;
+  struct sov* app = (struct sov*)data;
 
   if (strcmp(interface, wl_shm_interface.name) == 0)
   {
@@ -442,7 +440,7 @@ void handle_global(void* data, struct wl_registry* registry, uint32_t name, cons
 
 void handle_global_remove(void* data, struct wl_registry* registry, uint32_t name)
 {
-  struct wob*        app = (struct wob*)data;
+  struct sov*        app = (struct sov*)data;
   struct sov_output *output, *tmp;
   wl_list_for_each_safe(output, tmp, &(app->sov_outputs), link)
   {
@@ -454,7 +452,7 @@ void handle_global_remove(void* data, struct wl_registry* registry, uint32_t nam
   }
 }
 
-void sov_hide(struct wob* app)
+void sov_hide(struct sov* app)
 {
   if (wl_list_empty(&(app->sov_outputs)))
   {
@@ -482,7 +480,7 @@ void sov_hide(struct wob* app)
   }
 }
 
-void sov_show(struct wob* app)
+void sov_show(struct sov* app)
 {
   if (wl_list_empty(&(app->sov_outputs)))
   {
@@ -506,7 +504,7 @@ void sov_show(struct wob* app)
   }
 }
 
-void sov_destroy(struct wob* app)
+void sov_destroy(struct sov* app)
 {
   struct sov_output *output, *output_tmp;
   wl_list_for_each_safe(output, output_tmp, &app->sov_outputs, link)
@@ -532,7 +530,7 @@ void sov_destroy(struct wob* app)
   wl_display_disconnect(app->wl_display);
 }
 
-void sov_connect(struct wob* app)
+void sov_connect(struct sov* app)
 {
   const static struct wl_registry_listener wl_registry_listener = {
   .global        = handle_global,
@@ -593,12 +591,12 @@ int main(int argc, char** argv)
   sov_log_level_info();
 
   const char* usage =
-  "Usage: wob [options]\n"
+  "Usage: sov [options]\n"
   "\n"
   "  -h, --help                          Show help message and quit.\n"
   "  --version                           Show the version number and quit.\n"
   "  -v                                  Increase verbosity of messages, defaults to errors and warnings only\n"
-  "  -t, --timeout <ms>                  Hide wob after <ms> milliseconds, defaults to " STR(SOV_DEFAULT_TIMEOUT)
+  "  -t, --timeout <ms>                  Hide sov after <ms> milliseconds, defaults to " STR(SOV_DEFAULT_TIMEOUT)
   ".\n"
   "  -m, --max <%>                       Define the maximum percentage, defaults to " STR(SOV_DEFAULT_MAXIMUM)
   ". \n"
@@ -627,7 +625,7 @@ int main(int argc, char** argv)
   "  --overflow-background-color <#rgba> Define the background color when overflowed\n"
   "\n";
 
-  struct wob app = {0};
+  struct sov app = {0};
   wl_list_init(&(app.output_configs));
 
   char*           cfg_path     = NULL;
@@ -795,7 +793,7 @@ int main(int argc, char** argv)
       wl_list_insert(&(app.output_configs), &(output_config->link));
       break;
     case 4:
-      printf("wob version: " SOV_VERSION "\n");
+      printf("sov version: " SOV_VERSION "\n");
       return EXIT_SUCCESS;
     case 'h':
       printf("%s", usage);
@@ -908,6 +906,7 @@ int main(int argc, char** argv)
       if (hidden && showup)
       {
         sov_show(&app);
+        showup = false;
         hidden = false;
         sov_flush(&app);
       }
