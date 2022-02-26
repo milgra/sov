@@ -66,9 +66,9 @@ wob_inc = include_directories('include',
 			      'src/modules/zen_core',
 			      'src/modules/zen_text')
 
-wob_sources = ['src/main.c',
-	       'src/buffer.c',
-	       'src/log.c',
+wob_sources = ['src/overview/overview.c',
+	       'src/overview/buffer.c',
+	       'src/overview/log.c',
 
 	       'src/overview/config/config.c',
 	       'src/overview/config/fontconfig.c',
