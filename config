@@ -55,3 +55,12 @@ background_color #222222FF
 
 # focused background color
 background_color_focused #444444FF
+
+# window color
+window_color #00000077
+
+# empty thumb color
+empty_color #000000FF
+
+# empty thumb border
+empty_frame_color #434343FF

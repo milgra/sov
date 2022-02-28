@@ -1,9 +1,5 @@
 #define SOV_FILE "main.c"
 
-#define SOV_DEFAULT_WIDTH 400
-#define SOV_DEFAULT_HEIGHT 50
-#define SOV_DEFAULT_BORDER_OFFSET 0
-#define SOV_DEFAULT_BORDER_SIZE 0
 #define SOV_DEFAULT_BAR_PADDING 0
 #define SOV_DEFAULT_ANCHOR 0
 #define SOV_DEFAULT_MARGIN 0
@@ -55,15 +51,11 @@
 #define GET_WORKSPACES_CMD "swaymsg -t get_workspaces"
 #define GET_TREE_CMD "swaymsg -t get_tree"
 
+char* font_path;
+
 struct sov_geom
 {
-    unsigned long width;
-    unsigned long height;
-    unsigned long border_offset;
-    unsigned long border_size;
     unsigned long bar_padding;
-    unsigned long stride;
-    unsigned long size;
     unsigned long anchor;
     unsigned long margin;
 };
@@ -112,8 +104,6 @@ void noop()
 { /* intentionally left blank */
 }
 
-void layer_surface_configure(void* data, struct zwlr_layer_surface_v1* surface, uint32_t serial, uint32_t w, uint32_t h) { zwlr_layer_surface_v1_ack_configure(surface, serial); }
-
 void xdg_output_handle_name(void* data, struct zxdg_output_v1* xdg_output, const char* name)
 {
     sov_log_info("Detected output %s", name);
@@ -126,9 +116,7 @@ void xdg_output_handle_name(void* data, struct zxdg_output_v1* xdg_output, const
     }
 }
 
-char* font_path;
-
-void read_tree(vec_t* workspaces)
+void sov_read_tree(vec_t* workspaces)
 {
     char  buff[100];
     char* ws_json   = NULL; // REL 0
@@ -151,138 +139,13 @@ void read_tree(vec_t* workspaces)
     REL(tree_json); // REL 1
 }
 
-void sov_flush(struct sov* app)
+void layer_surface_configure(void* data, struct zwlr_layer_surface_v1* surface, uint32_t serial, uint32_t w, uint32_t h)
 {
-    if (wl_list_empty(&(app->sov_outputs)))
-    {
-	wl_surface_attach(app->fallback_sov_surface->wl_surface, app->wl_buffer, 0, 0);
-	wl_surface_damage(app->fallback_sov_surface->wl_surface, 0, 0, app->sov_geom->width, app->sov_geom->height);
-	wl_surface_commit(app->fallback_sov_surface->wl_surface);
-    }
-    else
-    {
-	struct sov_output *output, *tmp;
-	wl_list_for_each_safe(output, tmp, &(app->sov_outputs), link)
-	{
-	    wl_surface_attach(output->sov_surface->wl_surface, app->wl_buffer, 0, 0);
-	    wl_surface_damage(output->sov_surface->wl_surface, 0, 0, app->sov_geom->width, app->sov_geom->height);
-	    wl_surface_commit(output->sov_surface->wl_surface);
-	}
-    }
-
-    wl_buffer_destroy(app->wl_buffer);
-    app->wl_buffer = NULL;
-
-    if (wl_display_dispatch(app->wl_display) == -1)
-    {
-	sov_log_error("wl_display_dispatch failed");
-	exit(EXIT_FAILURE);
-    }
+    zwlr_layer_surface_v1_ack_configure(surface, serial);
 }
 
-struct sov_surface* sov_surface_create(struct sov* app, struct wl_output* wl_output)
+struct sov_surface* sov_surface_create(struct sov* app, struct wl_output* wl_output, unsigned long width, unsigned long height, unsigned long margin, unsigned long anchor)
 {
-    vec_t* workspaces = VNEW(); // REL 6
-    bm_t*  bitmap     = NULL;
-
-    read_tree(workspaces);
-
-    sway_workspace_t* ws  = workspaces->data[0];
-    sway_workspace_t* wsl = workspaces->data[workspaces->length - 1];
-
-    if (ws->width > 0 && ws->height > 0)
-    {
-	int gap   = config_get_int("gap");
-	int cols  = config_get_int("columns");
-	int rows  = (int) ceilf((float) wsl->number / cols);
-	int ratio = config_get_int("ratio");
-
-	int lay_wth = cols * (ws->width / ratio) + (cols + 1) * gap;
-	int lay_hth = rows * (ws->height / ratio) + (rows + 1) * gap;
-
-	bitmap = bm_new(lay_wth, lay_hth); // REL 5
-	// TODO set this from config
-	gfx_rect(bitmap, 0, 0, bitmap->w, bitmap->h, 0x00000077, 0);
-
-	textstyle_t main_style = {
-	    .font       = font_path,
-	    .margin     = config_get_int("text_margin_size"),
-	    .margin_top = config_get_int("text_margin_top_size"),
-	    .align      = TA_LEFT,
-	    .valign     = VA_TOP,
-	    .size       = config_get_int("text_title_size"),
-	    .textcolor  = cstr_color_from_cstring(config_get("text_title_color")),
-	    .backcolor  = 0,
-	    .multiline  = 0,
-	};
-
-	textstyle_t sub_style = {
-	    .font        = font_path,
-	    .margin      = config_get_int("text_margin_size"),
-	    .margin_top  = config_get_int("text_margin_top_size") + config_get_int("text_title_size"),
-	    .align       = TA_LEFT,
-	    .valign      = VA_TOP,
-	    .size        = config_get_int("text_description_size"),
-	    .textcolor   = cstr_color_from_cstring(config_get("text_description_color")),
-	    .backcolor   = 0,
-	    .line_height = config_get_int("text_description_size"),
-	    .multiline   = 1,
-	};
-
-	textstyle_t wsnum_style = {
-	    .font      = font_path,
-	    .margin    = config_get_int("text_margin_size"),
-	    .align     = TA_RIGHT,
-	    .valign    = VA_TOP,
-	    .size      = config_get_int("text_workspace_size"),
-	    .textcolor = cstr_color_from_cstring(config_get("text_workspace_color")),
-	    .backcolor = 0x00002200,
-	};
-
-	tree_drawer_draw(
-	    bitmap, workspaces, gap, cols, ratio, main_style, sub_style, wsnum_style, cstr_color_from_cstring(config_get("background_color")),
-	    cstr_color_from_cstring(config_get("background_color_focused")), cstr_color_from_cstring(config_get("border_color")), config_get_int("text_workspace_xshift"),
-	    config_get_int("text_workspace_yshift"));
-
-	app->sov_geom->width  = bitmap->w;
-	app->sov_geom->height = bitmap->h;
-	app->sov_geom->size   = bitmap->w * bitmap->h * 4;
-	app->sov_geom->stride = bitmap->w * 4;
-
-	if (app->wl_buffer == NULL)
-	{
-	    struct wl_shm_pool* pool = wl_shm_create_pool(app->wl_shm, app->shmid, app->sov_geom->size);
-	    if (pool == NULL)
-	    {
-		sov_log_error("wl_shm_create_pool failed");
-		exit(EXIT_FAILURE);
-	    }
-
-	    app->wl_buffer = wl_shm_pool_create_buffer(pool, 0, app->sov_geom->width, app->sov_geom->height, app->sov_geom->stride, WL_SHM_FORMAT_ARGB8888);
-	    wl_shm_pool_destroy(pool);
-	    if (app->wl_buffer == NULL)
-	    {
-		sov_log_error("wl_shm_pool_create_buffer failed");
-		exit(EXIT_FAILURE);
-	    }
-	}
-
-	if (app->argb == NULL) { app->argb = sov_shm_alloc(app->shmid, app->sov_geom->size); }
-
-	if (app->argb == NULL) { return EXIT_FAILURE; }
-
-	// memcpy((uint8_t*)app->argb, bitmap->data, bitmap->size);
-	// we have to do this until RGBA8888 is working for buffer format
-
-	for (int i = 0; i < bitmap->size; i += 4)
-	{
-	    app->argb[i]     = bitmap->data[i + 2];
-	    app->argb[i + 1] = bitmap->data[i + 1];
-	    app->argb[i + 2] = bitmap->data[i];
-	    app->argb[i + 3] = bitmap->data[i + 3];
-	}
-    }
-
     const static struct zwlr_layer_surface_v1_listener zwlr_layer_surface_listener = {
 	.configure = layer_surface_configure,
 	.closed    = noop,
@@ -309,9 +172,9 @@ struct sov_surface* sov_surface_create(struct sov* app, struct wl_output* wl_out
 	exit(EXIT_FAILURE);
     }
 
-    zwlr_layer_surface_v1_set_size(sov_surface->wlr_layer_surface, app->sov_geom->width, app->sov_geom->height);
-    zwlr_layer_surface_v1_set_anchor(sov_surface->wlr_layer_surface, app->sov_geom->anchor);
-    zwlr_layer_surface_v1_set_margin(sov_surface->wlr_layer_surface, app->sov_geom->margin, app->sov_geom->margin, app->sov_geom->margin, app->sov_geom->margin);
+    zwlr_layer_surface_v1_set_size(sov_surface->wlr_layer_surface, width, height);
+    zwlr_layer_surface_v1_set_anchor(sov_surface->wlr_layer_surface, anchor);
+    zwlr_layer_surface_v1_set_margin(sov_surface->wlr_layer_surface, margin, margin, margin, margin);
     zwlr_layer_surface_v1_add_listener(sov_surface->wlr_layer_surface, &zwlr_layer_surface_listener, app);
     wl_surface_commit(sov_surface->wl_surface);
 
@@ -456,10 +319,125 @@ void sov_hide(struct sov* app)
 
 void sov_show(struct sov* app)
 {
+    // create bitmap and buffer
+
+    vec_t* workspaces = VNEW(); // REL 6
+    bm_t*  bitmap     = NULL;
+
+    sov_read_tree(workspaces);
+
+    sway_workspace_t* ws  = workspaces->data[0];
+    sway_workspace_t* wsl = workspaces->data[workspaces->length - 1];
+
+    if (ws->width > 0 && ws->height > 0)
+    {
+	int gap   = config_get_int("gap");
+	int cols  = config_get_int("columns");
+	int rows  = (int) ceilf((float) wsl->number / cols);
+	int ratio = config_get_int("ratio");
+
+	int lay_wth = cols * (ws->width / ratio) + (cols + 1) * gap;
+	int lay_hth = rows * (ws->height / ratio) + (rows + 1) * gap;
+
+	bitmap = bm_new(lay_wth, lay_hth); // REL 5
+
+	gfx_rect(bitmap, 0, 0, bitmap->w, bitmap->h, cstr_color_from_cstring(config_get("window_color")), 0);
+
+	textstyle_t main_style = {
+	    .font       = font_path,
+	    .margin     = config_get_int("text_margin_size"),
+	    .margin_top = config_get_int("text_margin_top_size"),
+	    .align      = TA_LEFT,
+	    .valign     = VA_TOP,
+	    .size       = config_get_int("text_title_size"),
+	    .textcolor  = cstr_color_from_cstring(config_get("text_title_color")),
+	    .backcolor  = 0,
+	    .multiline  = 0,
+	};
+
+	textstyle_t sub_style = {
+	    .font        = font_path,
+	    .margin      = config_get_int("text_margin_size"),
+	    .margin_top  = config_get_int("text_margin_top_size") + config_get_int("text_title_size"),
+	    .align       = TA_LEFT,
+	    .valign      = VA_TOP,
+	    .size        = config_get_int("text_description_size"),
+	    .textcolor   = cstr_color_from_cstring(config_get("text_description_color")),
+	    .backcolor   = 0,
+	    .line_height = config_get_int("text_description_size"),
+	    .multiline   = 1,
+	};
+
+	textstyle_t wsnum_style = {
+	    .font      = font_path,
+	    .margin    = config_get_int("text_margin_size"),
+	    .align     = TA_RIGHT,
+	    .valign    = VA_TOP,
+	    .size      = config_get_int("text_workspace_size"),
+	    .textcolor = cstr_color_from_cstring(config_get("text_workspace_color")),
+	    .backcolor = 0x00002200,
+	};
+
+	tree_drawer_draw(
+	    bitmap,
+	    workspaces,
+	    gap,
+	    cols,
+	    ratio,
+	    main_style,
+	    sub_style,
+	    wsnum_style,
+	    cstr_color_from_cstring(config_get("background_color")),
+	    cstr_color_from_cstring(config_get("background_color_focused")),
+	    cstr_color_from_cstring(config_get("border_color")),
+	    cstr_color_from_cstring(config_get("empty_color")),
+	    cstr_color_from_cstring(config_get("empty_frame_color")),
+	    config_get_int("text_workspace_xshift"),
+	    config_get_int("text_workspace_yshift"));
+
+	uint32_t size   = bitmap->w * bitmap->h * 4;
+	uint32_t stride = bitmap->w * 4;
+
+	if (app->wl_buffer == NULL)
+	{
+	    struct wl_shm_pool* pool = wl_shm_create_pool(app->wl_shm, app->shmid, size);
+	    if (pool == NULL)
+	    {
+		sov_log_error("wl_shm_create_pool failed");
+		exit(EXIT_FAILURE);
+	    }
+
+	    app->wl_buffer = wl_shm_pool_create_buffer(pool, 0, bitmap->w, bitmap->h, stride, WL_SHM_FORMAT_ARGB8888);
+	    wl_shm_pool_destroy(pool);
+	    if (app->wl_buffer == NULL)
+	    {
+		sov_log_error("wl_shm_pool_create_buffer failed");
+		exit(EXIT_FAILURE);
+	    }
+	}
+
+	if (app->argb == NULL) { app->argb = sov_shm_alloc(app->shmid, size); }
+
+	if (app->argb == NULL) { return EXIT_FAILURE; }
+
+	// memcpy((uint8_t*)app->argb, bitmap->data, bitmap->size);
+	// we have to do this until RGBA8888 is working for buffer format
+
+	for (int i = 0; i < bitmap->size; i += 4)
+	{
+	    app->argb[i]     = bitmap->data[i + 2];
+	    app->argb[i + 1] = bitmap->data[i + 1];
+	    app->argb[i + 2] = bitmap->data[i];
+	    app->argb[i + 3] = bitmap->data[i + 3];
+	}
+    }
+
+    // create surface
+
     if (wl_list_empty(&(app->sov_outputs)))
     {
 	sov_log_info("No output matching configuration found, fallbacking to focused output");
-	app->fallback_sov_surface = sov_surface_create(app, NULL);
+	app->fallback_sov_surface = sov_surface_create(app, NULL, bitmap->w, bitmap->h, app->sov_geom->margin, app->sov_geom->anchor);
     }
     else
     {
@@ -467,13 +445,41 @@ void sov_show(struct sov* app)
 	wl_list_for_each_safe(output, tmp, &app->sov_outputs, link)
 	{
 	    sov_log_info("Showing bar on output %s", output->name);
-	    output->sov_surface = sov_surface_create(app, output->wl_output);
+	    output->sov_surface = sov_surface_create(app, output->wl_output, bitmap->w, bitmap->h, app->sov_geom->margin, app->sov_geom->anchor);
 	}
     }
 
     if (wl_display_roundtrip(app->wl_display) == -1)
     {
 	sov_log_error("wl_display_roundtrip failed");
+	exit(EXIT_FAILURE);
+    }
+
+    // flush
+
+    if (wl_list_empty(&(app->sov_outputs)))
+    {
+	wl_surface_attach(app->fallback_sov_surface->wl_surface, app->wl_buffer, 0, 0);
+	wl_surface_damage(app->fallback_sov_surface->wl_surface, 0, 0, bitmap->w, bitmap->h);
+	wl_surface_commit(app->fallback_sov_surface->wl_surface);
+    }
+    else
+    {
+	struct sov_output *output, *tmp;
+	wl_list_for_each_safe(output, tmp, &(app->sov_outputs), link)
+	{
+	    wl_surface_attach(output->sov_surface->wl_surface, app->wl_buffer, 0, 0);
+	    wl_surface_damage(output->sov_surface->wl_surface, 0, 0, bitmap->w, bitmap->h);
+	    wl_surface_commit(output->sov_surface->wl_surface);
+	}
+    }
+
+    wl_buffer_destroy(app->wl_buffer);
+    app->wl_buffer = NULL;
+
+    if (wl_display_dispatch(app->wl_display) == -1)
+    {
+	sov_log_error("wl_display_dispatch failed");
 	exit(EXIT_FAILURE);
     }
 }
@@ -563,10 +569,6 @@ int main(int argc, char** argv)
       "  -v                                  Increase verbosity of messages, defaults to errors and warnings only\n"
       "  -t, --timeout <ms>                  Hide sov after <ms> milliseconds, defaults to " STR(SOV_DEFAULT_TIMEOUT) ".\n"
       "  -m, --max <%>                       Define the maximum percentage, defaults to " STR(SOV_DEFAULT_MAXIMUM) ". \n"
-      "  -W, --width <px>                    Define bar width in pixels, defaults to " STR(SOV_DEFAULT_WIDTH) ". \n"
-      "  -H, --height <px>                   Define bar height in pixels, defaults to " STR(SOV_DEFAULT_HEIGHT) ". \n"
-      "  -o, --offset <px>                   Define border offset in pixels, defaults to " STR(SOV_DEFAULT_BORDER_OFFSET) ". \n"
-      "  -b, --border <px>                   Define border size in pixels, defaults to " STR(SOV_DEFAULT_BORDER_SIZE) ". \n"
       "  -p, --padding <px>                  Define bar padding in pixels, defaults to " STR(SOV_DEFAULT_BAR_PADDING) ". \n"
       "  -a, --anchor <s>                    Define anchor point; one of 'top', 'left', 'right', 'bottom', 'center' (default). \n"
       "                                      May be specified multiple times. \n"
@@ -589,13 +591,9 @@ int main(int argc, char** argv)
     unsigned long   maximum      = SOV_DEFAULT_MAXIMUM;
     unsigned long   timeout_msec = SOV_DEFAULT_TIMEOUT;
     struct sov_geom geom         = {
-		.width         = SOV_DEFAULT_WIDTH,
-		.height        = SOV_DEFAULT_HEIGHT,
-		.border_offset = SOV_DEFAULT_BORDER_OFFSET,
-		.border_size   = SOV_DEFAULT_BORDER_SIZE,
-		.bar_padding   = SOV_DEFAULT_BAR_PADDING,
-		.anchor        = SOV_DEFAULT_ANCHOR,
-		.margin        = SOV_DEFAULT_MARGIN,
+		.bar_padding = SOV_DEFAULT_BAR_PADDING,
+		.anchor      = SOV_DEFAULT_ANCHOR,
+		.margin      = SOV_DEFAULT_MARGIN,
     };
 
     struct sov_output_config* output_config;
@@ -610,8 +608,6 @@ int main(int argc, char** argv)
         {"max", required_argument, NULL, 'm'},
         {"width", required_argument, NULL, 'W'},
         {"height", required_argument, NULL, 'H'},
-        {"offset", required_argument, NULL, 'o'},
-        {"border", required_argument, NULL, 'b'},
         {"padding", required_argument, NULL, 'p'},
         {"anchor", required_argument, NULL, 'a'},
         {"margin", required_argument, NULL, 'M'},
@@ -657,38 +653,6 @@ int main(int argc, char** argv)
 		if (*strtoul_end != '\0' || errno == ERANGE || maximum == 0)
 		{
 		    sov_log_error("Maximum must be a value between 1 and %lu.", ULONG_MAX);
-		    return EXIT_FAILURE;
-		}
-		break;
-	    case 'W':
-		geom.width = strtoul(optarg, &strtoul_end, 10);
-		if (*strtoul_end != '\0' || errno == ERANGE)
-		{
-		    sov_log_error("Width must be a positive value.");
-		    return EXIT_FAILURE;
-		}
-		break;
-	    case 'H':
-		geom.height = strtoul(optarg, &strtoul_end, 10);
-		if (*strtoul_end != '\0' || errno == ERANGE)
-		{
-		    sov_log_error("Height must be a positive value.");
-		    return EXIT_FAILURE;
-		}
-		break;
-	    case 'o':
-		geom.border_offset = strtoul(optarg, &strtoul_end, 10);
-		if (*strtoul_end != '\0' || errno == ERANGE)
-		{
-		    sov_log_error("Border offset must be a positive value.");
-		    return EXIT_FAILURE;
-		}
-		break;
-	    case 'b':
-		geom.border_size = strtoul(optarg, &strtoul_end, 10);
-		if (*strtoul_end != '\0' || errno == ERANGE)
-		{
-		    sov_log_error("Border size must be a positive value.");
 		    return EXIT_FAILURE;
 		}
 		break;
@@ -753,18 +717,6 @@ int main(int argc, char** argv)
 	}
     }
 
-    if (geom.width < MIN_PERCENTAGE_BAR_WIDTH + 2 * (geom.border_offset + geom.border_size + geom.bar_padding))
-    {
-	sov_log_error("Invalid geometry: width is too small for given parameters");
-	return EXIT_FAILURE;
-    }
-
-    if (geom.height < MIN_PERCENTAGE_BAR_HEIGHT + 2 * (geom.border_offset + geom.border_size + geom.bar_padding))
-    {
-	sov_log_error("Invalid geometry: height is too small for given parameters");
-	return EXIT_FAILURE;
-    }
-
     /* init config */
 
     config_init(); // DESTROY 0
@@ -797,8 +749,6 @@ int main(int argc, char** argv)
     char* font_face = config_get("font_face");
     font_path       = fontconfig_new_path(font_face ? font_face : ""); // REL 4
 
-    geom.stride  = geom.width * 4;
-    geom.size    = geom.stride * geom.height;
     app.sov_geom = &geom;
 
     int shmid = sov_shm_create();
@@ -836,30 +786,24 @@ int main(int argc, char** argv)
 	{
 	    case -1:
 	    {
-		sov_log_info("POLL -1\n");
 		sov_log_error("poll() failed: %s", strerror(errno));
 
 		return EXIT_FAILURE;
 	    }
 	    case 0:
 	    {
-		sov_log_info("POLL 0\n");
-
 		// showing window on timeout
 		if (hidden && showup)
 		{
 		    sov_show(&app);
 		    showup = false;
 		    hidden = false;
-		    sov_flush(&app);
 		}
 
 		break;
 	    }
 	    default:
 	    {
-		sov_log_info("POLL DEFAULT\n");
-
 		if (fds[0].revents)
 		{
 		    if (!(fds[0].revents & POLLIN))
