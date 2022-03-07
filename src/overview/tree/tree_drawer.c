@@ -14,6 +14,7 @@ void tree_drawer_draw(
     textstyle_t main_style,
     textstyle_t sub_style,
     textstyle_t wsnum_style,
+    uint32_t    window_color,
     uint32_t    background_color,
     uint32_t    focused_color,
     uint32_t    border_color,
@@ -40,6 +41,7 @@ void tree_drawer_draw(
     textstyle_t main_style,
     textstyle_t sub_style,
     textstyle_t wsnum_style,
+    uint32_t    window_color,
     uint32_t    background_color,
     uint32_t    focused_color,
     uint32_t    border_color,
@@ -79,9 +81,10 @@ void tree_drawer_draw(
 	int cx = gap + wsi % cols * (wsw + gap);
 	int cy = gap + wsi / cols * (wsh + gap);
 
-	// TODO from config
-	gfx_rect(bm, cx, cy, wsw, wsh, empty_border, 0);
-	gfx_rect(bm, cx + 1, cy + 1, wsw - 2, wsh - 2, empty_color, 0);
+	gfx_rounded_rect(bm, cx - 1, cy - 1, wsw + 3, wsh + 3, 6, 0.0, empty_color, window_color);
+
+	// gfx_rounded_rect(bm, cx, cy, wsw, wsh, 10, 0.0, empty_border, window_color);
+	// gfx_rounded_rect(bm, cx + 1, cy + 1, wsw - 2, wsh - 2, 10, 0.0, empty_color, empty_border);
     }
 
     for (int wsi = 0; wsi < workspaces->length; wsi++)
@@ -95,7 +98,7 @@ void tree_drawer_draw(
 
 	/* draw focused workspace background */
 
-	if (ws->focused) gfx_rect(bm, cx + 1, cy + 1, wsw - 2, wsh - 2, focused_color, 0);
+	if (ws->focused) gfx_rounded_rect(bm, cx + 1, cy + 1, wsw - 2, wsh - 2, 10, 0.0, focused_color, empty_border);
 
 	/* draw windows */
 
@@ -126,8 +129,6 @@ void tree_drawer_draw(
 
 		    str_add_bytearray(str, wi->appid);
 
-		    int grey = 0xFF - rand() % 0x55;
-
 		    text_render(str, main_style, tbm);
 
 		    str_reset(str);
@@ -140,11 +141,12 @@ void tree_drawer_draw(
 
 		    /* draw frame */
 
-		    gfx_rect(bm, wcx + 1, wcy + 1, wiw - 2, wih - 2, border_color, 0);
+		    gfx_rounded_rect(bm, wcx, wcy, wiw, wih, 5, 0.0, border_color, 0);
+		    gfx_rounded_rect(bm, wcx + 1, wcy + 1, wiw - 2, wih - 2, 5, 0.0, main_style.backcolor, empty_border);
 
 		    /* insert text bitmap */
 
-		    gfx_insert(bm, tbm, wcx + 2, wcy + 2);
+		    gfx_blend_rgba1(bm, tbm->data, tbm->w, tbm->h, wcx + 2, wcy + 2);
 
 		    REL(str); // REL 1
 		    REL(tbm); // REL 0

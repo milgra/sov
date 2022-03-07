@@ -63,4 +63,4 @@ window_color #00000077
 empty_color #000000FF
 
 # empty thumb border
-empty_frame_color #434343FF
+empty_frame_color #ABABABFF

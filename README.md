@@ -1,3 +1,6 @@
+crash on empty workspace
+crash on floating window in empty workspace
+
 # wob — Wayland Overlay Bar
 
 [![Build Status](https://github.com/francma/wob/workflows/test/badge.svg)](https://github.com/francma/wob/actions)

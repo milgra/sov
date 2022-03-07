@@ -1,9 +1,7 @@
 #define SOV_FILE "main.c"
 
-#define SOV_DEFAULT_BAR_PADDING 0
 #define SOV_DEFAULT_ANCHOR 0
 #define SOV_DEFAULT_MARGIN 0
-#define SOV_DEFAULT_MAXIMUM 100
 #define SOV_DEFAULT_TIMEOUT 200
 
 #define MIN_PERCENTAGE_BAR_WIDTH 1
@@ -55,7 +53,6 @@ char* font_path;
 
 struct sov_geom
 {
-    unsigned long bar_padding;
     unsigned long anchor;
     unsigned long margin;
 };
@@ -341,7 +338,7 @@ void sov_show(struct sov* app)
 
 	bitmap = bm_new(lay_wth, lay_hth); // REL 5
 
-	gfx_rect(bitmap, 0, 0, bitmap->w, bitmap->h, cstr_color_from_cstring(config_get("window_color")), 0);
+	gfx_rounded_rect(bitmap, 0, 0, bitmap->w, bitmap->h, 20, 1.0, cstr_color_from_cstring(config_get("window_color")), 0);
 
 	textstyle_t main_style = {
 	    .font       = font_path,
@@ -387,6 +384,7 @@ void sov_show(struct sov* app)
 	    main_style,
 	    sub_style,
 	    wsnum_style,
+	    cstr_color_from_cstring(config_get("window_color")),
 	    cstr_color_from_cstring(config_get("background_color")),
 	    cstr_color_from_cstring(config_get("background_color_focused")),
 	    cstr_color_from_cstring(config_get("border_color")),
@@ -568,8 +566,6 @@ int main(int argc, char** argv)
       "  --version                           Show the version number and quit.\n"
       "  -v                                  Increase verbosity of messages, defaults to errors and warnings only\n"
       "  -t, --timeout <ms>                  Hide sov after <ms> milliseconds, defaults to " STR(SOV_DEFAULT_TIMEOUT) ".\n"
-      "  -m, --max <%>                       Define the maximum percentage, defaults to " STR(SOV_DEFAULT_MAXIMUM) ". \n"
-      "  -p, --padding <px>                  Define bar padding in pixels, defaults to " STR(SOV_DEFAULT_BAR_PADDING) ". \n"
       "  -a, --anchor <s>                    Define anchor point; one of 'top', 'left', 'right', 'bottom', 'center' (default). \n"
       "                                      May be specified multiple times. \n"
       "  -M, --margin <px>                   Define anchor margin in pixels, defaults to " STR(SOV_DEFAULT_MARGIN) ". \n"
@@ -588,12 +584,10 @@ int main(int argc, char** argv)
     wl_list_init(&(app.output_configs));
 
     char*           cfg_path     = NULL;
-    unsigned long   maximum      = SOV_DEFAULT_MAXIMUM;
     unsigned long   timeout_msec = SOV_DEFAULT_TIMEOUT;
     struct sov_geom geom         = {
-		.bar_padding = SOV_DEFAULT_BAR_PADDING,
-		.anchor      = SOV_DEFAULT_ANCHOR,
-		.margin      = SOV_DEFAULT_MARGIN,
+		.anchor = SOV_DEFAULT_ANCHOR,
+		.margin = SOV_DEFAULT_MARGIN,
     };
 
     struct sov_output_config* output_config;
@@ -645,22 +639,6 @@ int main(int argc, char** argv)
 		if (*strtoul_end != '\0' || errno == ERANGE || timeout_msec == 0)
 		{
 		    sov_log_error("Timeout must be a value between 1 and %lu.", ULONG_MAX);
-		    return EXIT_FAILURE;
-		}
-		break;
-	    case 'm':
-		maximum = strtoul(optarg, &strtoul_end, 10);
-		if (*strtoul_end != '\0' || errno == ERANGE || maximum == 0)
-		{
-		    sov_log_error("Maximum must be a value between 1 and %lu.", ULONG_MAX);
-		    return EXIT_FAILURE;
-		}
-		break;
-	    case 'p':
-		geom.bar_padding = strtoul(optarg, &strtoul_end, 10);
-		if (*strtoul_end != '\0' || errno == ERANGE)
-		{
-		    sov_log_error("Bar padding must be a positive value.");
 		    return EXIT_FAILURE;
 		}
 		break;
