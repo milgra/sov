@@ -57,10 +57,10 @@ background_color #222222FF
 background_color_focused #444444FF
 
 # window color
-window_color #00000077
+window_color #000000AA
 
 # empty thumb color
-empty_color #000000FF
+empty_color #111111FF
 
 # empty thumb border
-empty_frame_color #ABABABFF
+empty_frame_color #555555FF

@@ -81,10 +81,10 @@ void tree_drawer_draw(
 	int cx = gap + wsi % cols * (wsw + gap);
 	int cy = gap + wsi / cols * (wsh + gap);
 
-	gfx_rounded_rect(bm, cx - 1, cy - 1, wsw + 3, wsh + 3, 6, 0.0, empty_color, window_color);
+	// gfx_rounded_rect(bm, cx - 1, cy - 1, wsw + 3, wsh + 3, 8, 0.0, empty_color, window_color);
 
-	// gfx_rounded_rect(bm, cx, cy, wsw, wsh, 10, 0.0, empty_border, window_color);
-	// gfx_rounded_rect(bm, cx + 1, cy + 1, wsw - 2, wsh - 2, 10, 0.0, empty_color, empty_border);
+	gfx_rounded_rect(bm, cx, cy, wsw, wsh, 8, 0.0, empty_border, window_color);
+	gfx_rounded_rect(bm, cx + 1, cy + 1, wsw - 2, wsh - 2, 8, 0.0, empty_color, empty_border);
     }
 
     for (int wsi = 0; wsi < workspaces->length; wsi++)
@@ -98,7 +98,7 @@ void tree_drawer_draw(
 
 	/* draw focused workspace background */
 
-	if (ws->focused) gfx_rounded_rect(bm, cx + 1, cy + 1, wsw - 2, wsh - 2, 10, 0.0, focused_color, empty_border);
+	// if (ws->focused) gfx_rounded_rect(bm, cx + 1, cy + 1, wsw - 2, wsh - 2, 8, 0.0, focused_color, empty_border);
 
 	/* draw windows */
 
@@ -141,8 +141,8 @@ void tree_drawer_draw(
 
 		    /* draw frame */
 
-		    gfx_rounded_rect(bm, wcx, wcy, wiw, wih, 5, 0.0, border_color, 0);
-		    gfx_rounded_rect(bm, wcx + 1, wcy + 1, wiw - 2, wih - 2, 5, 0.0, main_style.backcolor, empty_border);
+		    gfx_rounded_rect(bm, wcx, wcy, wiw, wih, 7, 0.0, border_color, 0);
+		    gfx_rounded_rect(bm, wcx + 1, wcy + 1, wiw - 2, wih - 2, 7, 0.0, main_style.backcolor, empty_border);
 
 		    /* insert text bitmap */
 
