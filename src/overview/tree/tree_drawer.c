@@ -98,7 +98,7 @@ void tree_drawer_draw(
 
 	/* draw focused workspace background */
 
-	// if (ws->focused) gfx_rounded_rect(bm, cx + 1, cy + 1, wsw - 2, wsh - 2, 8, 0.0, focused_color, empty_border);
+	if (ws->focused) gfx_rounded_rect(bm, cx + 1, cy + 1, wsw - 2, wsh - 2, 8, 0.0, focused_color, empty_border);
 
 	/* draw windows */
 

@@ -1,5 +1,5 @@
 crash on empty workspace
-crash on floating window in empty workspace
+
 
 # wob — Wayland Overlay Bar
 

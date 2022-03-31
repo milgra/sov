@@ -36,7 +36,7 @@ text_description_size 12
 text_description_color #999999FF
 
 # workspace number text size
-text_workspace_size 20
+text_workspace_size 18
 
 # workspace number text color
 text_workspace_color #FFFFFFFF
