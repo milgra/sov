@@ -1,7 +1,3 @@
-# activator key code
-# get wanted key code with 'xinput test-xi2 --root' the wanted number is the 'detail' field  
-meta_code 133
-
 # distance between workspaces
 gap 5
 

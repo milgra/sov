@@ -1,18 +1,5 @@
 #define SOV_FILE "main.c"
 
-#define SOV_DEFAULT_ANCHOR 0
-#define SOV_DEFAULT_MARGIN 0
-#define SOV_DEFAULT_TIMEOUT 200
-
-#define MIN_PERCENTAGE_BAR_WIDTH 1
-#define MIN_PERCENTAGE_BAR_HEIGHT 1
-
-#define STR(x) #x
-
-// sizeof already includes NULL byte
-#define INPUT_BUFFER_LENGTH (3 * sizeof(unsigned long) + sizeof(" #000000FF #FFFFFFFF #FFFFFFFF\n"))
-
-#define _POSIX_C_SOURCE 200809L
 #include <errno.h>
 #include <getopt.h>
 #include <limits.h>
@@ -42,6 +29,9 @@
 #include "zc_cstrpath.c"
 #include "zc_vector.c"
 
+#define SOV_DEFAULT_ANCHOR 0
+#define SOV_DEFAULT_MARGIN 0
+#define INPUT_BUFFER_LENGTH (3 * sizeof(unsigned long) + sizeof(" #000000FF #FFFFFFFF #FFFFFFFF\n")) // sizeof already includes NULL byte
 #define CFG_PATH_LOC "~/.config/sway-overview/config"
 #define CFG_PATH_GLO "/usr/share/sway-overview/config"
 #define WIN_APPID "sway-overview"
@@ -314,7 +304,7 @@ void sov_hide(struct sov* app)
     }
 }
 
-void sov_show(struct sov* app)
+int sov_show(struct sov* app)
 {
     // create bitmap and buffer
 
@@ -560,34 +550,29 @@ int main(int argc, char** argv)
     sov_log_level_info();
 
     const char* usage =
-      "Usage: sov [options]\n"
-      "\n"
-      "  -h, --help                          Show help message and quit.\n"
-      "  --version                           Show the version number and quit.\n"
-      "  -v                                  Increase verbosity of messages, defaults to errors and warnings only\n"
-      "  -t, --timeout <ms>                  Hide sov after <ms> milliseconds, defaults to " STR(SOV_DEFAULT_TIMEOUT) ".\n"
-      "  -a, --anchor <s>                    Define anchor point; one of 'top', 'left', 'right', 'bottom', 'center' (default). \n"
-      "                                      May be specified multiple times. \n"
-      "  -M, --margin <px>                   Define anchor margin in pixels, defaults to " STR(SOV_DEFAULT_MARGIN) ". \n"
-      "  -O, --output <name>                 Define output to show bar on or '*' for all. If ommited, focused output is chosen.\n"
-      "                                      May be specified multiple times.\n"
-      "  --border-color <#rgba>              Define border color\n"
-      "  --background-color <#rgba>          Define background color\n"
-      "  --bar-color <#rgba>                 Define bar color\n"
-      "  --overflow-mode <mode>              Change the overflow behavior. Valid options are `none`, `wrap` (default), and `nowrap`.\n"
-      "  --overflow-bar-color <#rgba>        Define bar color when overflowed\n"
-      "  --overflow-border-color <#rgba>     Define the border color when overflowed\n"
-      "  --overflow-background-color <#rgba> Define the background color when overflowed\n"
-      "\n";
+	"Usage: sov [options]\n"
+	"\n"
+	"  -h, --help                          Show help message and quit.\n"
+	"  --version                           Show the version number and quit.\n"
+	"  -v                                  Increase verbosity of messages, defaults to errors and warnings only\n"
+	"  -O, --output <name>                 Define output to show bar on or '*' for all. If ommited, focused output is chosen.\n"
+	"                                      May be specified multiple times.\n"
+	"  --border-color <#rgba>              Define border color\n"
+	"  --background-color <#rgba>          Define background color\n"
+	"  --bar-color <#rgba>                 Define bar color\n"
+	"  --overflow-mode <mode>              Change the overflow behavior. Valid options are `none`, `wrap` (default), and `nowrap`.\n"
+	"  --overflow-bar-color <#rgba>        Define bar color when overflowed\n"
+	"  --overflow-border-color <#rgba>     Define the border color when overflowed\n"
+	"  --overflow-background-color <#rgba> Define the background color when overflowed\n"
+	"\n";
 
     struct sov app = {0};
     wl_list_init(&(app.output_configs));
 
-    char*           cfg_path     = NULL;
-    unsigned long   timeout_msec = SOV_DEFAULT_TIMEOUT;
-    struct sov_geom geom         = {
-		.anchor = SOV_DEFAULT_ANCHOR,
-		.margin = SOV_DEFAULT_MARGIN,
+    char*           cfg_path = NULL;
+    struct sov_geom geom     = {
+	    .anchor = SOV_DEFAULT_ANCHOR,
+	    .margin = SOV_DEFAULT_MARGIN,
     };
 
     struct sov_output_config* output_config;
@@ -598,7 +583,6 @@ int main(int argc, char** argv)
         {"help", no_argument, NULL, 'h'},
         {"version", no_argument, NULL, 4},
         {"config", required_argument, NULL, 'c'},
-        {"timeout", required_argument, NULL, 't'},
         {"max", required_argument, NULL, 'm'},
         {"width", required_argument, NULL, 'W'},
         {"height", required_argument, NULL, 'H'},
@@ -619,26 +603,11 @@ int main(int argc, char** argv)
     {
 	switch (c)
 	{
-	    /* case 1: */
-	    /*   if (!sov_parse_color(optarg, &strtoul_end, &(colors.border))) */
-	    /*   { */
-	    /*     sov_log_error("Border color must be a value between #00000000 and #FFFFFFFF."); */
-	    /*     return EXIT_FAILURE; */
-	    /*   } */
-	    /*   break; */
 	    case 'c':
 		cfg_path = cstr_new_cstring(optarg);
 		if (errno == ERANGE || cfg_path == NULL)
 		{
 		    sov_log_error("Invalid config path value", ULONG_MAX);
-		    return EXIT_FAILURE;
-		}
-		break;
-	    case 't':
-		timeout_msec = strtoul(optarg, &strtoul_end, 10);
-		if (*strtoul_end != '\0' || errno == ERANGE || timeout_msec == 0)
-		{
-		    sov_log_error("Timeout must be a value between 1 and %lu.", ULONG_MAX);
 		    return EXIT_FAILURE;
 		}
 		break;
@@ -753,8 +722,11 @@ int main(int argc, char** argv)
 
     bool showup = false;
     bool hidden = true;
+    bool alive  = true;
 
-    for (;;)
+    unsigned long timeout_msec = 200;
+
+    while (alive)
     {
 	unsigned long state                             = 0;
 	char          input_buffer[INPUT_BUFFER_LENGTH] = {0};
@@ -835,6 +807,13 @@ int main(int argc, char** argv)
 			return EXIT_FAILURE;
 		    }
 
+		    if (state == 2)
+		    {
+			alive = false;
+			sov_log_info("BREAK");
+			break;
+		    }
+
 		    if (state == 1 && showup == 1) { hidden = false; }
 
 		    if (state == 1 && showup == 0) { showup = 1; }
@@ -853,4 +832,7 @@ int main(int argc, char** argv)
 	    }
 	}
     }
+#ifdef DEBUG
+    mem_stats();
+#endif
 }

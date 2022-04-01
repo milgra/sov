@@ -1,9 +1,8 @@
-# activator key code
-# get wanted key code with 'xinput test-xi2 --root' the wanted number is the 'detail' field  
-meta_code 133
+# anchor, where to display sov, top, bottom, left, right, center
+anchor center
 
-# secondary key ( TAB by default ), uncomment it if you want to use it
-# secondary_code 23
+# margin, distance from edges if anchor is set
+margin 0
 
 # distance between workspaces
 gap 20

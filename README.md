@@ -1,17 +1,17 @@
 crash on empty workspace
+check wob's package build
+default anchor and margin from config
 
+# sov — Sway Overview
 
-# wob — Wayland Overlay Bar
+[![Build Status](https://github.com/milgra/sov/workflows/test/badge.svg)](https://github.com/milgra/sov/actions)
 
-[![Build Status](https://github.com/francma/wob/workflows/test/badge.svg)](https://github.com/francma/wob/actions)
+![preview](https://github.com/milgra/sov/sov.png)
 
-![preview](https://martinfranc.eu/wob-preview.svg)
+sway-overview is an application that shows thumbnails for all workspaces to make navigation in sway easier.
 
-A lightweight overlay volume/backlight/progress/anything bar for wlroots based Wayland compositors (requrires support for `wlr_layer_shell_unstable_v1`). This project is inspired by [xob - X Overlay Bar](https://github.com/florentc/xob).
-
-## Release signatures
-
-Releases are signed with [5C6DA024DDE27178073EA103F4B432D5D67990E3](https://keys.openpgp.org/vks/v1/by-fingerprint/5C6DA024DDE27178073EA103F4B432D5D67990E3) and published on [GitHub](https://github.com/francma/wob/releases).
+![alt text](screenshot2.png)
+![alt text](screenshot1.png)
 
 ## Installation
 
@@ -23,7 +23,6 @@ Install dependencies:
 - wayland-protocols \*
 - meson \*
 - [scdoc](https://git.sr.ht/~sircmpwn/scdoc) (optional: man page) \*
-- [libseccomp](https://github.com/seccomp/libseccomp) (optional: Linux kernel syscall filtering) \*
 
 \* _compile-time dependecy_
 
@@ -79,7 +78,7 @@ Add these lines to your Sway config file:
 
 ```
 set $WOBSOCK $XDG_RUNTIME_DIR/wob.sock
-exec mkfifo $WOBSOCK && tail -f $WOBSOCK | wob
+exec rm -f $WOBSOCK && mkfifo $WOBSOCK && tail -f $WOBSOCK | wob
 ```
 
 Volume using alsa:

@@ -19,6 +19,10 @@ rt = cc.find_library('rt')
 sov_version = '"@0@"'.format(meson.project_version())
 add_project_arguments('-DSOV_VERSION=@0@'.format(sov_version), language: 'c')
 
+if get_option('buildtype') == 'debug'
+  add_project_arguments('-DDEBUG', '-g', '-fsanitize=address', language : 'c')
+endif
+
 wayland_scanner_code = generator(
   wayland_scanner,
   output: '@BASENAME@-protocol.c',
@@ -96,31 +100,13 @@ executable(
   sov_sources,
   include_directories: [sov_inc],
   dependencies: sov_dependencies,
-  install: true
+  install: true,
+  link_args : '-fsanitize=address'
 )
 
 test('parse-input', executable(
   'test-parse-input',
   ['tests/sov_parse_input.c'],
-  include_directories: [sov_inc]
+  include_directories: [sov_inc],
+  link_args : '-fsanitize=address'
 ))
-
-scdoc = dependency('scdoc', version: '>=1.9.2', native: true, required: get_option('man-pages'))
-if scdoc.found()
-  scdoc = find_program(scdoc.get_pkgconfig_variable('scdoc'), native: true)
-  sh = find_program('sh', native: true)
-  mandir = get_option('mandir')
-  scdfile = 'sov.1.scd'
-  manfile = scdfile.split('.scd')[0]
-
-  custom_target(
-    manfile,
-    input: scdfile,
-    output: manfile,
-    command: [
-      sh, '-c', '@0@ < @INPUT@ > @1@'.format(scdoc.path(), manfile)
-    ],
-    install: true,
-    install_dir: join_paths(mandir, 'man1')
-  )
-endif
