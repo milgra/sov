@@ -19,10 +19,6 @@ rt = cc.find_library('rt')
 sov_version = '"@0@"'.format(meson.project_version())
 add_project_arguments('-DSOV_VERSION=@0@'.format(sov_version), language: 'c')
 
-if get_option('buildtype') == 'debug'
-  add_project_arguments('-DDEBUG', '-g', '-fsanitize=address', language : 'c')
-endif
-
 wayland_scanner_code = generator(
   wayland_scanner,
   output: '@BASENAME@-protocol.c',
@@ -69,7 +65,7 @@ sov_inc = include_directories('src/overview/config',
 			      'src/modules/zen_core',
 			      'src/modules/zen_text')
 
-sov_sources = ['src/overview/overview.c',
+sov_sources = ['src/overview/main.c',
 	       'src/overview/buffer.c',
 	       'src/overview/log.c',
 

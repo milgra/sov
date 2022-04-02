@@ -1,3 +1,6 @@
+/* define posix standard for strdup */
+#define _POSIX_C_SOURCE 200809L
+/* define file for logging */
 #define SOV_FILE "main.c"
 
 #include <errno.h>
@@ -126,12 +129,23 @@ void sov_read_tree(vec_t* workspaces)
     REL(tree_json); // REL 1
 }
 
-void layer_surface_configure(void* data, struct zwlr_layer_surface_v1* surface, uint32_t serial, uint32_t w, uint32_t h)
+void layer_surface_configure(
+    void*                         data,
+    struct zwlr_layer_surface_v1* surface,
+    uint32_t                      serial,
+    uint32_t                      w,
+    uint32_t                      h)
 {
     zwlr_layer_surface_v1_ack_configure(surface, serial);
 }
 
-struct sov_surface* sov_surface_create(struct sov* app, struct wl_output* wl_output, unsigned long width, unsigned long height, unsigned long margin, unsigned long anchor)
+struct sov_surface* sov_surface_create(
+    struct sov*       app,
+    struct wl_output* wl_output,
+    unsigned long     width,
+    unsigned long     height,
+    unsigned long     margin,
+    unsigned long     anchor)
 {
     const static struct zwlr_layer_surface_v1_listener zwlr_layer_surface_listener = {
 	.configure = layer_surface_configure,
@@ -308,7 +322,7 @@ int sov_show(struct sov* app)
 {
     // create bitmap and buffer
 
-    vec_t* workspaces = VNEW(); // REL 6
+    vec_t* workspaces = VNEW(); // REL 0
     bm_t*  bitmap     = NULL;
 
     sov_read_tree(workspaces);
@@ -326,7 +340,7 @@ int sov_show(struct sov* app)
 	int lay_wth = cols * (ws->width / ratio) + (cols + 1) * gap;
 	int lay_hth = rows * (ws->height / ratio) + (rows + 1) * gap;
 
-	bitmap = bm_new(lay_wth, lay_hth); // REL 5
+	bitmap = bm_new(lay_wth, lay_hth); // REL 1
 
 	gfx_rounded_rect(bitmap, 0, 0, bitmap->w, bitmap->h, 20, 1.0, cstr_color_from_cstring(config_get("window_color")), 0);
 
@@ -366,22 +380,7 @@ int sov_show(struct sov* app)
 	};
 
 	tree_drawer_draw(
-	    bitmap,
-	    workspaces,
-	    gap,
-	    cols,
-	    ratio,
-	    main_style,
-	    sub_style,
-	    wsnum_style,
-	    cstr_color_from_cstring(config_get("window_color")),
-	    cstr_color_from_cstring(config_get("background_color")),
-	    cstr_color_from_cstring(config_get("background_color_focused")),
-	    cstr_color_from_cstring(config_get("border_color")),
-	    cstr_color_from_cstring(config_get("empty_color")),
-	    cstr_color_from_cstring(config_get("empty_frame_color")),
-	    config_get_int("text_workspace_xshift"),
-	    config_get_int("text_workspace_yshift"));
+	    bitmap, workspaces, gap, cols, ratio, main_style, sub_style, wsnum_style, cstr_color_from_cstring(config_get("window_color")), cstr_color_from_cstring(config_get("background_color")), cstr_color_from_cstring(config_get("background_color_focused")), cstr_color_from_cstring(config_get("border_color")), cstr_color_from_cstring(config_get("empty_color")), cstr_color_from_cstring(config_get("empty_frame_color")), config_get_int("text_workspace_xshift"), config_get_int("text_workspace_yshift"));
 
 	uint32_t size   = bitmap->w * bitmap->h * 4;
 	uint32_t stride = bitmap->w * 4;
@@ -419,6 +418,8 @@ int sov_show(struct sov* app)
 	    app->argb[i + 3] = bitmap->data[i + 3];
 	}
     }
+
+    REL(workspaces); // REL 0
 
     // create surface
 
@@ -470,6 +471,8 @@ int sov_show(struct sov* app)
 	sov_log_error("wl_display_dispatch failed");
 	exit(EXIT_FAILURE);
     }
+
+    REL(bitmap); // REL 1
 }
 
 void sov_destroy(struct sov* app)
@@ -490,7 +493,6 @@ void sov_destroy(struct sov* app)
 
     zwlr_layer_shell_v1_destroy(app->wlr_layer_shell);
     wl_registry_destroy(app->wl_registry);
-    wl_buffer_destroy(app->wl_buffer);
     wl_compositor_destroy(app->wl_compositor);
     wl_shm_destroy(app->wl_shm);
     zxdg_output_manager_v1_destroy(app->xdg_output_manager);
@@ -671,8 +673,8 @@ int main(int argc, char** argv)
     char cwd[PATH_MAX];
     if (getcwd(cwd, sizeof(cwd)) == NULL) printf("Cannot get working directory\n");
 
-    char* cfg_path_loc = cfg_path ? cstr_new_path_normalize(cfg_path, cwd) : cstr_new_path_normalize(CFG_PATH_LOC, getenv("HOME")); // REL 2
-    char* cfg_path_glo = cstr_new_cstring(CFG_PATH_GLO);                                                                            // REL 3
+    char* cfg_path_loc = cfg_path ? cstr_new_path_normalize(cfg_path, cwd) : cstr_new_path_normalize(CFG_PATH_LOC, getenv("HOME")); // REL 1
+    char* cfg_path_glo = cstr_new_cstring(CFG_PATH_GLO);                                                                            // REL 2
 
     if (config_read(cfg_path_loc) < 0)
     {
@@ -684,8 +686,8 @@ int main(int argc, char** argv)
     else
 	sov_log_info("Using config file : %s\n", cfg_path_loc);
 
-    REL(cfg_path_glo); // REL 3
-    REL(cfg_path_loc); // REL 2
+    REL(cfg_path_glo); // REL 2
+    REL(cfg_path_loc); // REL 1
 
     if (sov_log_get_level() == 2) config_describe();
 
@@ -694,7 +696,7 @@ int main(int argc, char** argv)
     text_init(); // DESTROY 1
 
     char* font_face = config_get("font_face");
-    font_path       = fontconfig_new_path(font_face ? font_face : ""); // REL 4
+    font_path       = fontconfig_new_path(font_face ? font_face : ""); // REL 3
 
     app.sov_geom = &geom;
 
@@ -738,7 +740,8 @@ int main(int argc, char** argv)
 	    {
 		sov_log_error("poll() failed: %s", strerror(errno));
 
-		return EXIT_FAILURE;
+		alive = false;
+		break;
 	    }
 	    case 0:
 	    {
@@ -759,10 +762,15 @@ int main(int argc, char** argv)
 		    if (!(fds[0].revents & POLLIN))
 		    {
 			sov_log_error("WL_DISPLAY_FD unexpectedly closed, revents = %hd", fds[0].revents);
-			return EXIT_FAILURE;
+			alive = false;
+			break;
 		    }
 
-		    if (wl_display_dispatch(app.wl_display) == -1) { return EXIT_FAILURE; }
+		    if (wl_display_dispatch(app.wl_display) == -1)
+		    {
+			alive = false;
+			break;
+		    }
 		}
 
 		if (fds[1].revents)
@@ -771,9 +779,9 @@ int main(int argc, char** argv)
 		    {
 			sov_log_error("STDIN unexpectedly closed, revents = %hd", fds[1].revents);
 			if (!hidden) sov_hide(&app);
-			sov_destroy(&app);
 
-			return EXIT_FAILURE;
+			alive = false;
+			break;
 		    }
 
 		    fgets_rv = fgets(input_buffer, INPUT_BUFFER_LENGTH, stdin);
@@ -782,18 +790,18 @@ int main(int argc, char** argv)
 		    {
 			sov_log_info("Received EOF");
 			if (!hidden) sov_hide(&app);
-			sov_destroy(&app);
 
-			return EXIT_SUCCESS;
+			alive = false;
+			break;
 		    }
 
 		    if (fgets_rv == NULL)
 		    {
 			sov_log_error("fgets() failed: %s", strerror(errno));
 			if (!hidden) sov_hide(&app);
-			sov_destroy(&app);
 
-			return EXIT_FAILURE;
+			alive = false;
+			break;
 		    }
 
 		    if (!sov_parse_input(input_buffer, &state))
@@ -802,9 +810,8 @@ int main(int argc, char** argv)
 
 			if (!hidden) sov_hide(&app);
 
-			sov_destroy(&app);
-
-			return EXIT_FAILURE;
+			alive = false;
+			break;
 		    }
 
 		    if (state == 2)
@@ -832,6 +839,12 @@ int main(int argc, char** argv)
 	    }
 	}
     }
+
+    sov_destroy(&app);
+    config_destroy();
+    text_destroy();
+    REL(font_path);
+
 #ifdef DEBUG
     mem_stats();
 #endif

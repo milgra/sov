@@ -2,6 +2,10 @@ crash on empty workspace
 check wob's package build
 default anchor and margin from config
 
+# how to create debug build
+
+CC=clang meson build --buildtype=debug -Db_sanitize=address -Db_lundef=false
+
 # sov — Sway Overview
 
 [![Build Status](https://github.com/milgra/sov/workflows/test/badge.svg)](https://github.com/milgra/sov/actions)
