@@ -19,6 +19,10 @@ rt = cc.find_library('rt')
 sov_version = '"@0@"'.format(meson.project_version())
 add_project_arguments('-DSOV_VERSION=@0@'.format(sov_version), language: 'c')
 
+if get_option('buildtype').startswith('debug')
+  add_project_arguments('-DDEBUG', language : 'c')
+endif
+
 wayland_scanner_code = generator(
   wayland_scanner,
   output: '@BASENAME@-protocol.c',

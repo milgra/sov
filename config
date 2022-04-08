@@ -4,6 +4,9 @@ anchor center
 # margin, distance from edges if anchor is set
 margin 0
 
+# show timeout in millisecs
+timeout 200
+
 # distance between workspaces
 gap 20
 
