@@ -50,10 +50,12 @@ void tree_drawer_draw(
     int         wsnum_dx,
     int         wsnum_dy)
 {
-    sway_workspace_t* ws0 = workspaces->data[0];
-    sway_workspace_t* wsl = workspaces->data[workspaces->length - 1];
-
-    int max = ceilf((float) wsl->number / cols) * cols;
+    int max = 0;
+    if (workspaces->length > 1)
+    {
+	sway_workspace_t* wsl = workspaces->data[workspaces->length - 1];
+	max                   = ceilf((float) wsl->number / cols) * cols;
+    }
 
     /* find biggest workspace */
 

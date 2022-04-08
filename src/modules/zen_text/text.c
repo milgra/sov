@@ -281,8 +281,7 @@ void text_break_glyphs(glyph_t* glyphs, int count, textstyle_t style, int wth, i
 	int w = x1 - x0;
 	int h = y1 - y0;
 
-	int size = w * h;
-
+	/* int size = w * h; */
 	/* printf("w %i h %i size %i\n", w, h, size); */
 	// printf("%c bitmap left %i bitmap top %i\n", glyph.cp, font->glyph->bitmap_left, font->glyph->bitmap_top);
 
@@ -374,8 +373,8 @@ void text_align_glyphs(glyph_t* glyphs, int count, textstyle_t style, int w, int
 
 	    float ex = x; // end x
 
-	    int ri; // row index
-	    int sc; // space count
+	    int ri;     // row index
+	    int sc = 0; // space count
 
 	    for (ri = i; ri < count; ri++)
 	    {

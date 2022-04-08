@@ -70,12 +70,11 @@ void gfx_arc(bm_t* bitmap, float cx, float cy, float r, float edge, uint32_t c, 
     {
 	for (int y = 0; y < bitmap->h; y++)
 	{
-	    float    dx = (float) x - cx;
-	    float    dy = (float) y - cy;
-	    float    d  = sqrt(dx * dx + dy * dy);
-	    float    sa = (float) (c & 0xFF) / 255.0;
-	    uint8_t  ra = c & 0xFF;
-	    uint32_t fi = 0;
+	    float   dx = (float) x - cx;
+	    float   dy = (float) y - cy;
+	    float   d  = sqrt(dx * dx + dy * dy);
+	    float   sa = (float) (c & 0xFF) / 255.0;
+	    uint8_t ra = c & 0xFF;
 	    if (d < m)
 	    {
 		float r = atan2(dy, dx);
@@ -175,7 +174,6 @@ void gfx_tile(bm_t* bitmap)
     {
 	for (int row = 0; row < bitmap->h; row++)
 	{
-	    uint32_t index = row * bitmap->w + col;
 	    uint32_t color = (row % 2 == 0 && col % 2 == 1) ? 0xFFFFFFFF : 0x000000FF;
 	    gfx_rect(bitmap, color, row, 1, 1, color, 0);
 	}

@@ -21,10 +21,10 @@ void sov_log_inc_verbosity(void);
 
 void sov_log_use_colors(bool use_colors);
 
-#define sov_log_debug(...) sov_log(SOV_LOG_DEBUG, SOV_FILE, __LINE__, __VA_ARGS__)
-#define sov_log_info(...) sov_log(SOV_LOG_INFO, SOV_FILE, __LINE__, __VA_ARGS__)
-#define sov_log_warn(...) sov_log(SOV_LOG_WARN, SOV_FILE, __LINE__, __VA_ARGS__)
-#define sov_log_error(...) sov_log(SOV_LOG_ERROR, SOV_FILE, __LINE__, __VA_ARGS__)
+#define sov_log_debug(...) sov_log(SOV_LOG_DEBUG, __FILE__, __LINE__, __VA_ARGS__)
+#define sov_log_info(...) sov_log(SOV_LOG_INFO, __FILE__, __LINE__, __VA_ARGS__)
+#define sov_log_warn(...) sov_log(SOV_LOG_WARN, __FILE__, __LINE__, __VA_ARGS__)
+#define sov_log_error(...) sov_log(SOV_LOG_ERROR, __FILE__, __LINE__, __VA_ARGS__)
 
 #define sov_log_level_debug() sov_log_set_level(SOV_LOG_DEBUG);
 #define sov_log_level_info() sov_log_set_level(SOV_LOG_INFO);
@@ -34,8 +34,6 @@ void sov_log_use_colors(bool use_colors);
 #endif
 
 #if __INCLUDE_LEVEL__ == 0
-
-#define SOV_FILE "zc_log.c"
 
 #define _POSIX_C_SOURCE 199506L
 

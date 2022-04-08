@@ -1,7 +1,5 @@
 /* define posix standard for strdup */
 #define _POSIX_C_SOURCE 200809L
-/* define file for logging */
-#define SOV_FILE "main.c"
 
 #include <errno.h>
 #include <fcntl.h>
@@ -34,7 +32,6 @@
 #include "zc_log.c"
 #include "zc_vector.c"
 
-#define INPUT_BUFFER_LENGTH (3 * sizeof(unsigned long) + sizeof(" #000000FF #FFFFFFFF #FFFFFFFF\n")) // sizeof already includes NULL byte
 #define CFG_PATH_LOC "~/.config/sway-overview/config"
 #define CFG_PATH_GLO "/usr/share/sway-overview/config"
 #define GET_WORKSPACES_CMD "swaymsg -t get_workspaces"
@@ -73,6 +70,7 @@ struct sov_output
 
 struct sov
 {
+    char*                          cfg_path;
     uint8_t*                       argb;
     int                            shmid;
     struct wl_buffer*              wl_buffer;
@@ -567,6 +565,7 @@ int sov_show(struct sov* app)
     }
 
     REL(bitmap); // REL 1
+    return 0;
 }
 
 void sov_destroy(struct sov* app)
@@ -627,7 +626,7 @@ void sov_connect(struct sov* app)
 
 bool sov_parse_input(const char* input_buffer, unsigned long* state)
 {
-    char *input_ptr, *newline_position, *str_end;
+    char *input_ptr, *newline_position;
 
     newline_position = strchr(input_buffer, '\n');
     if (newline_position == NULL) { return false; }
@@ -642,6 +641,8 @@ bool sov_parse_input(const char* input_buffer, unsigned long* state)
 
 int main(int argc, char** argv)
 {
+    printf("swayoverview v" SOV_VERSION " by Milan Toth\n");
+
     sov_log_use_colors(isatty(STDERR_FILENO));
     sov_log_level_info();
 
@@ -649,91 +650,38 @@ int main(int argc, char** argv)
 	"Usage: sov [options]\n"
 	"\n"
 	"  -h, --help                          Show help message and quit.\n"
-	"  --version                           Show the version number and quit.\n"
 	"  -v                                  Increase verbosity of messages, defaults to errors and warnings only\n"
+	"  -c  --config= [path]                Use config file for session"
 	"  -O, --output <name>                 Define output to show bar on or '*' for all. If ommited, focused output is chosen.\n"
-	"                                      May be specified multiple times.\n"
-	"  --border-color <#rgba>              Define border color\n"
-	"  --background-color <#rgba>          Define background color\n"
-	"  --bar-color <#rgba>                 Define bar color\n"
-	"  --overflow-mode <mode>              Change the overflow behavior. Valid options are `none`, `wrap` (default), and `nowrap`.\n"
-	"  --overflow-bar-color <#rgba>        Define bar color when overflowed\n"
-	"  --overflow-border-color <#rgba>     Define the border color when overflowed\n"
-	"  --overflow-background-color <#rgba> Define the background color when overflowed\n"
 	"\n";
 
     struct sov app = {0};
+    int        c, option_index = 0;
+
     wl_list_init(&(app.output_configs));
 
-    char*           cfg_path = NULL;
-    struct sov_geom geom     = {0};
+    static struct option long_options[] = {
+	{"help", no_argument, NULL, 'h'},
+	{"config", required_argument, NULL, 'c'},
+	{"verbose", no_argument, NULL, 'v'}};
 
-    struct sov_output_config* output_config;
-    int                       option_index = 0;
-    int                       c;
-    char*                     strtoul_end;
-    static struct option      long_options[] = {
-        {"help", no_argument, NULL, 'h'},
-        {"version", no_argument, NULL, 4},
-        {"config", required_argument, NULL, 'c'},
-        {"max", required_argument, NULL, 'm'},
-        {"width", required_argument, NULL, 'W'},
-        {"height", required_argument, NULL, 'H'},
-        {"padding", required_argument, NULL, 'p'},
-        {"anchor", required_argument, NULL, 'a'},
-        {"margin", required_argument, NULL, 'M'},
-        {"output", required_argument, NULL, 'O'},
-        {"border-color", required_argument, NULL, 1},
-        {"background-color", required_argument, NULL, 2},
-        {"bar-color", required_argument, NULL, 3},
-        {"verbose", no_argument, NULL, 'v'},
-        {"overflow-mode", required_argument, NULL, 6},
-        {"overflow-bar-color", required_argument, NULL, 5},
-        {"overflow-background-color", required_argument, NULL, 7},
-        {"overflow-border-color", required_argument, NULL, 8}};
-
-    while ((c = getopt_long(argc, argv, "c:t:m:W:H:o:b:p:a:M:O:vh:f", long_options, &option_index)) != -1)
+    while ((c = getopt_long(argc, argv, "c:vhO:", long_options, &option_index)) != -1)
     {
 	switch (c)
 	{
 	    case 'c':
-		cfg_path = cstr_new_cstring(optarg);
-		if (errno == ERANGE || cfg_path == NULL)
+		app.cfg_path = cstr_new_cstring(optarg);
+		if (errno == ERANGE || app.cfg_path == NULL)
 		{
 		    sov_log_error("Invalid config path value", ULONG_MAX);
 		    return EXIT_FAILURE;
 		}
 		break;
-	    case 'a':
-		if (strcmp(optarg, "left") == 0) { geom.anchor |= ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT; }
-		else if (strcmp(optarg, "right") == 0)
-		{
-		    geom.anchor |= ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT;
-		}
-		else if (strcmp(optarg, "top") == 0)
-		{
-		    geom.anchor |= ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP;
-		}
-		else if (strcmp(optarg, "bottom") == 0)
-		{
-		    geom.anchor |= ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM;
-		}
-		else if (strcmp(optarg, "center") != 0)
-		{
-		    sov_log_error("Anchor must be one of 'top', 'bottom', 'left', 'right', 'center'.");
-		    return EXIT_FAILURE;
-		}
-		break;
-	    case 'M':
-		geom.margin = strtoul(optarg, &strtoul_end, 10);
-		if (*strtoul_end != '\0' || errno == ERANGE)
-		{
-		    sov_log_error("Anchor margin must be a positive value.");
-		    return EXIT_FAILURE;
-		}
-		break;
+	    case 'h': printf("%s", usage); return EXIT_SUCCESS;
+	    case 'v': sov_log_inc_verbosity(); break;
 	    case 'O':
-		output_config = calloc(1, sizeof(struct sov_output_config));
+	    {
+		struct sov_output_config* output_config = calloc(1, sizeof(struct sov_output_config)); // FREE!!!
 		if (output_config == NULL)
 		{
 		    sov_log_error("calloc failed");
@@ -750,12 +698,12 @@ int main(int argc, char** argv)
 
 		wl_list_insert(&(app.output_configs), &(output_config->link));
 		break;
-	    case 4: printf("sov version: " SOV_VERSION "\n"); return EXIT_SUCCESS;
-	    case 'h': printf("%s", usage); return EXIT_SUCCESS;
-	    case 'v': sov_log_inc_verbosity(); break;
+	    }
 	    default: fprintf(stderr, "%s", usage); return EXIT_FAILURE;
 	}
     }
+
+    struct sov_geom geom = {0};
 
     /* init config */
 
@@ -764,8 +712,8 @@ int main(int argc, char** argv)
     char cwd[PATH_MAX];
     if (getcwd(cwd, sizeof(cwd)) == NULL) printf("Cannot get working directory\n");
 
-    char* cfg_path_loc = cfg_path ? cstr_new_path_normalize(cfg_path, cwd) : cstr_new_path_normalize(CFG_PATH_LOC, getenv("HOME")); // REL 1
-    char* cfg_path_glo = cstr_new_cstring(CFG_PATH_GLO);                                                                            // REL 2
+    char* cfg_path_loc = app.cfg_path ? cstr_new_path_normalize(app.cfg_path, cwd) : cstr_new_path_normalize(CFG_PATH_LOC, getenv("HOME")); // REL 1
+    char* cfg_path_glo = cstr_new_cstring(CFG_PATH_GLO);                                                                                    // REL 2
 
     if (config_read(cfg_path_loc) < 0)
     {
@@ -821,8 +769,8 @@ int main(int argc, char** argv)
 
     while (alive)
     {
-	unsigned long state                             = 0;
-	char          input_buffer[INPUT_BUFFER_LENGTH] = {0};
+	unsigned long state           = 0;
+	char          input_buffer[3] = {0};
 	char*         fgets_rv;
 
 	switch (poll(fds, 2, !showup ? -1 : timeout_msec))
@@ -875,7 +823,7 @@ int main(int argc, char** argv)
 			break;
 		    }
 
-		    fgets_rv = fgets(input_buffer, INPUT_BUFFER_LENGTH, stdin);
+		    fgets_rv = fgets(input_buffer, 3, stdin);
 
 		    if (feof(stdin))
 		    {
