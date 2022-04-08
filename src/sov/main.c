@@ -80,7 +80,7 @@ struct sov
     struct wl_list                 output_configs;
     struct wl_registry*            wl_registry;
     struct wl_shm*                 wl_shm;
-    struct sov_geom*               sov_geom;
+    struct sov_geom                sov_geom;
     struct zwlr_layer_shell_v1*    wlr_layer_shell;
     struct zxdg_output_manager_v1* xdg_output_manager;
     struct sov_surface*            fallback_sov_surface;
@@ -518,7 +518,7 @@ int sov_show(struct sov* app)
     if (wl_list_empty(&(app->sov_outputs)))
     {
 	sov_log_info("No output matching configuration found, fallbacking to focused output");
-	app->fallback_sov_surface = sov_surface_create(app, NULL, bitmap->w, bitmap->h, app->sov_geom->margin, app->sov_geom->anchor);
+	app->fallback_sov_surface = sov_surface_create(app, NULL, bitmap->w, bitmap->h, app->sov_geom.margin, app->sov_geom.anchor);
     }
     else
     {
@@ -526,7 +526,7 @@ int sov_show(struct sov* app)
 	wl_list_for_each_safe(output, tmp, &app->sov_outputs, link)
 	{
 	    sov_log_info("Showing bar on output %s", output->name);
-	    output->sov_surface = sov_surface_create(app, output->wl_output, bitmap->w, bitmap->h, app->sov_geom->margin, app->sov_geom->anchor);
+	    output->sov_surface = sov_surface_create(app, output->wl_output, bitmap->w, bitmap->h, app->sov_geom.margin, app->sov_geom.anchor);
 	}
     }
 
@@ -649,10 +649,10 @@ int main(int argc, char** argv)
     const char* usage =
 	"Usage: sov [options]\n"
 	"\n"
-	"  -h, --help                          Show help message and quit.\n"
-	"  -v                                  Increase verbosity of messages, defaults to errors and warnings only\n"
 	"  -c  --config= [path]                Use config file for session"
-	"  -O, --output <name>                 Define output to show bar on or '*' for all. If ommited, focused output is chosen.\n"
+	"  -h, --help                          Show help message and quit.\n"
+	"  -o, --output <name>                 Define output to show bar on or '*' for all. If ommited, focused output is chosen.\n"
+	"  -v                                  Increase verbosity of messages, defaults to errors and warnings only\n"
 	"\n";
 
     struct sov app = {0};
@@ -678,8 +678,7 @@ int main(int argc, char** argv)
 		}
 		break;
 	    case 'h': printf("%s", usage); return EXIT_SUCCESS;
-	    case 'v': sov_log_inc_verbosity(); break;
-	    case 'O':
+	    case 'o':
 	    {
 		struct sov_output_config* output_config = calloc(1, sizeof(struct sov_output_config)); // FREE!!!
 		if (output_config == NULL)
@@ -699,11 +698,10 @@ int main(int argc, char** argv)
 		wl_list_insert(&(app.output_configs), &(output_config->link));
 		break;
 	    }
+	    case 'v': sov_log_inc_verbosity(); break;
 	    default: fprintf(stderr, "%s", usage); return EXIT_FAILURE;
 	}
     }
-
-    struct sov_geom geom = {0};
 
     /* init config */
 
@@ -728,6 +726,18 @@ int main(int argc, char** argv)
     REL(cfg_path_glo); // REL 2
     REL(cfg_path_loc); // REL 1
 
+    /* get anchor and margin values from config */
+
+    app.sov_geom.margin = config_get_int("margin");
+    char* anchor        = config_get("anchor");
+    if (anchor)
+    {
+	if (strcmp(anchor, "left") == 0) app.sov_geom.anchor |= ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT;
+	if (strcmp(anchor, "right") == 0) app.sov_geom.anchor |= ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT;
+	if (strcmp(anchor, "top") == 0) app.sov_geom.anchor |= ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP;
+	if (strcmp(anchor, "bottom") == 0) app.sov_geom.anchor |= ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM;
+    }
+
     if (sov_log_get_level() == 2) config_describe();
 
     /* init text rendeing */
@@ -736,8 +746,6 @@ int main(int argc, char** argv)
 
     char* font_face = config_get("font_face");
     font_path       = fontconfig_new_path(font_face ? font_face : ""); // REL 3
-
-    app.sov_geom = &geom;
 
     int shmid = sov_shm_create();
     if (shmid < 0) { return EXIT_FAILURE; }
