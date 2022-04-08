@@ -4,6 +4,7 @@
 #define SOV_FILE "main.c"
 
 #include <errno.h>
+#include <fcntl.h>
 #include <getopt.h>
 #include <limits.h>
 #include <poll.h>
@@ -11,12 +12,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/mman.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/un.h>
 #include <unistd.h>
 
-#include "buffer.c"
 #include "config.c"
 #include "fontconfig.c"
 #include "kvlines.c"
@@ -29,16 +30,13 @@
 #include "zc_channel.c"
 #include "zc_cstring.c"
 #include "zc_cstrpath.c"
+#include "zc_graphics.c"
 #include "zc_log.c"
 #include "zc_vector.c"
 
-#define SOV_DEFAULT_ANCHOR 0
-#define SOV_DEFAULT_MARGIN 0
 #define INPUT_BUFFER_LENGTH (3 * sizeof(unsigned long) + sizeof(" #000000FF #FFFFFFFF #FFFFFFFF\n")) // sizeof already includes NULL byte
 #define CFG_PATH_LOC "~/.config/sway-overview/config"
 #define CFG_PATH_GLO "/usr/share/sway-overview/config"
-#define WIN_APPID "sway-overview"
-#define WIN_TITLE "sway-overview"
 #define GET_WORKSPACES_CMD "swaymsg -t get_workspaces"
 #define GET_TREE_CMD "swaymsg -t get_tree"
 
@@ -92,6 +90,56 @@ struct sov
 
 void noop()
 { /* intentionally left blank */
+}
+
+int sov_shm_create()
+{
+    int  shmid = -1;
+    char shm_name[NAME_MAX];
+    for (int i = 0; i < UCHAR_MAX; ++i)
+    {
+	if (snprintf(shm_name, NAME_MAX, "/wob-%d", i) >= NAME_MAX)
+	{
+	    break;
+	}
+	shmid = shm_open(shm_name, O_RDWR | O_CREAT | O_EXCL, 0600);
+	if (shmid > 0 || errno != EEXIST)
+	{
+	    break;
+	}
+    }
+
+    if (shmid < 0)
+    {
+	sov_log_error("shm_open() failed: %s", strerror(errno));
+	return -1;
+    }
+
+    if (shm_unlink(shm_name) != 0)
+    {
+	sov_log_error("shm_unlink() failed: %s", strerror(errno));
+	return -1;
+    }
+
+    return shmid;
+}
+
+void* sov_shm_alloc(const int shmid, const size_t size)
+{
+    if (ftruncate(shmid, size) != 0)
+    {
+	sov_log_error("ftruncate() failed: %s", strerror(errno));
+	return NULL;
+    }
+
+    void* buffer = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, shmid, 0);
+    if (buffer == MAP_FAILED)
+    {
+	sov_log_error("mmap() failed: %s", strerror(errno));
+	return NULL;
+    }
+
+    return buffer;
 }
 
 void xdg_output_handle_name(
@@ -618,10 +666,7 @@ int main(int argc, char** argv)
     wl_list_init(&(app.output_configs));
 
     char*           cfg_path = NULL;
-    struct sov_geom geom     = {
-	    .anchor = SOV_DEFAULT_ANCHOR,
-	    .margin = SOV_DEFAULT_MARGIN,
-    };
+    struct sov_geom geom     = {0};
 
     struct sov_output_config* output_config;
     int                       option_index = 0;

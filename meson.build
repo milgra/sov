@@ -58,20 +58,17 @@ foreach p : client_protocols
   set_variable(name, dep)
 endforeach
 
-sov_inc = include_directories('src/overview/config',
-			      'src/overview/tree',
+sov_inc = include_directories('src/sov/config',
+			      'src/sov/tree',
 			      'src/modules/json',
 			      'src/modules/storage',
 			      'src/modules/zen_core',
 			      'src/modules/zen_text')
 
-sov_sources = ['src/overview/main.c',
-	       'src/overview/buffer.c',
-
-	       'src/overview/config/config.c',
-	       'src/overview/config/fontconfig.c',
-	       'src/overview/tree/tree_drawer.c',
-	       'src/overview/tree/tree_reader.c',	
+com_sources = ['src/sov/config/config.c',
+	       'src/sov/config/fontconfig.c',
+	       'src/sov/tree/tree_drawer.c',
+	       'src/sov/tree/tree_reader.c',	
 
 	       'src/modules/json/json.c',
 	       'src/modules/json/jsmn.c',
@@ -87,8 +84,11 @@ sov_sources = ['src/overview/main.c',
 	       'src/modules/zen_core/zc_string.c',
 	       'src/modules/zen_core/zc_vector.c',
 	       'src/modules/zen_core/zc_wrapper.c',
-	       'src/modules/zen_text/text.c'
-]
+	       'src/modules/zen_text/text.c']
+
+sov_sources = com_sources + 'src/sov/main.c'
+tst_sources = com_sources + 'src/sov/tree_test.c'
+
 sov_dependencies = [xdg_output_unstable_v1, wayland_client, wlr_layer_shell_unstable_v1, xdg_shell, rt, freetype, math]
 
 executable(
@@ -97,12 +97,11 @@ executable(
   include_directories: [sov_inc],
   dependencies: sov_dependencies,
   install: true,
-  link_args : '-fsanitize=address'
 )
 
-test('parse-input', executable(
-  'test-parse-input',
-  ['tests/sov_parse_input.c'],
+test('tree_test', executable(
+  'test-tree',
+  tst_sources,
   include_directories: [sov_inc],
-  link_args : '-fsanitize=address'
+  dependencies: sov_dependencies,
 ))
