@@ -20,7 +20,6 @@
 #include "config.c"
 #include "fontconfig.c"
 #include "kvlines.c"
-#include "log.c"
 #include "text.c"
 #include "tree_drawer.c"
 #include "tree_reader.c"
@@ -30,6 +29,7 @@
 #include "zc_channel.c"
 #include "zc_cstring.c"
 #include "zc_cstrpath.c"
+#include "zc_log.c"
 #include "zc_vector.c"
 
 #define SOV_DEFAULT_ANCHOR 0
@@ -94,7 +94,10 @@ void noop()
 { /* intentionally left blank */
 }
 
-void xdg_output_handle_name(void* data, struct zxdg_output_v1* xdg_output, const char* name)
+void xdg_output_handle_name(
+    void*                  data,
+    struct zxdg_output_v1* xdg_output,
+    const char*            name)
 {
     sov_log_info("Detected output %s", name);
     struct sov_output* output = (struct sov_output*) data;
@@ -106,7 +109,8 @@ void xdg_output_handle_name(void* data, struct zxdg_output_v1* xdg_output, const
     }
 }
 
-void sov_read_tree(vec_t* workspaces)
+void sov_read_tree(
+    vec_t* workspaces)
 {
     char  buff[100];
     char* ws_json   = NULL; // REL 0
@@ -182,7 +186,8 @@ struct sov_surface* sov_surface_create(
     return sov_surface;
 }
 
-void sov_surface_destroy(struct sov_surface* sov_surface)
+void sov_surface_destroy(
+    struct sov_surface* sov_surface)
 {
     if (sov_surface == NULL) { return; }
 
@@ -193,7 +198,8 @@ void sov_surface_destroy(struct sov_surface* sov_surface)
     sov_surface->wlr_layer_surface = NULL;
 }
 
-void sov_output_destroy(struct sov_output* output)
+void sov_output_destroy(
+    struct sov_output* output)
 {
     sov_surface_destroy(output->sov_surface);
     zxdg_output_v1_destroy(output->xdg_output);
@@ -208,7 +214,9 @@ void sov_output_destroy(struct sov_output* output)
     output->name        = NULL;
 }
 
-void xdg_output_handle_done(void* data, struct zxdg_output_v1* xdg_output)
+void xdg_output_handle_done(
+    void*                  data,
+    struct zxdg_output_v1* xdg_output)
 {
     struct sov_output* output = (struct sov_output*) data;
     struct sov*        app    = output->app;
@@ -230,7 +238,12 @@ void xdg_output_handle_done(void* data, struct zxdg_output_v1* xdg_output)
     free(output);
 }
 
-void handle_global(void* data, struct wl_registry* registry, uint32_t name, const char* interface, uint32_t version)
+void handle_global(
+    void*               data,
+    struct wl_registry* registry,
+    uint32_t            name,
+    const char*         interface,
+    uint32_t            version)
 {
     const static struct zxdg_output_v1_listener xdg_output_listener = {
 	.logical_position = noop,
@@ -242,7 +255,10 @@ void handle_global(void* data, struct wl_registry* registry, uint32_t name, cons
 
     struct sov* app = (struct sov*) data;
 
-    if (strcmp(interface, wl_shm_interface.name) == 0) { app->wl_shm = wl_registry_bind(registry, name, &wl_shm_interface, 1); }
+    if (strcmp(interface, wl_shm_interface.name) == 0)
+    {
+	app->wl_shm = wl_registry_bind(registry, name, &wl_shm_interface, 1);
+    }
     else if (strcmp(interface, wl_compositor_interface.name) == 0)
     {
 	app->wl_compositor = wl_registry_bind(registry, name, &wl_compositor_interface, 1);
@@ -276,7 +292,10 @@ void handle_global(void* data, struct wl_registry* registry, uint32_t name, cons
     }
 }
 
-void handle_global_remove(void* data, struct wl_registry* registry, uint32_t name)
+void handle_global_remove(
+    void*               data,
+    struct wl_registry* registry,
+    uint32_t            name)
 {
     struct sov*        app = (struct sov*) data;
     struct sov_output *output, *tmp;
@@ -290,7 +309,8 @@ void handle_global_remove(void* data, struct wl_registry* registry, uint32_t nam
     }
 }
 
-void sov_hide(struct sov* app)
+void sov_hide(
+    struct sov* app)
 {
     if (wl_list_empty(&(app->sov_outputs)))
     {
@@ -342,7 +362,18 @@ int sov_show(struct sov* app)
 
 	bitmap = bm_new(lay_wth, lay_hth); // REL 1
 
-	gfx_rounded_rect(bitmap, 0, 0, bitmap->w, bitmap->h, 20, 1.0, cstr_color_from_cstring(config_get("window_color")), 0);
+	uint32_t window_color = cstr_color_from_cstring(config_get("window_color"));
+
+	gfx_rounded_rect(
+	    bitmap,
+	    0,
+	    0,
+	    bitmap->w,
+	    bitmap->h,
+	    20,
+	    1.0,
+	    window_color,
+	    0);
 
 	textstyle_t main_style = {
 	    .font       = font_path,
@@ -380,7 +411,22 @@ int sov_show(struct sov* app)
 	};
 
 	tree_drawer_draw(
-	    bitmap, workspaces, gap, cols, ratio, main_style, sub_style, wsnum_style, cstr_color_from_cstring(config_get("window_color")), cstr_color_from_cstring(config_get("background_color")), cstr_color_from_cstring(config_get("background_color_focused")), cstr_color_from_cstring(config_get("border_color")), cstr_color_from_cstring(config_get("empty_color")), cstr_color_from_cstring(config_get("empty_frame_color")), config_get_int("text_workspace_xshift"), config_get_int("text_workspace_yshift"));
+	    bitmap,
+	    workspaces,
+	    gap,
+	    cols,
+	    ratio,
+	    main_style,
+	    sub_style,
+	    wsnum_style,
+	    cstr_color_from_cstring(config_get("window_color")),
+	    cstr_color_from_cstring(config_get("background_color")),
+	    cstr_color_from_cstring(config_get("background_color_focused")),
+	    cstr_color_from_cstring(config_get("border_color")),
+	    cstr_color_from_cstring(config_get("empty_color")),
+	    cstr_color_from_cstring(config_get("empty_frame_color")),
+	    config_get_int("text_workspace_xshift"),
+	    config_get_int("text_workspace_yshift"));
 
 	uint32_t size   = bitmap->w * bitmap->h * 4;
 	uint32_t stride = bitmap->w * 4;
