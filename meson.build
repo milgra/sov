@@ -103,6 +103,8 @@ executable(
   install: true,
 )
 
+install_data('config', install_dir : get_option('datadir') / 'sov')
+
 test('tree_test', executable(
   'test-tree',
   tst_sources,

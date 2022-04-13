@@ -1,5 +1,14 @@
+# anchor, where to display sov, top, bottom, left, right, center
+anchor center
+
+# margin, distance from edges if anchor is set
+margin 0
+
+# show timeout in millisecs
+timeout 200
+
 # distance between workspaces
-gap 25
+gap 20
 
 # columns
 columns 5
@@ -26,10 +35,10 @@ text_title_color #FFFFFFFF
 text_description_size 12
 
 # description text color
-text_description_color #AADDFFFF
+text_description_color #999999FF
 
 # workspace number text size
-text_workspace_size 20
+text_workspace_size 18
 
 # workspace number text color
 text_workspace_color #FFFFFFFF
@@ -41,10 +50,19 @@ text_workspace_xshift 11
 text_workspace_yshift -17
 
 # border color
-border_color #AADDFF6FF
+border_color #BCBCBCFF
 
 # background color
-background_color #000022FF
+background_color #222222FF
 
 # focused background color
-background_color_focused #222266FF
+background_color_focused #444444FF
+
+# window color
+window_color #000000AA
+
+# empty thumb color
+empty_color #111111FF
+
+# empty thumb border
+empty_frame_color #555555FF

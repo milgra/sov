@@ -1,10 +1,16 @@
 crash on empty workspace
 check wob's package build
 default anchor and margin from config
+crash on feh
+[destroyed object]: error 2: error accessing SHM buffer
+1649746916.248524 ERROR ../src/sov/main.c:587: wl_display_dispatch failed
 
 # how to create debug build
 
+
 CC=clang meson build --buildtype=debug -Db_sanitize=address -Db_lundef=false
+
+CC=clang meson build --buildtype=release
 
 # sov — Sway Overview
 

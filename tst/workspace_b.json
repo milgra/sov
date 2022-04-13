@@ -1,0 +1,348 @@
+[
+  {
+    "id": 4,
+    "type": "workspace",
+    "orientation": "horizontal",
+    "percent": null,
+    "urgent": false,
+    "marks": [],
+    "layout": "splith",
+    "border": "none",
+    "current_border_width": 0,
+    "rect": {
+      "x": 5,
+      "y": 29,
+      "width": 1910,
+      "height": 1046
+    },
+    "deco_rect": {
+      "x": 0,
+      "y": 0,
+      "width": 0,
+      "height": 0
+    },
+    "window_rect": {
+      "x": 0,
+      "y": 0,
+      "width": 0,
+      "height": 0
+    },
+    "geometry": {
+      "x": 0,
+      "y": 0,
+      "width": 0,
+      "height": 0
+    },
+    "name": "1",
+    "window": null,
+    "nodes": [],
+    "floating_nodes": [],
+    "focus": [
+      150,
+      128
+    ],
+    "fullscreen_mode": 1,
+    "sticky": false,
+    "num": 1,
+    "output": "eDP-1",
+    "representation": "H[foot foot]",
+    "focused": true,
+    "visible": true
+  },
+  {
+    "id": 6,
+    "type": "workspace",
+    "orientation": "horizontal",
+    "percent": null,
+    "urgent": false,
+    "marks": [],
+    "layout": "splith",
+    "border": "none",
+    "current_border_width": 0,
+    "rect": {
+      "x": 5,
+      "y": 29,
+      "width": 1910,
+      "height": 1046
+    },
+    "deco_rect": {
+      "x": 0,
+      "y": 0,
+      "width": 0,
+      "height": 0
+    },
+    "window_rect": {
+      "x": 0,
+      "y": 0,
+      "width": 0,
+      "height": 0
+    },
+    "geometry": {
+      "x": 0,
+      "y": 0,
+      "width": 0,
+      "height": 0
+    },
+    "name": "2",
+    "window": null,
+    "nodes": [],
+    "floating_nodes": [],
+    "focus": [
+      7,
+      149
+    ],
+    "fullscreen_mode": 1,
+    "sticky": false,
+    "num": 2,
+    "output": "eDP-1",
+    "representation": "H[foot foot]",
+    "focused": false,
+    "visible": false
+  },
+  {
+    "id": 8,
+    "type": "workspace",
+    "orientation": "horizontal",
+    "percent": null,
+    "urgent": false,
+    "marks": [],
+    "layout": "splith",
+    "border": "none",
+    "current_border_width": 0,
+    "rect": {
+      "x": 5,
+      "y": 29,
+      "width": 1910,
+      "height": 1046
+    },
+    "deco_rect": {
+      "x": 0,
+      "y": 0,
+      "width": 0,
+      "height": 0
+    },
+    "window_rect": {
+      "x": 0,
+      "y": 0,
+      "width": 0,
+      "height": 0
+    },
+    "geometry": {
+      "x": 0,
+      "y": 0,
+      "width": 0,
+      "height": 0
+    },
+    "name": "3",
+    "window": null,
+    "nodes": [],
+    "floating_nodes": [],
+    "focus": [
+      10
+    ],
+    "fullscreen_mode": 1,
+    "sticky": false,
+    "num": 3,
+    "output": "eDP-1",
+    "representation": "H[google-chrome]",
+    "focused": false,
+    "visible": false
+  },
+  {
+    "id": 13,
+    "type": "workspace",
+    "orientation": "horizontal",
+    "percent": null,
+    "urgent": false,
+    "marks": [],
+    "layout": "splith",
+    "border": "none",
+    "current_border_width": 0,
+    "rect": {
+      "x": 5,
+      "y": 29,
+      "width": 1910,
+      "height": 1046
+    },
+    "deco_rect": {
+      "x": 0,
+      "y": 0,
+      "width": 0,
+      "height": 0
+    },
+    "window_rect": {
+      "x": 0,
+      "y": 0,
+      "width": 0,
+      "height": 0
+    },
+    "geometry": {
+      "x": 0,
+      "y": 0,
+      "width": 0,
+      "height": 0
+    },
+    "name": "4",
+    "window": null,
+    "nodes": [],
+    "floating_nodes": [],
+    "focus": [
+      11,
+      12
+    ],
+    "fullscreen_mode": 1,
+    "sticky": false,
+    "num": 4,
+    "output": "eDP-1",
+    "representation": "H[google-chrome google-chrome]",
+    "focused": false,
+    "visible": false
+  },
+  {
+    "id": 114,
+    "type": "workspace",
+    "orientation": "horizontal",
+    "percent": null,
+    "urgent": false,
+    "marks": [],
+    "layout": "splith",
+    "border": "none",
+    "current_border_width": 0,
+    "rect": {
+      "x": 5,
+      "y": 29,
+      "width": 1910,
+      "height": 1046
+    },
+    "deco_rect": {
+      "x": 0,
+      "y": 0,
+      "width": 0,
+      "height": 0
+    },
+    "window_rect": {
+      "x": 0,
+      "y": 0,
+      "width": 0,
+      "height": 0
+    },
+    "geometry": {
+      "x": 0,
+      "y": 0,
+      "width": 0,
+      "height": 0
+    },
+    "name": "5",
+    "window": null,
+    "nodes": [],
+    "floating_nodes": [],
+    "focus": [
+      115
+    ],
+    "fullscreen_mode": 1,
+    "sticky": false,
+    "num": 5,
+    "output": "eDP-1",
+    "representation": "H[foot]",
+    "focused": false,
+    "visible": false
+  },
+  {
+    "id": 117,
+    "type": "workspace",
+    "orientation": "horizontal",
+    "percent": null,
+    "urgent": false,
+    "marks": [],
+    "layout": "splith",
+    "border": "none",
+    "current_border_width": 0,
+    "rect": {
+      "x": 5,
+      "y": 29,
+      "width": 1910,
+      "height": 1046
+    },
+    "deco_rect": {
+      "x": 0,
+      "y": 0,
+      "width": 0,
+      "height": 0
+    },
+    "window_rect": {
+      "x": 0,
+      "y": 0,
+      "width": 0,
+      "height": 0
+    },
+    "geometry": {
+      "x": 0,
+      "y": 0,
+      "width": 0,
+      "height": 0
+    },
+    "name": "6",
+    "window": null,
+    "nodes": [],
+    "floating_nodes": [],
+    "focus": [
+      120
+    ],
+    "fullscreen_mode": 1,
+    "sticky": false,
+    "num": 6,
+    "output": "eDP-1",
+    "representation": "H[V[foot foot foot]]",
+    "focused": false,
+    "visible": false
+  },
+  {
+    "id": 129,
+    "type": "workspace",
+    "orientation": "horizontal",
+    "percent": null,
+    "urgent": false,
+    "marks": [],
+    "layout": "splith",
+    "border": "none",
+    "current_border_width": 0,
+    "rect": {
+      "x": 5,
+      "y": 29,
+      "width": 1910,
+      "height": 1046
+    },
+    "deco_rect": {
+      "x": 0,
+      "y": 0,
+      "width": 0,
+      "height": 0
+    },
+    "window_rect": {
+      "x": 0,
+      "y": 0,
+      "width": 0,
+      "height": 0
+    },
+    "geometry": {
+      "x": 0,
+      "y": 0,
+      "width": 0,
+      "height": 0
+    },
+    "name": "7",
+    "window": null,
+    "nodes": [],
+    "floating_nodes": [],
+    "focus": [
+      119
+    ],
+    "fullscreen_mode": 1,
+    "sticky": false,
+    "num": 7,
+    "output": "eDP-1",
+    "representation": "H[foot]",
+    "focused": false,
+    "visible": false
+  }
+]

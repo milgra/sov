@@ -1,3 +1,12 @@
+# anchor, where to display sov, top, bottom, left, right, center
+anchor center
+
+# margin, distance from edges if anchor is set
+margin 0
+
+# show timeout in millisecs
+timeout 200
+
 # distance between workspaces
 gap 5
 
@@ -48,3 +57,12 @@ background_color #445522FF
 
 # focused background color
 background_color_focused #662222FF
+
+# window color
+window_color #445566AA
+
+# empty thumb color
+empty_color #115511FF
+
+# empty thumb border
+empty_frame_color #005522FF

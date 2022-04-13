@@ -7,6 +7,7 @@
 #include "zc_bitmap.c"
 #include "zc_cstring.c"
 #include "zc_cstrpath.c"
+#include "zc_graphics.c"
 #include <getopt.h>
 #include <limits.h>
 #include <math.h>
@@ -72,6 +73,8 @@ int main(int argc, char* argv[])
     sway_workspace_t* ws  = workspaces->data[0];
     sway_workspace_t* wsl = workspaces->data[workspaces->length - 1];
 
+    bm_t* bitmap;
+
     if (ws->width > 0 && ws->height > 0)
     {
 	int gap   = config_get_int("gap");
@@ -82,12 +85,25 @@ int main(int argc, char* argv[])
 	int lay_wth = cols * (ws->width / ratio) + (cols + 1) * gap;
 	int lay_hth = rows * (ws->height / ratio) + (rows + 1) * gap;
 
-	bm_t* bitmap = bm_new(lay_wth, lay_hth); // REL 5
+	bitmap = bm_new(lay_wth, lay_hth); // REL 1
+
+	uint32_t window_color = cstr_color_from_cstring(config_get("window_color"));
+
+	gfx_rounded_rect(
+	    bitmap,
+	    0,
+	    0,
+	    bitmap->w,
+	    bitmap->h,
+	    20,
+	    1.0,
+	    window_color,
+	    0);
 
 	textstyle_t main_style = {
 	    .font       = font_path,
-	    .margin     = 5,
-	    .margin_top = -7,
+	    .margin     = config_get_int("text_margin_size"),
+	    .margin_top = config_get_int("text_margin_top_size"),
 	    .align      = TA_LEFT,
 	    .valign     = VA_TOP,
 	    .size       = config_get_int("text_title_size"),
@@ -98,19 +114,20 @@ int main(int argc, char* argv[])
 
 	textstyle_t sub_style = {
 	    .font        = font_path,
-	    .margin      = 5,
-	    .margin_top  = 10,
+	    .margin      = config_get_int("text_margin_size"),
+	    .margin_top  = config_get_int("text_margin_top_size") + config_get_int("text_title_size"),
 	    .align       = TA_LEFT,
 	    .valign      = VA_TOP,
 	    .size        = config_get_int("text_description_size"),
 	    .textcolor   = cstr_color_from_cstring(config_get("text_description_color")),
 	    .backcolor   = 0,
-	    .line_height = 12,
+	    .line_height = config_get_int("text_description_size"),
 	    .multiline   = 1,
 	};
 
 	textstyle_t wsnum_style = {
 	    .font      = font_path,
+	    .margin    = config_get_int("text_margin_size"),
 	    .align     = TA_RIGHT,
 	    .valign    = VA_TOP,
 	    .size      = config_get_int("text_workspace_size"),

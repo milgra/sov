@@ -1,0 +1,873 @@
+{
+  "id": 1,
+  "type": "root",
+  "orientation": "horizontal",
+  "percent": null,
+  "urgent": false,
+  "marks": [],
+  "focused": false,
+  "layout": "splith",
+  "border": "none",
+  "current_border_width": 0,
+  "rect": {
+    "x": 0,
+    "y": 0,
+    "width": 1920,
+    "height": 1080
+  },
+  "deco_rect": {
+    "x": 0,
+    "y": 0,
+    "width": 0,
+    "height": 0
+  },
+  "window_rect": {
+    "x": 0,
+    "y": 0,
+    "width": 0,
+    "height": 0
+  },
+  "geometry": {
+    "x": 0,
+    "y": 0,
+    "width": 0,
+    "height": 0
+  },
+  "name": "root",
+  "window": null,
+  "nodes": [
+    {
+      "id": 2147483647,
+      "type": "output",
+      "orientation": "horizontal",
+      "percent": null,
+      "urgent": false,
+      "marks": [],
+      "focused": false,
+      "layout": "output",
+      "border": "none",
+      "current_border_width": 0,
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 1920,
+        "height": 1080
+      },
+      "deco_rect": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0
+      },
+      "window_rect": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0
+      },
+      "geometry": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0
+      },
+      "name": "__i3",
+      "window": null,
+      "nodes": [
+        {
+          "id": 2147483646,
+          "type": "workspace",
+          "orientation": "horizontal",
+          "percent": null,
+          "urgent": false,
+          "marks": [],
+          "focused": false,
+          "layout": "splith",
+          "border": "none",
+          "current_border_width": 0,
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 1920,
+            "height": 1080
+          },
+          "deco_rect": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          },
+          "window_rect": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          },
+          "geometry": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          },
+          "name": "__i3_scratch",
+          "window": null,
+          "nodes": [],
+          "floating_nodes": [],
+          "focus": [],
+          "fullscreen_mode": 1,
+          "sticky": false
+        }
+      ],
+      "floating_nodes": [],
+      "focus": [
+        2147483646
+      ],
+      "fullscreen_mode": 0,
+      "sticky": false
+    },
+    {
+      "id": 3,
+      "type": "output",
+      "orientation": "none",
+      "percent": 1,
+      "urgent": false,
+      "marks": [],
+      "focused": false,
+      "layout": "output",
+      "border": "none",
+      "current_border_width": 0,
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 1920,
+        "height": 1080
+      },
+      "deco_rect": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0
+      },
+      "window_rect": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0
+      },
+      "geometry": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0
+      },
+      "name": "eDP-1",
+      "window": null,
+      "nodes": [
+        {
+          "id": 4,
+          "type": "workspace",
+          "orientation": "horizontal",
+          "percent": null,
+          "urgent": false,
+          "marks": [],
+          "focused": false,
+          "layout": "splith",
+          "border": "none",
+          "current_border_width": 0,
+          "rect": {
+            "x": 5,
+            "y": 29,
+            "width": 1910,
+            "height": 1046
+          },
+          "deco_rect": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          },
+          "window_rect": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          },
+          "geometry": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          },
+          "name": "1",
+          "window": null,
+          "nodes": [
+            {
+              "id": 62,
+              "type": "con",
+              "orientation": "vertical",
+              "percent": 1,
+              "urgent": false,
+              "marks": [],
+              "focused": false,
+              "layout": "splitv",
+              "border": "none",
+              "current_border_width": 0,
+              "rect": {
+                "x": 5,
+                "y": 29,
+                "width": 1910,
+                "height": 1046
+              },
+              "deco_rect": {
+                "x": 0,
+                "y": 0,
+                "width": 0,
+                "height": 0
+              },
+              "window_rect": {
+                "x": 0,
+                "y": 0,
+                "width": 0,
+                "height": 0
+              },
+              "geometry": {
+                "x": 0,
+                "y": 0,
+                "width": 0,
+                "height": 0
+              },
+              "name": null,
+              "window": null,
+              "nodes": [
+                {
+                  "id": 5,
+                  "type": "con",
+                  "orientation": "none",
+                  "percent": 0.4980879541108987,
+                  "urgent": false,
+                  "marks": [],
+                  "focused": false,
+                  "layout": "none",
+                  "border": "pixel",
+                  "current_border_width": 1,
+                  "rect": {
+                    "x": 5,
+                    "y": 29,
+                    "width": 1910,
+                    "height": 521
+                  },
+                  "deco_rect": {
+                    "x": 0,
+                    "y": 0,
+                    "width": 0,
+                    "height": 0
+                  },
+                  "window_rect": {
+                    "x": 1,
+                    "y": 1,
+                    "width": 1908,
+                    "height": 519
+                  },
+                  "geometry": {
+                    "x": 0,
+                    "y": 0,
+                    "width": 700,
+                    "height": 500
+                  },
+                  "name": "emacs",
+                  "window": null,
+                  "nodes": [],
+                  "floating_nodes": [],
+                  "focus": [],
+                  "fullscreen_mode": 0,
+                  "sticky": false,
+                  "pid": 1363,
+                  "app_id": "foot",
+                  "visible": true,
+                  "max_render_time": 0,
+                  "shell": "xdg_shell",
+                  "inhibit_idle": false,
+                  "idle_inhibitors": {
+                    "user": "none",
+                    "application": "none"
+                  }
+                },
+                {
+                  "id": 93,
+                  "type": "con",
+                  "orientation": "none",
+                  "percent": 0.497131931166348,
+                  "urgent": false,
+                  "marks": [],
+                  "focused": true,
+                  "layout": "none",
+                  "border": "pixel",
+                  "current_border_width": 1,
+                  "rect": {
+                    "x": 5,
+                    "y": 555,
+                    "width": 1910,
+                    "height": 520
+                  },
+                  "deco_rect": {
+                    "x": 0,
+                    "y": 0,
+                    "width": 0,
+                    "height": 0
+                  },
+                  "window_rect": {
+                    "x": 1,
+                    "y": 1,
+                    "width": 1908,
+                    "height": 518
+                  },
+                  "geometry": {
+                    "x": 0,
+                    "y": 0,
+                    "width": 700,
+                    "height": 500
+                  },
+                  "name": "swaymsg -t get_tree | jq > tst/tst_tree1.json",
+                  "window": null,
+                  "nodes": [],
+                  "floating_nodes": [],
+                  "focus": [],
+                  "fullscreen_mode": 0,
+                  "sticky": false,
+                  "pid": 43104,
+                  "app_id": "foot",
+                  "visible": true,
+                  "max_render_time": 0,
+                  "shell": "xdg_shell",
+                  "inhibit_idle": false,
+                  "idle_inhibitors": {
+                    "user": "none",
+                    "application": "none"
+                  }
+                }
+              ],
+              "floating_nodes": [],
+              "focus": [
+                93,
+                5
+              ],
+              "fullscreen_mode": 0,
+              "sticky": false
+            }
+          ],
+          "floating_nodes": [],
+          "focus": [
+            62
+          ],
+          "fullscreen_mode": 1,
+          "sticky": false,
+          "num": 1,
+          "output": "eDP-1",
+          "representation": "H[V[foot foot]]"
+        },
+        {
+          "id": 6,
+          "type": "workspace",
+          "orientation": "horizontal",
+          "percent": null,
+          "urgent": false,
+          "marks": [],
+          "focused": false,
+          "layout": "splith",
+          "border": "none",
+          "current_border_width": 0,
+          "rect": {
+            "x": 5,
+            "y": 29,
+            "width": 1910,
+            "height": 1046
+          },
+          "deco_rect": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          },
+          "window_rect": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          },
+          "geometry": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          },
+          "name": "2",
+          "window": null,
+          "nodes": [
+            {
+              "id": 7,
+              "type": "con",
+              "orientation": "none",
+              "percent": 1,
+              "urgent": false,
+              "marks": [],
+              "focused": false,
+              "layout": "none",
+              "border": "pixel",
+              "current_border_width": 1,
+              "rect": {
+                "x": 5,
+                "y": 29,
+                "width": 1910,
+                "height": 1046
+              },
+              "deco_rect": {
+                "x": 0,
+                "y": 0,
+                "width": 0,
+                "height": 0
+              },
+              "window_rect": {
+                "x": 1,
+                "y": 1,
+                "width": 1908,
+                "height": 1044
+              },
+              "geometry": {
+                "x": 0,
+                "y": 0,
+                "width": 700,
+                "height": 500
+              },
+              "name": "build/test-tree -c tst/test_config_1 -w tst/tst_ws1.json -t tst/tst_tree1.json -o tst/curr_tst1.bmp",
+              "window": null,
+              "nodes": [],
+              "floating_nodes": [],
+              "focus": [],
+              "fullscreen_mode": 0,
+              "sticky": false,
+              "pid": 1386,
+              "app_id": "foot",
+              "visible": false,
+              "max_render_time": 0,
+              "shell": "xdg_shell",
+              "inhibit_idle": false,
+              "idle_inhibitors": {
+                "user": "none",
+                "application": "none"
+              }
+            }
+          ],
+          "floating_nodes": [],
+          "focus": [
+            7
+          ],
+          "fullscreen_mode": 1,
+          "sticky": false,
+          "num": 2,
+          "output": "eDP-1",
+          "representation": "H[foot]"
+        },
+        {
+          "id": 64,
+          "type": "workspace",
+          "orientation": "horizontal",
+          "percent": null,
+          "urgent": false,
+          "marks": [],
+          "focused": false,
+          "layout": "splith",
+          "border": "none",
+          "current_border_width": 0,
+          "rect": {
+            "x": 5,
+            "y": 29,
+            "width": 1910,
+            "height": 1046
+          },
+          "deco_rect": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          },
+          "window_rect": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          },
+          "geometry": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          },
+          "name": "3",
+          "window": null,
+          "nodes": [
+            {
+              "id": 9,
+              "type": "con",
+              "orientation": "none",
+              "percent": 1,
+              "urgent": false,
+              "marks": [],
+              "focused": false,
+              "layout": "none",
+              "border": "none",
+              "current_border_width": 2,
+              "rect": {
+                "x": 5,
+                "y": 29,
+                "width": 1910,
+                "height": 1046
+              },
+              "deco_rect": {
+                "x": 0,
+                "y": 0,
+                "width": 0,
+                "height": 0
+              },
+              "window_rect": {
+                "x": 0,
+                "y": 0,
+                "width": 1910,
+                "height": 1046
+              },
+              "geometry": {
+                "x": 0,
+                "y": 0,
+                "width": 1910,
+                "height": 1046
+              },
+              "name": "With Hearts Toward None IV - YouTube Music - Google Chrome",
+              "window": null,
+              "nodes": [],
+              "floating_nodes": [],
+              "focus": [],
+              "fullscreen_mode": 0,
+              "sticky": false,
+              "pid": 1407,
+              "app_id": "google-chrome",
+              "visible": false,
+              "max_render_time": 0,
+              "shell": "xdg_shell",
+              "inhibit_idle": false,
+              "idle_inhibitors": {
+                "user": "none",
+                "application": "enabled"
+              }
+            }
+          ],
+          "floating_nodes": [],
+          "focus": [
+            9
+          ],
+          "fullscreen_mode": 1,
+          "sticky": false,
+          "num": 3,
+          "output": "eDP-1",
+          "representation": "H[google-chrome]"
+        },
+        {
+          "id": 12,
+          "type": "workspace",
+          "orientation": "horizontal",
+          "percent": null,
+          "urgent": false,
+          "marks": [],
+          "focused": false,
+          "layout": "splith",
+          "border": "none",
+          "current_border_width": 0,
+          "rect": {
+            "x": 5,
+            "y": 29,
+            "width": 1910,
+            "height": 1046
+          },
+          "deco_rect": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          },
+          "window_rect": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          },
+          "geometry": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          },
+          "name": "4",
+          "window": null,
+          "nodes": [
+            {
+              "id": 11,
+              "type": "con",
+              "orientation": "none",
+              "percent": 0.4989528795811518,
+              "urgent": false,
+              "marks": [],
+              "focused": false,
+              "layout": "none",
+              "border": "none",
+              "current_border_width": 2,
+              "rect": {
+                "x": 5,
+                "y": 29,
+                "width": 953,
+                "height": 1046
+              },
+              "deco_rect": {
+                "x": 0,
+                "y": 0,
+                "width": 0,
+                "height": 0
+              },
+              "window_rect": {
+                "x": 0,
+                "y": 0,
+                "width": 953,
+                "height": 1046
+              },
+              "geometry": {
+                "x": 0,
+                "y": 0,
+                "width": 953,
+                "height": 1046
+              },
+              "name": "Search results - milan.toth@flexiana.com - Flexiana Mail - Google Chrome",
+              "window": null,
+              "nodes": [],
+              "floating_nodes": [],
+              "focus": [],
+              "fullscreen_mode": 0,
+              "sticky": false,
+              "pid": 1407,
+              "app_id": "google-chrome",
+              "visible": false,
+              "max_render_time": 0,
+              "shell": "xdg_shell",
+              "inhibit_idle": false,
+              "idle_inhibitors": {
+                "user": "none",
+                "application": "none"
+              }
+            },
+            {
+              "id": 10,
+              "type": "con",
+              "orientation": "none",
+              "percent": 0.49842931937172774,
+              "urgent": false,
+              "marks": [],
+              "focused": false,
+              "layout": "none",
+              "border": "none",
+              "current_border_width": 2,
+              "rect": {
+                "x": 963,
+                "y": 29,
+                "width": 952,
+                "height": 1046
+              },
+              "deco_rect": {
+                "x": 0,
+                "y": 0,
+                "width": 0,
+                "height": 0
+              },
+              "window_rect": {
+                "x": 0,
+                "y": 0,
+                "width": 952,
+                "height": 1046
+              },
+              "geometry": {
+                "x": 0,
+                "y": 0,
+                "width": 952,
+                "height": 1046
+              },
+              "name": "(2) Roundcube Webmail :: Inbox - Google Chrome",
+              "window": null,
+              "nodes": [],
+              "floating_nodes": [],
+              "focus": [],
+              "fullscreen_mode": 0,
+              "sticky": false,
+              "pid": 1407,
+              "app_id": "google-chrome",
+              "visible": false,
+              "max_render_time": 0,
+              "shell": "xdg_shell",
+              "inhibit_idle": false,
+              "idle_inhibitors": {
+                "user": "none",
+                "application": "none"
+              }
+            }
+          ],
+          "floating_nodes": [],
+          "focus": [
+            10,
+            11
+          ],
+          "fullscreen_mode": 1,
+          "sticky": false,
+          "num": 4,
+          "output": "eDP-1",
+          "representation": "H[google-chrome google-chrome]"
+        },
+        {
+          "id": 88,
+          "type": "workspace",
+          "orientation": "horizontal",
+          "percent": null,
+          "urgent": false,
+          "marks": [],
+          "focused": false,
+          "layout": "splith",
+          "border": "none",
+          "current_border_width": 0,
+          "rect": {
+            "x": 5,
+            "y": 29,
+            "width": 1910,
+            "height": 1046
+          },
+          "deco_rect": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          },
+          "window_rect": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          },
+          "geometry": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          },
+          "name": "5",
+          "window": null,
+          "nodes": [
+            {
+              "id": 89,
+              "type": "con",
+              "orientation": "none",
+              "percent": 1,
+              "urgent": false,
+              "marks": [],
+              "focused": false,
+              "layout": "none",
+              "border": "pixel",
+              "current_border_width": 1,
+              "rect": {
+                "x": 5,
+                "y": 29,
+                "width": 1910,
+                "height": 1046
+              },
+              "deco_rect": {
+                "x": 0,
+                "y": 0,
+                "width": 0,
+                "height": 0
+              },
+              "window_rect": {
+                "x": 1,
+                "y": 1,
+                "width": 1908,
+                "height": 1044
+              },
+              "geometry": {
+                "x": 0,
+                "y": 0,
+                "width": 700,
+                "height": 500
+              },
+              "name": "mc [milgra@milgra-pc]:~/.config",
+              "window": null,
+              "nodes": [],
+              "floating_nodes": [],
+              "focus": [],
+              "fullscreen_mode": 0,
+              "sticky": false,
+              "pid": 42825,
+              "app_id": "foot",
+              "visible": false,
+              "max_render_time": 0,
+              "shell": "xdg_shell",
+              "inhibit_idle": false,
+              "idle_inhibitors": {
+                "user": "none",
+                "application": "none"
+              }
+            }
+          ],
+          "floating_nodes": [],
+          "focus": [
+            89
+          ],
+          "fullscreen_mode": 1,
+          "sticky": false,
+          "num": 5,
+          "output": "eDP-1",
+          "representation": "H[foot]"
+        }
+      ],
+      "floating_nodes": [],
+      "focus": [
+        4,
+        6,
+        64,
+        88,
+        12
+      ],
+      "fullscreen_mode": 0,
+      "sticky": false,
+      "active": true,
+      "dpms": true,
+      "primary": false,
+      "make": "Unknown",
+      "model": "0x0700",
+      "serial": "0x00000000",
+      "scale": 1,
+      "scale_filter": "nearest",
+      "transform": "normal",
+      "adaptive_sync_status": "disabled",
+      "current_workspace": "1",
+      "modes": [
+        {
+          "width": 1920,
+          "height": 1080,
+          "refresh": 60027
+        }
+      ],
+      "current_mode": {
+        "width": 1920,
+        "height": 1080,
+        "refresh": 60027
+      },
+      "max_render_time": 0
+    }
+  ],
+  "floating_nodes": [],
+  "focus": [
+    3
+  ],
+  "fullscreen_mode": 0,
+  "sticky": false
+}

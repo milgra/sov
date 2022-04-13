@@ -32,8 +32,8 @@
 #include "zc_log.c"
 #include "zc_vector.c"
 
-#define CFG_PATH_LOC "~/.config/sway-overview/config"
-#define CFG_PATH_GLO "/usr/share/sway-overview/config"
+#define CFG_PATH_LOC "~/.config/sov/config"
+#define CFG_PATH_GLO "/usr/local/share/sov/config"
 #define GET_WORKSPACES_CMD "swaymsg -t get_workspaces"
 #define GET_TREE_CMD "swaymsg -t get_tree"
 
