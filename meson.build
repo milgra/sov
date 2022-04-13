@@ -1,7 +1,7 @@
 project(
   'sov',
   'c',
-  version: '0.9',
+  version: '0.5',
   license: 'ISC',
   default_options: ['c_std=c99']
 )
@@ -105,9 +105,9 @@ executable(
 
 install_data('config', install_dir : get_option('datadir') / 'sov')
 
-test('tree_test', executable(
-  'test-tree',
+executable(
+  'test_tree',
   tst_sources,
   include_directories: [sov_inc],
   dependencies: sov_dependencies,
-))
+)
