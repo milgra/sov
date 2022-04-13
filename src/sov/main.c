@@ -33,7 +33,7 @@
 #include "zc_vector.c"
 
 #define CFG_PATH_LOC "~/.config/sov/config"
-#define CFG_PATH_GLO "/usr/local/share/sov/config"
+#define CFG_PATH_GLO "/usr/share/sov/config"
 #define GET_WORKSPACES_CMD "swaymsg -t get_workspaces"
 #define GET_TREE_CMD "swaymsg -t get_tree"
 
