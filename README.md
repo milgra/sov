@@ -30,7 +30,7 @@ Install dependencies:
 Run these commands:
 
 ```
-git clone git@github.com:francma/sov.git
+git clone git@github.com:milgra/sov.git
 cd sov
 meson build
 ninja -C build
@@ -55,7 +55,6 @@ Launch sov in the config connected to a named pipe but remove the named pipe fir
 
 ```
 exec rm -f /tmp/sovpipe && mkfifo /tmp/sovpipe && tail -f /tmp/sovpipe | sov
-
 ```
 
 Set up your sway config so that on workspace button press and release it writes 1 and 0 into the pipe:
@@ -91,9 +90,9 @@ If you want to customize sov, copy /usr/share/sov/config to ~/.config/sov/config
 
 Possible keys :
 
-**anchor** : where to display sov, top, bottom, left, right, center
-**margin** : distance from edges if anchor is set
-**timeout** : show timeout in millisecs
+**anchor** : where to display sov, top, bottom, left, right, center  
+**margin** : distance from edges if anchor is set  
+**timeout** : show timeout in millisecs  
 **gap** : distance between workspaces  
 **columns** : thumbnail columns  
 **ratio** : thumbnail to workspace ratio  
@@ -111,9 +110,9 @@ Possible keys :
 **border_color** : border color  
 **background_color** : background color  
 **background_color_focused** : focused background color  
-**window_color** : window color
-**empty_color** :  empty thumb color
-**empty_frame_color** : empty thumb border
+**window_color** : window color  
+**empty_color** :  empty thumb color  
+**empty_frame_color** : empty thumb border  
 
 ## Contribution/Development ##
 
@@ -130,11 +129,14 @@ Creating a debug build :
 
 ```
 CC=clang meson build --buildtype=debug -Db_sanitize=address -Db_lundef=false
+ninja -C build
 ```
 
 ## Donate ##
 
-paypal : [https://paypal.me/milgra](https://paypal.me/milgra) / patreon : [https://www.patreon.com/milgra](https://www.patreon.com/milgra) / bitcoin : 37cSZoyQckihNvy939AgwBNCiutUVN82du  
+paypal : [https://paypal.me/milgra](https://paypal.me/milgra)
+patreon : [https://www.patreon.com/milgra](https://www.patreon.com/milgra)
+bitcoin : 37cSZoyQckihNvy939AgwBNCiutUVN82du  
 
 ## License ##
 
@@ -142,6 +144,6 @@ MIT, see [LICENSE](/LICENSE).
 
 ## TODO/BUGS ##
 
-crash on empty workspace
-crash on feh
-fix test and release workflows
+crash on empty workspace sometimes
+crash on feh  
+fix test and release workflows  
