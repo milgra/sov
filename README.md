@@ -2,8 +2,6 @@
 
 [![Build Status](https://github.com/milgra/sov/workflows/test/badge.svg)](https://github.com/milgra/sov/actions)
 
-![preview](https://github.com/milgra/sov/sov.png)
-
 An overlay that shows schemas for all workspaces to make navigation in sway easier.
 
 ![alt text](screenshot.png)
@@ -81,7 +79,6 @@ bindsym --release $mod+7 exec "echo 0 > /tmp/sovpipe"
 bindsym --release $mod+8 exec "echo 0 > /tmp/sovpipe"
 bindsym --release $mod+9 exec "echo 0 > /tmp/sovpipe"
 bindsym --release $mod+0 exec "echo 0 > /tmp/sovpipe"
-
 ```
 
 ## Configuration ##
@@ -90,6 +87,7 @@ If you want to customize sov, copy /usr/share/sov/config to ~/.config/sov/config
 
 Possible keys :
 
+```
 **anchor** : where to display sov, top, bottom, left, right, center  
 **margin** : distance from edges if anchor is set  
 **timeout** : show timeout in millisecs  
@@ -113,6 +111,7 @@ Possible keys :
 **window_color** : window color  
 **empty_color** :  empty thumb color  
 **empty_frame_color** : empty thumb border  
+```
 
 ## Contribution/Development ##
 
@@ -134,8 +133,8 @@ ninja -C build
 
 ## Donate ##
 
-paypal : [https://paypal.me/milgra](https://paypal.me/milgra)
-patreon : [https://www.patreon.com/milgra](https://www.patreon.com/milgra)
+paypal : [https://paypal.me/milgra](https://paypal.me/milgra)  
+patreon : [https://www.patreon.com/milgra](https://www.patreon.com/milgra)  
 bitcoin : 37cSZoyQckihNvy939AgwBNCiutUVN82du  
 
 ## License ##
@@ -144,6 +143,6 @@ MIT, see [LICENSE](/LICENSE).
 
 ## TODO/BUGS ##
 
-crash on empty workspace sometimes
+crash on empty workspace sometimes  
 crash on feh  
 fix test and release workflows  
