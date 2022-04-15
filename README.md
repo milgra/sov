@@ -88,29 +88,29 @@ If you want to customize sov, copy /usr/share/sov/config to ~/.config/sov/config
 Possible keys :
 
 ```
-**anchor** : where to display sov, top, bottom, left, right, center  
-**margin** : distance from edges if anchor is set  
-**timeout** : show timeout in millisecs  
-**gap** : distance between workspaces  
-**columns** : thumbnail columns  
-**ratio** : thumbnail to workspace ratio  
-**font_face** : font face, use any string that is output by fc-list  
-**text_margin_size** : margin size around text  
-**text_margin_top_size** : margin top size over text  
-**text_title_size** : title text size  
-**text_title_color** : title text color  
-**text_description_size** : description text size  
-**text_description_color** : description text color  
-**text_workspace_size** : workspace number text size  
-**text_workspace_color** : workspace number text color  
-**text_workspace_xshift** : workspace number x shift  
-**text_workspace_yshift** : workspace number y shift  
-**border_color** : border color  
-**background_color** : background color  
-**background_color_focused** : focused background color  
-**window_color** : window color  
-**empty_color** :  empty thumb color  
-**empty_frame_color** : empty thumb border  
+"anchor" : where to display sov, top, bottom, left, right, center  
+"margin" : distance from edges if anchor is set  
+"timeout" : show timeout in millisecs  
+"gap" : distance between workspaces  
+"columns" : thumbnail columns  
+"ratio" : thumbnail to workspace ratio  
+"font_face" : font face, use any string that is output by fc-list  
+"text_margin_size" : margin size around text  
+"text_margin_top_size" : margin top size over text  
+"text_title_size" : title text size  
+"text_title_color" : title text color  
+"text_description_size" : description text size  
+"text_description_color" : description text color  
+"text_workspace_size" : workspace number text size  
+"text_workspace_color" : workspace number text color  
+"text_workspace_xshift" : workspace number x shift  
+"text_workspace_yshift" : workspace number y shift  
+"border_color" : border color  
+"background_color" : background color  
+"background_color_focused" : focused background color  
+"window_color" : window color  
+"empty_color" :  empty thumb color  
+"empty_frame_color" : empty thumb border  
 ```
 
 ## Contribution/Development ##
