@@ -2,7 +2,7 @@
 
 [![Build Status](https://github.com/milgra/sov/workflows/test/badge.svg)](https://github.com/milgra/sov/actions)
 
-An overlay that shows schemas for all workspaces to make navigation in sway easier.
+An overlay that shows schemas for all workspaces to make navigation in sway easier. [Used by SwayOS](https://swayos.github.io)
 
 ![alt text](screenshot.png)
 
