@@ -143,6 +143,4 @@ MIT, see [LICENSE](/LICENSE).
 
 ## TODO/BUGS ##
 
-crash on empty workspace sometimes  
-crash on feh  
 fix test and release workflows  
