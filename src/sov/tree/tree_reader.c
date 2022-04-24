@@ -34,12 +34,13 @@ void tree_reader_extract(char* ws_json, char* tree_json, vec_t* workspaces);
 #include "json.c"
 #include "zc_cstring.c"
 #include "zc_cstrpath.c"
+#include "zc_log.c"
 
 void sway_workspace_del(void* p)
 {
     sway_workspace_t* ws = p;
     REL(ws->windows);
-    REL(ws->output);
+    if (ws->output) REL(ws->output);
 }
 
 void sway_workspace_desc(void* p, int level)
@@ -94,12 +95,14 @@ void tree_reader_extract(char* ws_json, char* tree_json, vec_t* workspaces)
     vec_t* json = VNEW(); // REL 0
     json_parse(ws_json, json);
 
+    // find workspaces
+
     for (int index = 0; index < json->length; index += 2)
     {
-	char* key     = json->data[index];
-	char* type_id = strstr(key, "/id");
+	char* key      = json->data[index];
+	char* type_prt = strstr(key, "/type");
 
-	if (type_id != NULL)
+	if (type_prt != NULL && strcmp(json->data[index + 1], "workspace") == 0)
 	{
 	    sway_workspace_t* ws = sway_workspace_new(); // REL 1
 
@@ -140,6 +143,8 @@ void tree_reader_extract(char* ws_json, char* tree_json, vec_t* workspaces)
 	    REL(fk);   // REL 9
 
 	    VADDR(workspaces, ws); // REL 1
+
+	    zc_log_debug("Found workspace, num : %i", ws->number);
 	}
     }
 
@@ -147,6 +152,8 @@ void tree_reader_extract(char* ws_json, char* tree_json, vec_t* workspaces)
     json = VNEW();
 
     json_parse(tree_json, json); // REL 0
+
+    // find windows
 
     int curr_wspc_n = 0;
 
@@ -197,12 +204,14 @@ void tree_reader_extract(char* ws_json, char* tree_json, vec_t* workspaces)
 	    char* rw = sway_get_value(json, index, wk);
 	    char* rh = sway_get_value(json, index, hk);
 
-	    wi->x      = atoi(rx);
-	    wi->y      = atoi(ry);
-	    wi->width  = atoi(rw);
-	    wi->height = atoi(rh);
-	    wi->appid  = cstr_new_cstring(c);
-	    wi->title  = cstr_new_cstring(t);
+	    if (rx) wi->x = atoi(rx);
+	    if (ry) wi->y = atoi(ry);
+	    if (rw) wi->width = atoi(rw);
+	    if (rh) wi->height = atoi(rh);
+	    if (c) wi->appid = cstr_new_cstring(c);
+	    if (t) wi->title = cstr_new_cstring(t);
+
+	    zc_log_debug("Found window, appid %s title %s %i %i %i %i", wi->appid, wi->title, wi->x, wi->y, wi->width, wi->height);
 
 	    for (int wsi = 0; wsi < workspaces->length; wsi++)
 	    {

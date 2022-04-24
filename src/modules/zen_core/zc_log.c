@@ -1,35 +1,35 @@
-#ifndef _SOV_LOG_H
-#define _SOV_LOG_H
+#ifndef _ZC_LOG_H
+#define _ZC_LOG_H
 
 #include <stdbool.h>
 
 typedef enum
 {
-    SOV_LOG_DEBUG = 0,
-    SOV_LOG_INFO  = 1,
-    SOV_LOG_WARN  = 2,
-    SOV_LOG_ERROR = 3,
-} sov_log_importance;
+    ZC_LOG_DEBUG = 0,
+    ZC_LOG_INFO  = 1,
+    ZC_LOG_WARN  = 2,
+    ZC_LOG_ERROR = 3,
+} zc_log_importance;
 
-void sov_log(sov_log_importance importance, const char* file, int line, const char* fmt, ...);
+void zc_log(zc_log_importance importance, const char* file, int line, const char* fmt, ...);
 
-void sov_log_set_level(sov_log_importance importance);
+void zc_log_set_level(zc_log_importance importance);
 
-int sov_log_get_level();
+int zc_log_get_level();
 
-void sov_log_inc_verbosity(void);
+void zc_log_inc_verbosity(void);
 
-void sov_log_use_colors(bool use_colors);
+void zc_log_use_colors(bool use_colors);
 
-#define sov_log_debug(...) sov_log(SOV_LOG_DEBUG, __FILE__, __LINE__, __VA_ARGS__)
-#define sov_log_info(...) sov_log(SOV_LOG_INFO, __FILE__, __LINE__, __VA_ARGS__)
-#define sov_log_warn(...) sov_log(SOV_LOG_WARN, __FILE__, __LINE__, __VA_ARGS__)
-#define sov_log_error(...) sov_log(SOV_LOG_ERROR, __FILE__, __LINE__, __VA_ARGS__)
+#define zc_log_debug(...) zc_log(ZC_LOG_DEBUG, __FILE__, __LINE__, __VA_ARGS__)
+#define zc_log_info(...) zc_log(ZC_LOG_INFO, __FILE__, __LINE__, __VA_ARGS__)
+#define zc_log_warn(...) zc_log(ZC_LOG_WARN, __FILE__, __LINE__, __VA_ARGS__)
+#define zc_log_error(...) zc_log(ZC_LOG_ERROR, __FILE__, __LINE__, __VA_ARGS__)
 
-#define sov_log_level_debug() sov_log_set_level(SOV_LOG_DEBUG);
-#define sov_log_level_info() sov_log_set_level(SOV_LOG_INFO);
-#define sov_log_level_warn() sov_log_set_level(SOV_LOG_WARN);
-#define sov_log_level_error() sov_log_set_level(SOV_LOG_ERROR);
+#define zc_log_level_debug() zc_log_set_level(ZC_LOG_DEBUG);
+#define zc_log_level_info() zc_log_set_level(ZC_LOG_INFO);
+#define zc_log_level_warn() zc_log_set_level(ZC_LOG_WARN);
+#define zc_log_level_error() zc_log_set_level(ZC_LOG_ERROR);
 
 #endif
 
@@ -65,7 +65,7 @@ void sov_log_use_colors(bool use_colors);
 #include <time.h>
 #include <unistd.h>
 
-static sov_log_importance min_importance_to_log = SOV_LOG_WARN;
+static zc_log_importance min_importance_to_log = ZC_LOG_WARN;
 
 static bool use_colors = false;
 
@@ -83,7 +83,7 @@ static const char* verbosity_colors[] = {
     COLOR_LIGHT_RED,
 };
 
-void sov_log(const sov_log_importance importance, const char* file, const int line, const char* fmt, ...)
+void zc_log(const zc_log_importance importance, const char* file, const int line, const char* fmt, ...)
 {
     if (importance < min_importance_to_log)
     {
@@ -127,26 +127,26 @@ void sov_log(const sov_log_importance importance, const char* file, const int li
     fprintf(stderr, "\n");
 }
 
-void sov_log_set_level(const sov_log_importance importance)
+void zc_log_set_level(const zc_log_importance importance)
 {
     min_importance_to_log = importance;
 }
 
-void sov_log_use_colors(const bool colors)
+void zc_log_use_colors(const bool colors)
 {
     use_colors = colors;
 }
 
-void sov_log_inc_verbosity(void)
+void zc_log_inc_verbosity(void)
 {
-    if (min_importance_to_log != SOV_LOG_DEBUG)
+    if (min_importance_to_log != ZC_LOG_DEBUG)
     {
 	min_importance_to_log -= 1;
-	sov_log_debug("Set log level to %s", verbosity_names[min_importance_to_log]);
+	zc_log_debug("Set log level to %s", verbosity_names[min_importance_to_log]);
     }
 }
 
-int sov_log_get_level()
+int zc_log_get_level()
 {
     return min_importance_to_log;
 }

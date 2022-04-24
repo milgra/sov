@@ -225,13 +225,13 @@ int sov_shm_create()
 
     if (shmid < 0)
     {
-	sov_log_error("shm_open() failed: %s", strerror(errno));
+	zc_log_error("shm_open() failed: %s", strerror(errno));
 	return -1;
     }
 
     if (shm_unlink(shm_name) != 0)
     {
-	sov_log_error("shm_unlink() failed: %s", strerror(errno));
+	zc_log_error("shm_unlink() failed: %s", strerror(errno));
 	return -1;
     }
 
@@ -242,14 +242,14 @@ void* sov_shm_alloc(const int shmid, const size_t size)
 {
     if (ftruncate(shmid, size) != 0)
     {
-	sov_log_error("ftruncate() failed: %s", strerror(errno));
+	zc_log_error("ftruncate() failed: %s", strerror(errno));
 	return NULL;
     }
 
     void* buffer = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, shmid, 0);
     if (buffer == MAP_FAILED)
     {
-	sov_log_error("mmap() failed: %s", strerror(errno));
+	zc_log_error("mmap() failed: %s", strerror(errno));
 	return NULL;
     }
 
@@ -261,12 +261,12 @@ void xdg_output_handle_name(
     struct zxdg_output_v1* xdg_output,
     const char*            name)
 {
-    sov_log_info("Detected output %s", name);
+    zc_log_info("Detected output %s", name);
     struct sov_output* output = (struct sov_output*) data;
     output->name              = strdup(name);
     if (output->name == NULL)
     {
-	sov_log_error("strdup failed\n");
+	zc_log_error("strdup failed\n");
 	exit(EXIT_FAILURE);
     }
 }
@@ -297,21 +297,21 @@ struct sov_surface* sov_surface_create(
     struct sov_surface* sov_surface = calloc(1, sizeof(struct sov_surface));
     if (sov_surface == NULL)
     {
-	sov_log_error("calloc failed");
+	zc_log_error("calloc failed");
 	exit(EXIT_FAILURE);
     }
 
     sov_surface->wl_surface = wl_compositor_create_surface(app->wl_compositor);
     if (sov_surface->wl_surface == NULL)
     {
-	sov_log_error("wl_compositor_create_surface failed");
+	zc_log_error("wl_compositor_create_surface failed");
 	exit(EXIT_FAILURE);
     }
 
     sov_surface->wlr_layer_surface = zwlr_layer_shell_v1_get_layer_surface(app->wlr_layer_shell, sov_surface->wl_surface, wl_output, ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY, "sov");
     if (sov_surface->wlr_layer_surface == NULL)
     {
-	sov_log_error("wlr_layer_shell_v1_get_layer_surface failed");
+	zc_log_error("wlr_layer_shell_v1_get_layer_surface failed");
 	exit(EXIT_FAILURE);
     }
 
@@ -365,12 +365,12 @@ void xdg_output_handle_done(
 	if (strcmp(output->name, output_config->name) == 0 || strcmp("*", output_config->name) == 0)
 	{
 	    wl_list_insert(&output->app->sov_outputs, &output->link);
-	    sov_log_info("Bar will be displayed on output %s", output->name);
+	    zc_log_info("Bar will be displayed on output %s", output->name);
 	    return;
 	}
     }
 
-    sov_log_info("Bar will NOT be displayed on output %s", output->name);
+    zc_log_info("Bar will NOT be displayed on output %s", output->name);
 
     sov_output_destroy(output);
     free(output);
@@ -415,7 +415,7 @@ void handle_global(
 
 	    if (wl_display_roundtrip(app->wl_display) == -1)
 	    {
-		sov_log_error("wl_display_roundtrip failed");
+		zc_log_error("wl_display_roundtrip failed");
 		exit(EXIT_FAILURE);
 	    }
 	}
@@ -457,14 +457,14 @@ int sov_connect_display(struct sov* app)
     app->wl_display = wl_display_connect(NULL);
     if (app->wl_display == NULL)
     {
-	sov_log_error("wl_display_connect failed");
+	zc_log_error("wl_display_connect failed");
 	return EXIT_FAILURE;
     }
 
     app->wl_registry = wl_display_get_registry(app->wl_display);
     if (app->wl_registry == NULL)
     {
-	sov_log_error("wl_display_get_registry failed");
+	zc_log_error("wl_display_get_registry failed");
 	return EXIT_FAILURE;
     }
 
@@ -473,7 +473,7 @@ int sov_connect_display(struct sov* app)
     wl_list_init(&app->sov_outputs);
     if (wl_display_roundtrip(app->wl_display) == -1)
     {
-	sov_log_error("wl_display_roundtrip failed");
+	zc_log_error("wl_display_roundtrip failed");
 	return EXIT_FAILURE;
     }
 
@@ -509,7 +509,7 @@ int sov_show(struct sov* app)
 	struct wl_shm_pool* pool = wl_shm_create_pool(app->wl_shm, app->shmid, size);
 	if (pool == NULL)
 	{
-	    sov_log_error("wl_shm_create_pool failed");
+	    zc_log_error("wl_shm_create_pool failed");
 	    return EXIT_FAILURE;
 	}
 
@@ -518,7 +518,7 @@ int sov_show(struct sov* app)
 
 	if (wl_buffer == NULL)
 	{
-	    sov_log_error("wl_shm_pool_create_buffer failed");
+	    zc_log_error("wl_shm_pool_create_buffer failed");
 	    return EXIT_FAILURE;
 	}
 
@@ -540,7 +540,7 @@ int sov_show(struct sov* app)
 
 	if (wl_list_empty(&(app->sov_outputs)))
 	{
-	    sov_log_info("No output matching configuration found, fallbacking to focused output");
+	    zc_log_info("No output matching configuration found, fallbacking to focused output");
 	    app->fallback_sov_surface = sov_surface_create(app, NULL, bitmap->w, bitmap->h, app->sov_geom.margin, app->sov_geom.anchor);
 	}
 	else
@@ -548,14 +548,14 @@ int sov_show(struct sov* app)
 	    struct sov_output *output, *tmp;
 	    wl_list_for_each_safe(output, tmp, &app->sov_outputs, link)
 	    {
-		sov_log_info("Showing bar on output %s", output->name);
+		zc_log_info("Showing bar on output %s", output->name);
 		output->sov_surface = sov_surface_create(app, output->wl_output, bitmap->w, bitmap->h, app->sov_geom.margin, app->sov_geom.anchor);
 	    }
 	}
 
 	if (wl_display_roundtrip(app->wl_display) == -1)
 	{
-	    sov_log_error("wl_display_roundtrip failed");
+	    zc_log_error("wl_display_roundtrip failed");
 	    return EXIT_FAILURE;
 	}
 
@@ -584,7 +584,7 @@ int sov_show(struct sov* app)
 
 	if (wl_display_dispatch(app->wl_display) == -1)
 	{
-	    sov_log_error("wl_display_dispatch failed");
+	    zc_log_error("wl_display_dispatch failed");
 	    return EXIT_FAILURE;
 	}
 
@@ -599,7 +599,7 @@ int sov_hide(
 {
     if (wl_list_empty(&(app->sov_outputs)))
     {
-	sov_log_info("Hiding bar on focused output");
+	zc_log_info("Hiding bar on focused output");
 	sov_surface_destroy(app->fallback_sov_surface);
 	free(app->fallback_sov_surface);
 	app->fallback_sov_surface = NULL;
@@ -609,7 +609,7 @@ int sov_hide(
 	struct sov_output *output, *tmp;
 	wl_list_for_each_safe(output, tmp, &app->sov_outputs, link)
 	{
-	    sov_log_info("Hiding bar on output %s", output->name);
+	    zc_log_info("Hiding bar on output %s", output->name);
 	    sov_surface_destroy(output->sov_surface);
 	    free(output->sov_surface);
 	    output->sov_surface = NULL;
@@ -618,7 +618,7 @@ int sov_hide(
 
     if (wl_display_roundtrip(app->wl_display) == -1)
     {
-	sov_log_error("wl_display_roundtrip failed");
+	zc_log_error("wl_display_roundtrip failed");
 	return EXIT_FAILURE;
     }
 
@@ -655,8 +655,8 @@ int main(int argc, char** argv)
     printf("swayoverview v" SOV_VERSION " by Milan Toth ( www.milgra.com )\n");
     printf("listens on standard input for '0' - hide panel '1' - show panel '2' - quit\n");
 
-    sov_log_use_colors(isatty(STDERR_FILENO));
-    sov_log_level_info();
+    zc_log_use_colors(isatty(STDERR_FILENO));
+    zc_log_level_info();
 
     const char* usage =
 	"Usage: sov [options]\n"
@@ -688,7 +688,7 @@ int main(int argc, char** argv)
 		app.cfg_path = cstr_new_cstring(optarg);
 		if (errno == ERANGE || app.cfg_path == NULL)
 		{
-		    sov_log_error("Invalid config path value", ULONG_MAX);
+		    zc_log_error("Invalid config path value", ULONG_MAX);
 		    return EXIT_FAILURE;
 		}
 		break;
@@ -698,7 +698,7 @@ int main(int argc, char** argv)
 		struct sov_output_config* output_config = calloc(1, sizeof(struct sov_output_config)); // FREE!!!
 		if (output_config == NULL)
 		{
-		    sov_log_error("calloc failed");
+		    zc_log_error("calloc failed");
 		    return EXIT_FAILURE;
 		}
 
@@ -706,14 +706,14 @@ int main(int argc, char** argv)
 		if (output_config->name == NULL)
 		{
 		    free(output_config);
-		    sov_log_error("strdup failed");
+		    zc_log_error("strdup failed");
 		    return EXIT_FAILURE;
 		}
 
 		wl_list_insert(&(app.output_configs), &(output_config->link));
 		break;
 	    }
-	    case 'v': sov_log_inc_verbosity(); break;
+	    case 'v': zc_log_inc_verbosity(); break;
 	    default: fprintf(stderr, "%s", usage); return EXIT_FAILURE;
 	}
     }
@@ -731,12 +731,12 @@ int main(int argc, char** argv)
     if (config_read(cfg_path_loc) < 0)
     {
 	if (config_read(cfg_path_glo) < 0)
-	    sov_log_warn("No local or global config file found\n");
+	    zc_log_warn("No local or global config file found\n");
 	else
-	    sov_log_info("Using config file : %s\n", cfg_path_glo);
+	    zc_log_info("Using config file : %s\n", cfg_path_glo);
     }
     else
-	sov_log_info("Using config file : %s\n", cfg_path_loc);
+	zc_log_info("Using config file : %s\n", cfg_path_loc);
 
     REL(cfg_path_glo); // REL 2
     REL(cfg_path_loc); // REL 1
@@ -753,7 +753,7 @@ int main(int argc, char** argv)
 	if (strcmp(anchor, "bottom") == 0) app.sov_geom.anchor |= ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM;
     }
 
-    if (sov_log_get_level() == 2) config_describe();
+    if (zc_log_get_level() == 2) config_describe();
 
     /* get timout from config */
 
@@ -768,7 +768,7 @@ int main(int argc, char** argv)
 
     if (!app.font_path)
     {
-	sov_log_error("No font files found.");
+	zc_log_error("No font files found.");
 	return EXIT_FAILURE;
     }
 
@@ -785,7 +785,7 @@ int main(int argc, char** argv)
 	app.wl_compositor == NULL ||
 	app.wlr_layer_shell == NULL)
     {
-	sov_log_error("Wayland compositor doesn't support all required protocols");
+	zc_log_error("Wayland compositor doesn't support all required protocols");
 	return EXIT_FAILURE;
     }
 
@@ -816,7 +816,7 @@ int main(int argc, char** argv)
 	{
 	    case -1:
 	    {
-		sov_log_error("poll() failed: %s", strerror(errno));
+		zc_log_error("poll() failed: %s", strerror(errno));
 
 		alive = false;
 		break;
@@ -838,7 +838,7 @@ int main(int argc, char** argv)
 		{
 		    if (!(fds[0].revents & POLLIN))
 		    {
-			sov_log_error("WL_DISPLAY_FD unexpectedly closed, revents = %hd", fds[0].revents);
+			zc_log_error("WL_DISPLAY_FD unexpectedly closed, revents = %hd", fds[0].revents);
 			alive = false;
 			break;
 		    }
@@ -854,7 +854,7 @@ int main(int argc, char** argv)
 		{
 		    if (!(fds[1].revents & POLLIN))
 		    {
-			sov_log_error("STDIN unexpectedly closed, revents = %hd", fds[1].revents);
+			zc_log_error("STDIN unexpectedly closed, revents = %hd", fds[1].revents);
 			if (!hidden) sov_hide(&app);
 
 			alive = false;
@@ -865,7 +865,7 @@ int main(int argc, char** argv)
 
 		    if (feof(stdin))
 		    {
-			sov_log_info("Received EOF");
+			zc_log_info("Received EOF");
 			if (!hidden) sov_hide(&app);
 
 			alive = false;
@@ -874,7 +874,7 @@ int main(int argc, char** argv)
 
 		    if (fgets_rv == NULL)
 		    {
-			sov_log_error("fgets() failed: %s", strerror(errno));
+			zc_log_error("fgets() failed: %s", strerror(errno));
 			if (!hidden) sov_hide(&app);
 
 			alive = false;
@@ -883,7 +883,7 @@ int main(int argc, char** argv)
 
 		    if (!sov_parse_input(input_buffer, &state))
 		    {
-			sov_log_error("Received invalid input");
+			zc_log_error("Received invalid input");
 
 			if (!hidden) sov_hide(&app);
 

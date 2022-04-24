@@ -8,6 +8,7 @@
 #include "zc_cstring.c"
 #include "zc_cstrpath.c"
 #include "zc_graphics.c"
+#include "zc_log.c"
 #include <getopt.h>
 #include <limits.h>
 #include <math.h>
@@ -18,6 +19,9 @@
 
 int main(int argc, char* argv[])
 {
+    zc_log_use_colors(isatty(STDERR_FILENO));
+    zc_log_level_debug();
+
     char* cfg_path       = NULL;
     char* ws_json_path   = NULL;
     char* tree_json_path = NULL;
