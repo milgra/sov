@@ -179,18 +179,18 @@ void tree_drawer_draw(
 
     /* draw all workspace numbers */
 
-    for (int wsi = 0; wsi < max; wsi++)
+    for (uint8_t wsi = 0; wsi < max; wsi++)
     {
 	int cx = gap + wsi % cols * (wsw + gap);
 	int cy = gap + wsi / cols * (wsh + gap);
 
 	if (wsw > 0 && wsh > 0)
 	{
-	    bm_t*  tbm     = bm_new(wsw, wsh); // REL 0
-	    str_t* str     = str_new();        // REL 1
-	    char   nums[4] = {0};
+	    bm_t*  tbm      = bm_new(wsw, wsh); // REL 0
+	    str_t* str      = str_new();        // REL 1
+	    char   nums[10] = {0};
 
-	    snprintf(nums, 4, "%i", wsi + 1);
+	    snprintf(nums, 4, "%hu", wsi + 1);
 	    str_add_bytearray(str, nums);
 
 	    text_render(str, wsnum_style, tbm);

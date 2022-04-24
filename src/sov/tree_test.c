@@ -50,6 +50,7 @@ int main(int argc, char* argv[])
 	if (option == '?') printf("-c --config= [path] \t use config file for session\n");
     }
 
+    printf("*****************\n");
     printf("cfg_path %s\n", cfg_path);
     printf("ws_json_path %s\n", ws_json_path);
     printf("tree_json_path %s\n", tree_json_path);
