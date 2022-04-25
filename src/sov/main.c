@@ -661,10 +661,10 @@ int main(int argc, char** argv)
     const char* usage =
 	"Usage: sov [options]\n"
 	"\n"
-	"  -c  --config= [path]                Use config file for session"
+	"  -c  --config= [path]                Use config file for session.\n"
 	"  -h, --help                          Show help message and quit.\n"
 	"  -o, --output <name>                 Define output to show bar on or '*' for all. If ommited, focused output is chosen.\n"
-	"  -v                                  Increase verbosity of messages, defaults to errors and warnings only\n"
+	"  -v                                  Increase verbosity of messages, defaults to errors and warnings only.\n"
 	"\n";
 
     struct sov app = {0};
