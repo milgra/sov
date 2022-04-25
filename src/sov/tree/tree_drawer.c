@@ -52,7 +52,7 @@ void tree_drawer_draw(
     int         wsnum_dy)
 {
     int max = cols;
-    if (workspaces->length > cols)
+    if (workspaces->length > 0)
     {
 	sway_workspace_t* wsl = workspaces->data[workspaces->length - 1];
 	max                   = ceilf((float) wsl->number / cols) * cols;

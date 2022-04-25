@@ -1,0 +1,435 @@
+{
+  "id": 1,
+  "type": "root",
+  "orientation": "horizontal",
+  "percent": null,
+  "urgent": false,
+  "marks": [
+  ],
+  "focused": false,
+  "layout": "splith",
+  "border": "none",
+  "current_border_width": 0,
+  "rect": {
+    "x": 0,
+    "y": 0,
+    "width": 1024,
+    "height": 768
+  },
+  "deco_rect": {
+    "x": 0,
+    "y": 0,
+    "width": 0,
+    "height": 0
+  },
+  "window_rect": {
+    "x": 0,
+    "y": 0,
+    "width": 0,
+    "height": 0
+  },
+  "geometry": {
+    "x": 0,
+    "y": 0,
+    "width": 0,
+    "height": 0
+  },
+  "name": "root",
+  "window": null,
+  "nodes": [
+    {
+      "id": 2147483647,
+      "type": "output",
+      "orientation": "horizontal",
+      "percent": null,
+      "urgent": false,
+      "marks": [
+      ],
+      "focused": false,
+      "layout": "output",
+      "border": "none",
+      "current_border_width": 0,
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 1024,
+        "height": 768
+      },
+      "deco_rect": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0
+      },
+      "window_rect": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0
+      },
+      "geometry": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0
+      },
+      "name": "__i3",
+      "window": null,
+      "nodes": [
+        {
+          "id": 2147483646,
+          "type": "workspace",
+          "orientation": "horizontal",
+          "percent": null,
+          "urgent": false,
+          "marks": [
+          ],
+          "focused": false,
+          "layout": "splith",
+          "border": "none",
+          "current_border_width": 0,
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 1024,
+            "height": 768
+          },
+          "deco_rect": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          },
+          "window_rect": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          },
+          "geometry": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          },
+          "name": "__i3_scratch",
+          "window": null,
+          "nodes": [
+          ],
+          "floating_nodes": [
+          ],
+          "focus": [
+          ],
+          "fullscreen_mode": 1,
+          "sticky": false
+        }
+      ],
+      "floating_nodes": [
+      ],
+      "focus": [
+        2147483646
+      ],
+      "fullscreen_mode": 0,
+      "sticky": false
+    },
+    {
+      "id": 3,
+      "type": "output",
+      "orientation": "none",
+      "percent": 1.0,
+      "urgent": false,
+      "marks": [
+      ],
+      "focused": false,
+      "layout": "output",
+      "border": "none",
+      "current_border_width": 0,
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 1024,
+        "height": 768
+      },
+      "deco_rect": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0
+      },
+      "window_rect": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0
+      },
+      "geometry": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0
+      },
+      "name": "Virtual-1",
+      "window": null,
+      "nodes": [
+        {
+          "id": 7,
+          "type": "workspace",
+          "orientation": "horizontal",
+          "percent": null,
+          "urgent": false,
+          "marks": [
+          ],
+          "focused": true,
+          "layout": "splith",
+          "border": "none",
+          "current_border_width": 0,
+          "rect": {
+            "x": 5,
+            "y": 29,
+            "width": 1014,
+            "height": 734
+          },
+          "deco_rect": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          },
+          "window_rect": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          },
+          "geometry": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          },
+          "name": "6",
+          "window": null,
+          "nodes": [
+          ],
+          "floating_nodes": [
+          ],
+          "focus": [
+          ],
+          "fullscreen_mode": 1,
+          "sticky": false,
+          "num": 6,
+          "output": "Virtual-1",
+          "representation": null
+        }
+      ],
+      "floating_nodes": [
+      ],
+      "focus": [
+        7
+      ],
+      "fullscreen_mode": 0,
+      "sticky": false,
+      "active": true,
+      "dpms": true,
+      "primary": false,
+      "make": "<Unknown>",
+      "model": "<Unknown>",
+      "serial": "",
+      "scale": 1.0,
+      "scale_filter": "nearest",
+      "transform": "normal",
+      "adaptive_sync_status": "disabled",
+      "current_workspace": "6",
+      "modes": [
+        {
+          "width": 1024,
+          "height": 768,
+          "refresh": 60004
+        },
+        {
+          "width": 2560,
+          "height": 1600,
+          "refresh": 59987
+        },
+        {
+          "width": 2560,
+          "height": 1600,
+          "refresh": 59972
+        },
+        {
+          "width": 1920,
+          "height": 1440,
+          "refresh": 60000
+        },
+        {
+          "width": 1856,
+          "height": 1392,
+          "refresh": 59995
+        },
+        {
+          "width": 1792,
+          "height": 1344,
+          "refresh": 60000
+        },
+        {
+          "width": 2048,
+          "height": 1152,
+          "refresh": 60000
+        },
+        {
+          "width": 1920,
+          "height": 1200,
+          "refresh": 59885
+        },
+        {
+          "width": 1920,
+          "height": 1200,
+          "refresh": 59950
+        },
+        {
+          "width": 1920,
+          "height": 1080,
+          "refresh": 60000
+        },
+        {
+          "width": 1600,
+          "height": 1200,
+          "refresh": 60000
+        },
+        {
+          "width": 1680,
+          "height": 1050,
+          "refresh": 59954
+        },
+        {
+          "width": 1680,
+          "height": 1050,
+          "refresh": 59883
+        },
+        {
+          "width": 1400,
+          "height": 1050,
+          "refresh": 59978
+        },
+        {
+          "width": 1400,
+          "height": 1050,
+          "refresh": 59948
+        },
+        {
+          "width": 1600,
+          "height": 900,
+          "refresh": 60000
+        },
+        {
+          "width": 1280,
+          "height": 1024,
+          "refresh": 60020
+        },
+        {
+          "width": 1440,
+          "height": 900,
+          "refresh": 59887
+        },
+        {
+          "width": 1440,
+          "height": 900,
+          "refresh": 59901
+        },
+        {
+          "width": 1280,
+          "height": 960,
+          "refresh": 60000
+        },
+        {
+          "width": 1280,
+          "height": 854,
+          "refresh": 59951
+        },
+        {
+          "width": 1366,
+          "height": 768,
+          "refresh": 59790
+        },
+        {
+          "width": 1366,
+          "height": 768,
+          "refresh": 60000
+        },
+        {
+          "width": 1360,
+          "height": 768,
+          "refresh": 60015
+        },
+        {
+          "width": 1280,
+          "height": 800,
+          "refresh": 59810
+        },
+        {
+          "width": 1280,
+          "height": 800,
+          "refresh": 59910
+        },
+        {
+          "width": 1280,
+          "height": 768,
+          "refresh": 59870
+        },
+        {
+          "width": 1280,
+          "height": 768,
+          "refresh": 59995
+        },
+        {
+          "width": 1280,
+          "height": 720,
+          "refresh": 60000
+        },
+        {
+          "width": 1152,
+          "height": 768,
+          "refresh": 59950
+        },
+        {
+          "width": 800,
+          "height": 600,
+          "refresh": 60317
+        },
+        {
+          "width": 800,
+          "height": 600,
+          "refresh": 56250
+        },
+        {
+          "width": 848,
+          "height": 480,
+          "refresh": 60000
+        },
+        {
+          "width": 720,
+          "height": 480,
+          "refresh": 59938
+        },
+        {
+          "width": 640,
+          "height": 480,
+          "refresh": 59940
+        }
+      ],
+      "current_mode": {
+        "width": 1024,
+        "height": 768,
+        "refresh": 60004
+      },
+      "max_render_time": 0
+    }
+  ],
+  "floating_nodes": [
+  ],
+  "focus": [
+    3
+  ],
+  "fullscreen_mode": 0,
+  "sticky": false
+}
