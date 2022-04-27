@@ -90,8 +90,10 @@ com_sources = ['src/sov/config/config.c',
 	       'src/modules/zen_core/zc_wrapper.c',
 	       'src/modules/zen_text/text.c']
 
-sov_sources = com_sources + 'src/sov/main.c'
-tst_sources = com_sources + 'src/sov/tree_test.c'
+sov_sources = com_sources
+sov_sources += 'src/sov/main.c'
+tst_sources = com_sources
+tst_sources += 'src/sov/tree_test.c'
 
 sov_dependencies = [xdg_output_unstable_v1, wayland_client, wlr_layer_shell_unstable_v1, xdg_shell, rt, freetype, math]
 
