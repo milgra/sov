@@ -16,8 +16,8 @@ columns 5
 # thumbnail to workspace ratio
 ratio 8
 
-# font face, use any string that is output by fc-list
-font_face Terminus (TTF):style=Bold
+# font face, use any string that is output by fc-list, recommended is Terminus (TTF):style=Bold
+font_face Sans
 
 # margin size around text
 text_margin_size 7
