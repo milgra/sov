@@ -18,23 +18,13 @@ char* fontconfig_new_path(char* face_desc)
 
     char* cstr = cstr_new_cstring(""); // REL 0
 
-    /* look for face_desc in fc-list fitting end of row */
-    char* command = cstr_new_format(80, "fc-list | grep '%s'$", face_desc); // REL 1
+	/* look for first match with fc-match */
+    char* command = cstr_new_format(80, "fc-match %s --format=%%{file}", face_desc); // REL 1
     FILE* pipe    = popen(command, "r");                                    // CLOSE 0
     REL(command);                                                           // REL 1
 
     while (fgets(buff, sizeof(buff), pipe) != NULL) cstr = cstr_append(cstr, buff);
     pclose(pipe); // CLOSE 0
-
-    if (strlen(cstr) == 0)
-    {
-	/* if no result, look for face_desc in fc-list inside rows */
-	command    = cstr_new_format(80, "fc-list | grep '%s'", face_desc); // REL 2
-	FILE* pipe = popen(command, "r");                                   // CLOSE 1
-	REL(command);                                                       // REL 2
-
-	while (fgets(buff, sizeof(buff), pipe) != NULL) cstr = cstr_append(cstr, buff);
-	pclose(pipe); // CLOSE 1
 
 	if (strlen(cstr) == 0)
 	{
@@ -46,18 +36,10 @@ char* fontconfig_new_path(char* face_desc)
 	    while (fgets(buff, sizeof(buff), pipe) != NULL) cstr = cstr_append(cstr, buff);
 	    pclose(pipe); // CLOSE 2
 	}
-    }
 
     /* extract file name before double colon */
 
-    char* dcolon = strchr(cstr, ':');
-    char* result = cstr_new_cstring("");
-
-    result = cstr_append_sub(result, cstr, 0, dcolon - cstr);
-
-    REL(cstr); // REL 0
-
-    return result;
+    return cstr;
 }
 
 #endif
