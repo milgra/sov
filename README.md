@@ -1,6 +1,6 @@
 # sov — Sway Overview
 
-An overlay that shows schemas for all workspaces to make navigation in sway easier. [Used by SwayOS](https://swayos.github.io)
+An overlay that shows schemas of all workspaces to make navigation in sway easier. [Used by SwayOS](https://swayos.github.io)
 
 ![alt text](screenshot.png)
 
@@ -47,7 +47,7 @@ sov
 
 ### Usage with sway wm
 
-Launch sov in the config connected to a named pipe but remove the named pipe first to avoid mkfifo errors.
+Launch sov in the config connected to a named pipe, but remove the named pipe first to avoid mkfifo errors.
 
 ```
 exec rm -f /tmp/sovpipe && mkfifo /tmp/sovpipe && tail -f /tmp/sovpipe | sov
@@ -82,7 +82,10 @@ bindsym --release $mod+0 exec "echo 0 > /tmp/sovpipe"
 ## Configuration ##
 
 If you want to customize sov, copy /usr/share/sov/config to ~/.config/sov/config and edit it.
-
+```
+mdir -p ~/.config/sov/config
+cp /usr/share/sov/config ~/.config/sov/config
+```
 Possible keys :
 
 ```
