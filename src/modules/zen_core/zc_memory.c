@@ -71,7 +71,7 @@ void* mem_alloc(size_t size,                    /* size of data to store */
 		char* file,                     /* caller file name */
 		int   line)                       /* caller file line number */
 {
-    if (size == 0) mem_exit("Ttrying to allocate 0 bytes for", file, line);
+    if (size == 0) mem_exit("Trying to allocate 0 bytes for", file, line);
     uint8_t* bytes = malloc(sizeof(struct mem_head) + size);
     if (bytes == NULL) mem_exit("Out of RAM \\_(o)_/ for", file, line);
 
@@ -103,7 +103,7 @@ void* mem_calloc(size_t size,                    /* size of data to store */
 		 char* file,                     /* caller file name */
 		 int   line)                       /* caller file line number */
 {
-    if (size == 0) mem_exit("Ttrying to allocate 0 bytes for", file, line);
+    if (size == 0) mem_exit("Trying to allocate 0 bytes for", file, line);
     uint8_t* bytes = calloc(1, sizeof(struct mem_head) + size);
     if (bytes == NULL) mem_exit("Out of RAM \\_(o)_/ for", file, line);
 
