@@ -7,6 +7,7 @@ char* fontconfig_new_path(char* face_desc);
 
 #if __INCLUDE_LEVEL__ == 0
 
+#define _POSIX_C_SOURCE 200112L
 #include "zc_cstring.c"
 #include "zc_memory.c"
 #include <stdio.h>
