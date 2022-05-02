@@ -12,6 +12,7 @@ int kvlines_write(char* libpath, map_t* db);
 
 #include "zc_cstring.c"
 #include <limits.h>
+#include <linux/limits.h>
 #include <stdio.h>
 
 int kvlines_read(char* libpath, map_t* db)
