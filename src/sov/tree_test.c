@@ -70,41 +70,37 @@ int main(int argc, char* argv[])
     char* font_face = config_get("font_face");
     char* font_path = fontconfig_new_path(font_face ? font_face : ""); // REL 4
 
-    char*  ws_json    = cstr_new_file(ws_json_path);
-    char*  tree_json  = cstr_new_file(tree_json_path);
-    vec_t* workspaces = VNEW(); // REL 6
+    char*  ws_json     = cstr_new_file(ws_json_path);
+    char*  tree_json   = cstr_new_file(tree_json_path);
+    vec_t* workspaces  = VNEW(); // REL 6
+    vec_t* outputs     = VNEW();
+    char*  curr_output = NULL;
 
     tree_reader_extract(ws_json, tree_json, workspaces);
 
-    sway_workspace_t* ws  = workspaces->data[0];
-    sway_workspace_t* wsl = workspaces->data[workspaces->length - 1];
+    // extract outputs
 
-    bm_t* bitmap;
-
-    if (ws->width > 0 && ws->height > 0)
+    for (int index = 0; index < workspaces->length; index++)
     {
-	int gap   = config_get_int("gap");
-	int cols  = config_get_int("columns");
-	int rows  = (int) ceilf((float) wsl->number / cols);
-	int ratio = config_get_int("ratio");
+	sway_workspace_t* ws = workspaces->data[index];
 
-	int lay_wth = cols * (ws->width / ratio) + (cols + 1) * gap;
-	int lay_hth = rows * (ws->height / ratio) + (rows + 1) * gap;
+	if (!curr_output || strcmp(ws->output, curr_output) != 0)
+	{
+	    curr_output = ws->output;
+	    VADD(outputs, ws->output);
+	}
+    }
 
-	bitmap = bm_new(lay_wth, lay_hth); // REL 1
+    for (int oi = 0; oi < outputs->length; oi++)
+    {
+	char*  curr_output = outputs->data[oi];
+	vec_t* curr_ws     = VNEW(); // REL 1
 
-	uint32_t window_color = cstr_color_from_cstring(config_get("window_color"));
-
-	gfx_rounded_rect(
-	    bitmap,
-	    0,
-	    0,
-	    bitmap->w,
-	    bitmap->h,
-	    20,
-	    1.0,
-	    window_color,
-	    0);
+	for (int index = 0; index < workspaces->length; index++)
+	{
+	    sway_workspace_t* ws = workspaces->data[index];
+	    if (strcmp(ws->output, curr_output) == 0) VADD(curr_ws, ws);
+	}
 
 	textstyle_t main_style = {
 	    .font       = font_path,
@@ -141,9 +137,12 @@ int main(int argc, char* argv[])
 	    .backcolor = 0x00002200,
 	};
 
-	tree_drawer_draw(
-	    bitmap,
-	    workspaces,
+	int gap   = config_get_int("gap");
+	int cols  = config_get_int("columns");
+	int ratio = config_get_int("ratio");
+
+	bm_t* bitmap = tree_drawer_bm_create(
+	    curr_ws,
 	    gap,
 	    cols,
 	    ratio,
@@ -159,7 +158,10 @@ int main(int argc, char* argv[])
 	    config_get_int("text_workspace_xshift"),
 	    config_get_int("text_workspace_yshift"));
 
-	bm_write(bitmap, output_path);
+	char* filename = cstr_new_format(strlen(output_path) + 10, "%s_o%i.bmp", output_path, oi); // REL 9
+	bm_write(bitmap, filename);
+	REL(filename);
+	REL(bitmap);
     }
 
     REL(workspaces); // REL 6

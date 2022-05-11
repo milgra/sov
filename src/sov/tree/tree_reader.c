@@ -144,7 +144,7 @@ void tree_reader_extract(char* ws_json, char* tree_json, vec_t* workspaces)
 
 	    VADDR(workspaces, ws); // REL 1
 
-	    zc_log_debug("Found workspace, num : %i", ws->number);
+	    zc_log_debug("Found workspace, num : %i output : %s", ws->number, ws->output);
 	}
     }
 

@@ -124,6 +124,7 @@ Please follow these guidelines :
 - use zen_core functions and containers and memory handling
 - make sure that the app is leak free. if you run the dev build it automagically checks for leaks on exit on two levels (zc_memory and clang address sanitizer ) and prints leaks
 - always run all tests before push
+- test detach/attach new output
 
 Creating a debug build :
 

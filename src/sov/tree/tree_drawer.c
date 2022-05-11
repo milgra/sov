@@ -5,8 +5,7 @@
 #include "zc_bitmap.c"
 #include "zc_vector.c"
 
-void tree_drawer_draw(
-    bm_t*       bm,
+bm_t* tree_drawer_bm_create(
     vec_t*      workspaces,
     int         gap,
     int         cols,
@@ -33,8 +32,7 @@ void tree_drawer_draw(
 #include "zc_log.c"
 #include <math.h>
 
-void tree_drawer_draw(
-    bm_t*       bm,
+bm_t* tree_drawer_bm_create(
     vec_t*      workspaces,
     int         gap,
     int         cols,
@@ -51,41 +49,52 @@ void tree_drawer_draw(
     int         wsnum_dx,
     int         wsnum_dy)
 {
-    int max = cols;
-    if (workspaces->length > 0)
+    int wth  = 0;
+    int hth  = 0;
+    int rows = (int) ceilf((float) workspaces->length / cols);
+
+    /* get biggest workspace */
+
+    for (int index = 0; index < workspaces->length; index++)
     {
-	sway_workspace_t* wsl = workspaces->data[workspaces->length - 1];
-	max                   = ceilf((float) wsl->number / cols) * cols;
-    }
-
-    zc_log_debug("Worskpaces to draw : %i", max);
-
-    /* calculate ws dimensions */
-
-    int wsw = 0;
-    int wsh = 0;
-
-    for (int wsi = 0; wsi < workspaces->length; wsi++)
-    {
-	sway_workspace_t* ws = workspaces->data[wsi];
-
-	if (ws->width > wsw)
+	sway_workspace_t* ws = workspaces->data[index];
+	if (ws->width > wth || ws->height > hth)
 	{
-	    wsw = ws->width;
-	    wsh = ws->height;
+	    wth = ws->width;
+	    hth = ws->height;
 	}
     }
 
-    zc_log_debug("Biggest workspace : %ix%i", wsw, wsh);
+    /* calculate full width */
 
-    wsw /= scale;
-    wsh /= scale;
+    int lay_wth = cols * (wth / scale) + (cols + 1) * gap;
+    int lay_hth = rows * (hth / scale) + (rows + 1) * gap;
+
+    /* draw rounded background */
+
+    bm_t* bm = bm_new(lay_wth, lay_hth); // REL 0
+
+    gfx_rounded_rect(
+	bm,
+	0,
+	0,
+	bm->w,
+	bm->h,
+	20,
+	1.0,
+	window_color,
+	0);
+
+    /* calculate individual ws schema dimensions */
+
+    int wsw = wth / scale;
+    int wsh = hth / scale;
 
     zc_log_debug("Scaled workspace : %ix%i", wsw, wsh);
 
     /* draw workspace backgrounds including empty */
 
-    for (int wsi = 0; wsi < max; wsi++)
+    for (int wsi = 0; wsi < rows * cols; wsi++)
     {
 	int cx = gap + wsi % cols * (wsw + gap);
 	int cy = gap + wsi / cols * (wsh + gap);
@@ -102,12 +111,10 @@ void tree_drawer_draw(
     {
 	sway_workspace_t* ws = workspaces->data[wsi];
 
-	int num = ws->number;
-
 	zc_log_debug("Drawing workspace %i", wsi);
 
-	int cx = gap + (num - 1) % cols * (wsw + gap);
-	int cy = gap + (num - 1) / cols * (wsh + gap);
+	int cx = gap + wsi % cols * (wsw + gap);
+	int cy = gap + wsi / cols * (wsh + gap);
 
 	/* draw focused workspace background */
 
@@ -179,10 +186,12 @@ void tree_drawer_draw(
 
     /* draw all workspace numbers */
 
-    for (uint8_t wsi = 0; wsi < max; wsi++)
+    for (uint8_t wsi = 0; wsi < workspaces->length; wsi++)
     {
-	int cx = gap + wsi % cols * (wsw + gap);
-	int cy = gap + wsi / cols * (wsh + gap);
+	sway_workspace_t* ws  = workspaces->data[wsi];
+	int               cx  = gap + wsi % cols * (wsw + gap);
+	int               cy  = gap + wsi / cols * (wsh + gap);
+	int               num = ws->number;
 
 	if (wsw > 0 && wsh > 0)
 	{
@@ -190,7 +199,7 @@ void tree_drawer_draw(
 	    str_t* str      = str_new();        // REL 1
 	    char   nums[10] = {0};
 
-	    snprintf(nums, 4, "%hu", wsi + 1);
+	    snprintf(nums, 4, "%d", num);
 	    str_add_bytearray(str, nums);
 
 	    text_render(str, wsnum_style, tbm);
@@ -202,6 +211,8 @@ void tree_drawer_draw(
 	    REL(tbm); // REL 0
 	}
     }
+
+    return bm;
 }
 
 #endif

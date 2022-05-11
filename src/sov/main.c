@@ -64,6 +64,8 @@ struct sov_output
     struct sov_surface*    sov_surface;
     struct zxdg_output_v1* xdg_output;
     uint32_t               wl_name;
+    int32_t                width;
+    int32_t                height;
 };
 
 struct sov
@@ -71,7 +73,6 @@ struct sov
     char*                          cfg_path;
     char*                          font_path;
     int                            timeout;
-    uint8_t*                       argb;
     int                            shmid;
     struct wl_compositor*          wl_compositor;
     struct wl_display*             wl_display;
@@ -109,95 +110,63 @@ void sov_read_tree(
     REL(tree_json); // REL 1
 }
 
-bm_t* sov_draw_tree_create(struct sov* app)
+bm_t* sov_draw_tree_create(char* font_path, vec_t* workspaces, int32_t width, int32_t height)
 {
-    bm_t*  bitmap     = NULL;
-    vec_t* workspaces = VNEW(); // REL 0
+    textstyle_t main_style = {
+	.font       = font_path,
+	.margin     = config_get_int("text_margin_size"),
+	.margin_top = config_get_int("text_margin_top_size"),
+	.align      = TA_LEFT,
+	.valign     = VA_TOP,
+	.size       = config_get_int("text_title_size"),
+	.textcolor  = cstr_color_from_cstring(config_get("text_title_color")),
+	.backcolor  = 0,
+	.multiline  = 0,
+    };
 
-    sov_read_tree(workspaces);
+    textstyle_t sub_style = {
+	.font        = font_path,
+	.margin      = config_get_int("text_margin_size"),
+	.margin_top  = config_get_int("text_margin_top_size") + config_get_int("text_title_size"),
+	.align       = TA_LEFT,
+	.valign      = VA_TOP,
+	.size        = config_get_int("text_description_size"),
+	.textcolor   = cstr_color_from_cstring(config_get("text_description_color")),
+	.backcolor   = 0,
+	.line_height = config_get_int("text_description_size"),
+	.multiline   = 1,
+    };
 
-    sway_workspace_t* ws  = workspaces->data[0];
-    sway_workspace_t* wsl = workspaces->data[workspaces->length - 1];
+    textstyle_t wsnum_style = {
+	.font      = font_path,
+	.margin    = config_get_int("text_margin_size"),
+	.align     = TA_RIGHT,
+	.valign    = VA_TOP,
+	.size      = config_get_int("text_workspace_size"),
+	.textcolor = cstr_color_from_cstring(config_get("text_workspace_color")),
+	.backcolor = 0x00002200,
+    };
 
-    if (ws->width > 0 && ws->height > 0)
-    {
-	int gap   = config_get_int("gap");
-	int cols  = config_get_int("columns");
-	int rows  = (int) ceilf((float) wsl->number / cols);
-	int ratio = config_get_int("ratio");
+    int gap   = config_get_int("gap");
+    int cols  = config_get_int("columns");
+    int ratio = config_get_int("ratio");
 
-	int lay_wth = cols * (ws->width / ratio) + (cols + 1) * gap;
-	int lay_hth = rows * (ws->height / ratio) + (rows + 1) * gap;
-
-	bitmap = bm_new(lay_wth, lay_hth); // REL 1
-
-	uint32_t window_color = cstr_color_from_cstring(config_get("window_color"));
-
-	gfx_rounded_rect(
-	    bitmap,
-	    0,
-	    0,
-	    bitmap->w,
-	    bitmap->h,
-	    20,
-	    1.0,
-	    window_color,
-	    0);
-
-	textstyle_t main_style = {
-	    .font       = app->font_path,
-	    .margin     = config_get_int("text_margin_size"),
-	    .margin_top = config_get_int("text_margin_top_size"),
-	    .align      = TA_LEFT,
-	    .valign     = VA_TOP,
-	    .size       = config_get_int("text_title_size"),
-	    .textcolor  = cstr_color_from_cstring(config_get("text_title_color")),
-	    .backcolor  = 0,
-	    .multiline  = 0,
-	};
-
-	textstyle_t sub_style = {
-	    .font        = app->font_path,
-	    .margin      = config_get_int("text_margin_size"),
-	    .margin_top  = config_get_int("text_margin_top_size") + config_get_int("text_title_size"),
-	    .align       = TA_LEFT,
-	    .valign      = VA_TOP,
-	    .size        = config_get_int("text_description_size"),
-	    .textcolor   = cstr_color_from_cstring(config_get("text_description_color")),
-	    .backcolor   = 0,
-	    .line_height = config_get_int("text_description_size"),
-	    .multiline   = 1,
-	};
-
-	textstyle_t wsnum_style = {
-	    .font      = app->font_path,
-	    .margin    = config_get_int("text_margin_size"),
-	    .align     = TA_RIGHT,
-	    .valign    = VA_TOP,
-	    .size      = config_get_int("text_workspace_size"),
-	    .textcolor = cstr_color_from_cstring(config_get("text_workspace_color")),
-	    .backcolor = 0x00002200,
-	};
-
-	tree_drawer_draw(
-	    bitmap,
-	    workspaces,
-	    gap,
-	    cols,
-	    ratio,
-	    main_style,
-	    sub_style,
-	    wsnum_style,
-	    cstr_color_from_cstring(config_get("window_color")),
-	    cstr_color_from_cstring(config_get("background_color")),
-	    cstr_color_from_cstring(config_get("background_color_focused")),
-	    cstr_color_from_cstring(config_get("border_color")),
-	    cstr_color_from_cstring(config_get("empty_color")),
-	    cstr_color_from_cstring(config_get("empty_frame_color")),
-	    config_get_int("text_workspace_xshift"),
-	    config_get_int("text_workspace_yshift"));
-    }
-    REL(workspaces); // REL 0
+    bm_t* bitmap = tree_drawer_bm_create(
+	workspaces,
+	gap,
+	cols,
+	ratio,
+	main_style,
+	sub_style,
+	wsnum_style,
+	cstr_color_from_cstring(config_get("window_color")),
+	cstr_color_from_cstring(config_get("background_color")),
+	cstr_color_from_cstring(config_get("background_color_focused")),
+	cstr_color_from_cstring(config_get("border_color")),
+	cstr_color_from_cstring(config_get("empty_color")),
+	cstr_color_from_cstring(config_get("empty_frame_color")),
+	config_get_int("text_workspace_xshift"),
+	config_get_int("text_workspace_yshift"));
 
     return bitmap;
 }
@@ -256,19 +225,9 @@ void* sov_shm_alloc(const int shmid, const size_t size)
     return buffer;
 }
 
-void xdg_output_handle_name(
-    void*                  data,
-    struct zxdg_output_v1* xdg_output,
-    const char*            name)
+int sov_shm_dealloc(void* buffer, const size_t size)
 {
-    zc_log_info("Detected output %s", name);
-    struct sov_output* output = (struct sov_output*) data;
-    output->name              = strdup(name);
-    if (output->name == NULL)
-    {
-	zc_log_error("strdup failed\n");
-	exit(EXIT_FAILURE);
-    }
+    return munmap(buffer, size);
 }
 
 void layer_surface_configure(
@@ -350,6 +309,39 @@ void sov_output_destroy(
     output->wl_output   = NULL;
     output->xdg_output  = NULL;
     output->name        = NULL;
+
+    free(output);
+}
+
+void xdg_output_handle_name(
+    void*                  data,
+    struct zxdg_output_v1* xdg_output,
+    const char*            name)
+{
+    zc_log_info("Detected output %s", name);
+
+    struct sov_output* output = (struct sov_output*) data;
+    output->name              = strdup(name);
+    if (output->name == NULL)
+    {
+	zc_log_error("strdup failed\n");
+	exit(EXIT_FAILURE);
+    }
+}
+
+void xdg_output_handle_size(
+    void*                  data,
+    struct zxdg_output_v1* xdg_output,
+    int32_t                width,
+    int32_t                height)
+{
+
+    struct sov_output* output = (struct sov_output*) data;
+
+    zc_log_info("Detected size for %s %i %i", output->name, width, height);
+
+    output->width  = width;
+    output->height = height;
 }
 
 void xdg_output_handle_done(
@@ -357,23 +349,9 @@ void xdg_output_handle_done(
     struct zxdg_output_v1* xdg_output)
 {
     struct sov_output* output = (struct sov_output*) data;
-    struct sov*        app    = output->app;
 
-    struct sov_output_config *output_config, *tmp;
-    wl_list_for_each_safe(output_config, tmp, &app->output_configs, link)
-    {
-	if (strcmp(output->name, output_config->name) == 0 || strcmp("*", output_config->name) == 0)
-	{
-	    wl_list_insert(&output->app->sov_outputs, &output->link);
-	    zc_log_info("Bar will be displayed on output %s", output->name);
-	    return;
-	}
-    }
-
-    zc_log_info("Bar will NOT be displayed on output %s", output->name);
-
-    sov_output_destroy(output);
-    free(output);
+    wl_list_insert(&output->app->sov_outputs, &output->link);
+    zc_log_info("Adding output %s", output->name);
 }
 
 void handle_global(
@@ -385,7 +363,7 @@ void handle_global(
 {
     const static struct zxdg_output_v1_listener xdg_output_listener = {
 	.logical_position = noop,
-	.logical_size     = noop,
+	.logical_size     = xdg_output_handle_size,
 	.name             = xdg_output_handle_name,
 	.description      = noop,
 	.done             = xdg_output_handle_done,
@@ -403,22 +381,21 @@ void handle_global(
     }
     else if (strcmp(interface, "wl_output") == 0)
     {
-	if (!wl_list_empty(&(app->output_configs)))
+	struct sov_output* output = calloc(1, sizeof(struct sov_output));
+	output->wl_output         = wl_registry_bind(registry, name, &wl_output_interface, 1);
+	output->app               = app;
+	output->wl_name           = name;
+
+	output->xdg_output = zxdg_output_manager_v1_get_xdg_output(app->xdg_output_manager, output->wl_output);
+	zxdg_output_v1_add_listener(output->xdg_output, &xdg_output_listener, output);
+
+	if (wl_display_roundtrip(app->wl_display) == -1)
 	{
-	    struct sov_output* output = calloc(1, sizeof(struct sov_output));
-	    output->wl_output         = wl_registry_bind(registry, name, &wl_output_interface, 1);
-	    output->app               = app;
-	    output->wl_name           = name;
-
-	    output->xdg_output = zxdg_output_manager_v1_get_xdg_output(app->xdg_output_manager, output->wl_output);
-	    zxdg_output_v1_add_listener(output->xdg_output, &xdg_output_listener, output);
-
-	    if (wl_display_roundtrip(app->wl_display) == -1)
-	    {
-		zc_log_error("wl_display_roundtrip failed");
-		exit(EXIT_FAILURE);
-	    }
+	    zc_log_error("wl_display_roundtrip failed");
+	    exit(EXIT_FAILURE);
 	}
+	else
+	    zc_log_debug("wl_display_roundtrip success");
     }
     else if (strcmp(interface, zwlr_layer_shell_v1_interface.name) == 0)
     {
@@ -441,6 +418,7 @@ void handle_global_remove(
     {
 	if (output->wl_name == name)
 	{
+	    wl_list_remove(&output->link);
 	    sov_output_destroy(output);
 	    break;
 	}
@@ -451,7 +429,7 @@ int sov_connect_display(struct sov* app)
 {
     const static struct wl_registry_listener wl_registry_listener = {
 	.global        = handle_global,
-	.global_remove = noop,
+	.global_remove = handle_global_remove,
     };
 
     app->wl_display = wl_display_connect(NULL);
@@ -497,123 +475,127 @@ bool sov_parse_input(const char* input_buffer, unsigned long* state)
 
 int sov_show(struct sov* app)
 {
-    bm_t* bitmap = sov_draw_tree_create(app);
+    // get tree first
 
-    if (bitmap)
+    vec_t* workspaces = VNEW(); // REL 0
+
+    sov_read_tree(workspaces);
+
+    // go through outputs
+
+    struct sov_output *output, *tmp;
+    wl_list_for_each_safe(output, tmp, &(app->sov_outputs), link)
     {
-	struct wl_buffer* wl_buffer = NULL;
+	// get workspaces for output, get biggest number and biggest ws dimension
 
-	uint32_t size   = bitmap->w * bitmap->h * 4;
-	uint32_t stride = bitmap->w * 4;
+	vec_t* curr_ws = VNEW(); // REL 1
 
-	struct wl_shm_pool* pool = wl_shm_create_pool(app->wl_shm, app->shmid, size);
-	if (pool == NULL)
+	int wth = 0;
+	int hth = 0;
+
+	for (int index = 0; index < workspaces->length; index++)
 	{
-	    zc_log_error("wl_shm_create_pool failed");
-	    return EXIT_FAILURE;
-	}
-
-	wl_buffer = wl_shm_pool_create_buffer(pool, 0, bitmap->w, bitmap->h, stride, WL_SHM_FORMAT_ARGB8888);
-	wl_shm_pool_destroy(pool);
-
-	if (wl_buffer == NULL)
-	{
-	    zc_log_error("wl_shm_pool_create_buffer failed");
-	    return EXIT_FAILURE;
-	}
-
-	if (app->argb == NULL) { app->argb = sov_shm_alloc(app->shmid, size); }
-	if (app->argb == NULL) { return EXIT_FAILURE; }
-
-	// memcpy((uint8_t*)app->argb, bitmap->data, bitmap->size);
-	// we have to do this until RGBA8888 is working for buffer format
-
-	for (int i = 0; i < bitmap->size; i += 4)
-	{
-	    app->argb[i]     = bitmap->data[i + 2];
-	    app->argb[i + 1] = bitmap->data[i + 1];
-	    app->argb[i + 2] = bitmap->data[i];
-	    app->argb[i + 3] = bitmap->data[i + 3];
-	}
-
-	// create surface
-
-	if (wl_list_empty(&(app->sov_outputs)))
-	{
-	    zc_log_info("No output matching configuration found, fallbacking to focused output");
-	    app->fallback_sov_surface = sov_surface_create(app, NULL, bitmap->w, bitmap->h, app->sov_geom.margin, app->sov_geom.anchor);
-	}
-	else
-	{
-	    struct sov_output *output, *tmp;
-	    wl_list_for_each_safe(output, tmp, &app->sov_outputs, link)
+	    sway_workspace_t* ws = workspaces->data[index];
+	    if (strcmp(ws->output, output->name) == 0)
 	    {
-		zc_log_info("Showing bar on output %s", output->name);
-		output->sov_surface = sov_surface_create(app, output->wl_output, bitmap->w, bitmap->h, app->sov_geom.margin, app->sov_geom.anchor);
+		VADD(curr_ws, ws);
+		if (ws->width > wth || ws->height > hth)
+		{
+		    wth = ws->width;
+		    hth = ws->height;
+		}
 	    }
 	}
 
-	if (wl_display_roundtrip(app->wl_display) == -1)
-	{
-	    zc_log_error("wl_display_roundtrip failed");
-	    return EXIT_FAILURE;
-	}
+	zc_log_debug("showing %i workspaces on output %s wth %i hth %i", curr_ws->length, output->name, wth, hth);
 
-	// flush
+	bm_t* bitmap = sov_draw_tree_create(app->font_path, curr_ws, wth, hth);
 
-	if (wl_list_empty(&(app->sov_outputs)))
+	REL(curr_ws); // REL 1
+
+	if (bitmap)
 	{
-	    wl_surface_attach(app->fallback_sov_surface->wl_surface, wl_buffer, 0, 0);
-	    wl_surface_damage(app->fallback_sov_surface->wl_surface, 0, 0, bitmap->w, bitmap->h);
-	    wl_surface_commit(app->fallback_sov_surface->wl_surface);
-	}
-	else
-	{
-	    struct sov_output *output, *tmp;
-	    wl_list_for_each_safe(output, tmp, &(app->sov_outputs), link)
+	    struct wl_buffer* wl_buffer = NULL;
+
+	    uint32_t size   = bitmap->w * bitmap->h * 4;
+	    uint32_t stride = bitmap->w * 4;
+
+	    struct wl_shm_pool* pool = wl_shm_create_pool(app->wl_shm, app->shmid, size);
+	    if (pool == NULL)
 	    {
-		wl_surface_attach(output->sov_surface->wl_surface, wl_buffer, 0, 0);
-		wl_surface_damage(output->sov_surface->wl_surface, 0, 0, bitmap->w, bitmap->h);
-		wl_surface_commit(output->sov_surface->wl_surface);
+		zc_log_error("wl_shm_create_pool failed");
+		return EXIT_FAILURE;
 	    }
+
+	    wl_buffer = wl_shm_pool_create_buffer(pool, 0, bitmap->w, bitmap->h, stride, WL_SHM_FORMAT_ARGB8888);
+	    wl_shm_pool_destroy(pool);
+
+	    if (wl_buffer == NULL)
+	    {
+		zc_log_error("wl_shm_pool_create_buffer failed");
+		return EXIT_FAILURE;
+	    }
+
+	    uint8_t* argb = sov_shm_alloc(app->shmid, size);
+	    if (argb == NULL) { return EXIT_FAILURE; }
+
+	    // memcpy((uint8_t*)app->argb, bitmap->data, bitmap->size);
+	    // we have to do this until RGBA8888 is working for buffer format
+
+	    for (int i = 0; i < bitmap->size; i += 4)
+	    {
+		argb[i]     = bitmap->data[i + 2];
+		argb[i + 1] = bitmap->data[i + 1];
+		argb[i + 2] = bitmap->data[i];
+		argb[i + 3] = bitmap->data[i + 3];
+	    }
+
+	    // create surface
+	    output->sov_surface = sov_surface_create(app, output->wl_output, bitmap->w, bitmap->h, app->sov_geom.margin, app->sov_geom.anchor);
+
+	    if (wl_display_roundtrip(app->wl_display) == -1)
+	    {
+		zc_log_error("wl_display_roundtrip failed");
+		return EXIT_FAILURE;
+	    }
+
+	    zc_log_info("Showing on output %s", output->name);
+
+	    // flush
+	    wl_surface_attach(output->sov_surface->wl_surface, wl_buffer, 0, 0);
+	    wl_surface_damage(output->sov_surface->wl_surface, 0, 0, bitmap->w, bitmap->h);
+	    wl_surface_commit(output->sov_surface->wl_surface);
+
+	    /* cleanup */
+
+	    wl_buffer_destroy(wl_buffer);
+
+	    if (wl_display_dispatch(app->wl_display) == -1)
+	    {
+		zc_log_error("wl_display_dispatch failed");
+		return EXIT_FAILURE;
+	    }
+
+	    REL(bitmap); // REL 1
+
+	    sov_shm_dealloc(argb, size);
 	}
-
-	/* cleanup */
-
-	wl_buffer_destroy(wl_buffer);
-
-	if (wl_display_dispatch(app->wl_display) == -1)
-	{
-	    zc_log_error("wl_display_dispatch failed");
-	    return EXIT_FAILURE;
-	}
-
-	REL(bitmap); // REL 1
     }
+
+    REL(workspaces); // REL 0
 
     return 0;
 }
 
-int sov_hide(
-    struct sov* app)
+int sov_hide(struct sov* app)
 {
-    if (wl_list_empty(&(app->sov_outputs)))
+    struct sov_output *output, *tmp;
+    wl_list_for_each_safe(output, tmp, &app->sov_outputs, link)
     {
-	zc_log_info("Hiding bar on focused output");
-	sov_surface_destroy(app->fallback_sov_surface);
-	free(app->fallback_sov_surface);
-	app->fallback_sov_surface = NULL;
-    }
-    else
-    {
-	struct sov_output *output, *tmp;
-	wl_list_for_each_safe(output, tmp, &app->sov_outputs, link)
-	{
-	    zc_log_info("Hiding bar on output %s", output->name);
-	    sov_surface_destroy(output->sov_surface);
-	    free(output->sov_surface);
-	    output->sov_surface = NULL;
-	}
+	zc_log_info("Hiding on output %s", output->name);
+	sov_surface_destroy(output->sov_surface);
+	free(output->sov_surface);
+	output->sov_surface = NULL;
     }
 
     if (wl_display_roundtrip(app->wl_display) == -1)
@@ -631,7 +613,6 @@ void sov_destroy(struct sov* app)
     wl_list_for_each_safe(output, output_tmp, &app->sov_outputs, link)
     {
 	sov_output_destroy(output);
-	free(output);
     }
 
     struct sov_output_config *config, *config_tmp;
@@ -663,7 +644,6 @@ int main(int argc, char** argv)
 	"\n"
 	"  -c  --config= [path]                Use config file for session.\n"
 	"  -h, --help                          Show help message and quit.\n"
-	"  -o, --output <name>                 Define output to show bar on or '*' for all. If ommited, focused output is chosen.\n"
 	"  -v                                  Increase verbosity of messages, defaults to errors and warnings only.\n"
 	"\n";
 
@@ -693,26 +673,6 @@ int main(int argc, char** argv)
 		}
 		break;
 	    case 'h': printf("%s", usage); return EXIT_SUCCESS;
-	    case 'o':
-	    {
-		struct sov_output_config* output_config = calloc(1, sizeof(struct sov_output_config)); // FREE!!!
-		if (output_config == NULL)
-		{
-		    zc_log_error("calloc failed");
-		    return EXIT_FAILURE;
-		}
-
-		output_config->name = strdup(optarg);
-		if (output_config->name == NULL)
-		{
-		    free(output_config);
-		    zc_log_error("strdup failed");
-		    return EXIT_FAILURE;
-		}
-
-		wl_list_insert(&(app.output_configs), &(output_config->link));
-		break;
-	    }
 	    case 'v': zc_log_inc_verbosity(); break;
 	    default: fprintf(stderr, "%s", usage); return EXIT_FAILURE;
 	}
