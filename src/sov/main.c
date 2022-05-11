@@ -86,8 +86,7 @@ struct sov
     struct sov_surface*            fallback_sov_surface;
 };
 
-void sov_read_tree(
-    vec_t* workspaces)
+void sov_read_tree(vec_t* workspaces)
 {
     char  buff[100];
     char* ws_json   = NULL; // REL 0
@@ -108,67 +107,6 @@ void sov_read_tree(
 
     REL(ws_json);   // REL 0
     REL(tree_json); // REL 1
-}
-
-bm_t* sov_draw_tree_create(char* font_path, vec_t* workspaces, int32_t width, int32_t height)
-{
-    textstyle_t main_style = {
-	.font       = font_path,
-	.margin     = config_get_int("text_margin_size"),
-	.margin_top = config_get_int("text_margin_top_size"),
-	.align      = TA_LEFT,
-	.valign     = VA_TOP,
-	.size       = config_get_int("text_title_size"),
-	.textcolor  = cstr_color_from_cstring(config_get("text_title_color")),
-	.backcolor  = 0,
-	.multiline  = 0,
-    };
-
-    textstyle_t sub_style = {
-	.font        = font_path,
-	.margin      = config_get_int("text_margin_size"),
-	.margin_top  = config_get_int("text_margin_top_size") + config_get_int("text_title_size"),
-	.align       = TA_LEFT,
-	.valign      = VA_TOP,
-	.size        = config_get_int("text_description_size"),
-	.textcolor   = cstr_color_from_cstring(config_get("text_description_color")),
-	.backcolor   = 0,
-	.line_height = config_get_int("text_description_size"),
-	.multiline   = 1,
-    };
-
-    textstyle_t wsnum_style = {
-	.font      = font_path,
-	.margin    = config_get_int("text_margin_size"),
-	.align     = TA_RIGHT,
-	.valign    = VA_TOP,
-	.size      = config_get_int("text_workspace_size"),
-	.textcolor = cstr_color_from_cstring(config_get("text_workspace_color")),
-	.backcolor = 0x00002200,
-    };
-
-    int gap   = config_get_int("gap");
-    int cols  = config_get_int("columns");
-    int ratio = config_get_int("ratio");
-
-    bm_t* bitmap = tree_drawer_bm_create(
-	workspaces,
-	gap,
-	cols,
-	ratio,
-	main_style,
-	sub_style,
-	wsnum_style,
-	cstr_color_from_cstring(config_get("window_color")),
-	cstr_color_from_cstring(config_get("background_color")),
-	cstr_color_from_cstring(config_get("background_color_focused")),
-	cstr_color_from_cstring(config_get("border_color")),
-	cstr_color_from_cstring(config_get("empty_color")),
-	cstr_color_from_cstring(config_get("empty_frame_color")),
-	config_get_int("text_workspace_xshift"),
-	config_get_int("text_workspace_yshift"));
-
-    return bitmap;
 }
 
 void noop()
@@ -509,7 +447,61 @@ int sov_show(struct sov* app)
 
 	zc_log_debug("showing %i workspaces on output %s wth %i hth %i", curr_ws->length, output->name, wth, hth);
 
-	bm_t* bitmap = sov_draw_tree_create(app->font_path, curr_ws, wth, hth);
+	textstyle_t main_style = {
+	    .font       = app->font_path,
+	    .margin     = config_get_int("text_margin_size"),
+	    .margin_top = config_get_int("text_margin_top_size"),
+	    .align      = TA_LEFT,
+	    .valign     = VA_TOP,
+	    .size       = config_get_int("text_title_size"),
+	    .textcolor  = cstr_color_from_cstring(config_get("text_title_color")),
+	    .backcolor  = 0,
+	    .multiline  = 0,
+	};
+
+	textstyle_t sub_style = {
+	    .font        = app->font_path,
+	    .margin      = config_get_int("text_margin_size"),
+	    .margin_top  = config_get_int("text_margin_top_size") + config_get_int("text_title_size"),
+	    .align       = TA_LEFT,
+	    .valign      = VA_TOP,
+	    .size        = config_get_int("text_description_size"),
+	    .textcolor   = cstr_color_from_cstring(config_get("text_description_color")),
+	    .backcolor   = 0,
+	    .line_height = config_get_int("text_description_size"),
+	    .multiline   = 1,
+	};
+
+	textstyle_t wsnum_style = {
+	    .font      = app->font_path,
+	    .margin    = config_get_int("text_margin_size"),
+	    .align     = TA_RIGHT,
+	    .valign    = VA_TOP,
+	    .size      = config_get_int("text_workspace_size"),
+	    .textcolor = cstr_color_from_cstring(config_get("text_workspace_color")),
+	    .backcolor = 0x00002200,
+	};
+
+	int gap   = config_get_int("gap");
+	int cols  = config_get_int("columns");
+	int ratio = config_get_int("ratio");
+
+	bm_t* bitmap = tree_drawer_bm_create(
+	    curr_ws,
+	    gap,
+	    cols,
+	    ratio,
+	    main_style,
+	    sub_style,
+	    wsnum_style,
+	    cstr_color_from_cstring(config_get("window_color")),
+	    cstr_color_from_cstring(config_get("background_color")),
+	    cstr_color_from_cstring(config_get("background_color_focused")),
+	    cstr_color_from_cstring(config_get("border_color")),
+	    cstr_color_from_cstring(config_get("empty_color")),
+	    cstr_color_from_cstring(config_get("empty_frame_color")),
+	    config_get_int("text_workspace_xshift"),
+	    config_get_int("text_workspace_yshift"));
 
 	REL(curr_ws); // REL 1
 
