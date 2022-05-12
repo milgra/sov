@@ -1,6 +1,6 @@
 # sov — Sway Overview
 
-An overlay that shows schemas of all workspaces to make navigation in sway easier. [Used by SwayOS](https://swayos.github.io)
+An overlay that shows schemas for all workspaces to make navigation in sway easier. [Used by SwayOS](https://swayos.github.io)
 
 ![alt text](screenshot.png)
 
