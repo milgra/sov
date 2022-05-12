@@ -17,7 +17,7 @@ columns 5
 ratio 8
 
 # font face, use any string that is output by fc-list, recommended is Terminus (TTF):style=Bold
-font_face Sans
+font_face Terminus (TTF):style=Bold
 
 # margin size around text
 text_margin_size 7
