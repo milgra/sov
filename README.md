@@ -9,6 +9,7 @@ An overlay that shows schemas of all workspaces to make navigation in sway easie
 - no downscaled and confusing thumbnails, just crystal clear app names and titles
 - layout schema makes workspace identification easier
 - super lightweight   
+- multi-display support
 
 ## Installation
 
