@@ -10,55 +10,22 @@ char* fontconfig_new_path(char* face_desc);
 #define _POSIX_C_SOURCE 200112L
 #include "zc_cstring.c"
 #include "zc_memory.c"
+#include <limits.h>
+#include <linux/limits.h>
 #include <stdio.h>
 #include <string.h>
 
 char* fontconfig_new_path(char* face_desc)
 {
-    char buff[100];
-
-    char* cstr = cstr_new_cstring(""); // REL 0
-
-    /* look for face_desc in fc-list fitting end of row */
-    char* command = cstr_new_format(80, "fc-list | grep '%s'$", face_desc); // REL 1
-    FILE* pipe    = popen(command, "r");                                    // CLOSE 0
-    REL(command);                                                           // REL 1
-
-    while (fgets(buff, sizeof(buff), pipe) != NULL) cstr = cstr_append(cstr, buff);
+    char  buff[PATH_MAX];
+    char* filename = cstr_new_cstring("");                                                // REL 0
+    char* command  = cstr_new_format(80, "fc-match \"%s\" --format=%%{file}", face_desc); // REL 1
+    FILE* pipe     = popen(command, "r");                                                 // CLOSE 0
+    while (fgets(buff, sizeof(buff), pipe) != NULL) filename = cstr_append(filename, buff);
     pclose(pipe); // CLOSE 0
+    REL(command); // REL 1
 
-    if (strlen(cstr) == 0)
-    {
-	/* if no result, look for face_desc in fc-list inside rows */
-	command    = cstr_new_format(80, "fc-list | grep '%s'", face_desc); // REL 2
-	FILE* pipe = popen(command, "r");                                   // CLOSE 1
-	REL(command);                                                       // REL 2
-
-	while (fgets(buff, sizeof(buff), pipe) != NULL) cstr = cstr_append(cstr, buff);
-	pclose(pipe); // CLOSE 1
-
-	if (strlen(cstr) == 0)
-	{
-	    /* if no result, get first available font */
-	    command    = cstr_new_cstring("fc-list | grep ''$"); // REL 3
-	    FILE* pipe = popen(command, "r");                    // CLOSE 2
-	    REL(command);                                        // REL  3
-
-	    while (fgets(buff, sizeof(buff), pipe) != NULL) cstr = cstr_append(cstr, buff);
-	    pclose(pipe); // CLOSE 2
-	}
-    }
-
-    /* extract file name before double colon */
-
-    char* dcolon = strchr(cstr, ':');
-    char* result = cstr_new_cstring("");
-
-    result = cstr_append_sub(result, cstr, 0, dcolon - cstr);
-
-    REL(cstr); // REL 0
-
-    return result;
+    return filename;
 }
 
 #endif
