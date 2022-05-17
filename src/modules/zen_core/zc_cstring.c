@@ -218,8 +218,8 @@ char* cstr_new_file(char* path)
 	{
 	    // Something went wrong, throw away the memory and set
 	    // the buffer to NULL
-	    free(buffer);
 	    buffer = NULL;
+	    free(buffer);
 	}
 
 	// Always remember to close the file.
