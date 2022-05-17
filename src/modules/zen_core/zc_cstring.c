@@ -214,12 +214,15 @@ char* cstr_new_file(char* path)
 	// and buffer is now officially a string
 	buffer[string_size] = '\0';
 
-	if (string_size != read_size)
+	if (read_size != 0) 
 	{
-	    // Something went wrong, throw away the memory and set
-	    // the buffer to NULL
-	    buffer = NULL;
-	    free(buffer);
+		if (string_size != read_size)
+		{
+		    // Something went wrong, throw away the memory and set
+		    // the buffer to NULL
+		    free(buffer);
+		    buffer = NULL;
+		}
 	}
 
 	// Always remember to close the file.
