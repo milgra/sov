@@ -84,7 +84,7 @@ bindsym --release $mod+0 exec "echo 0 > /tmp/sovpipe"
 
 If you want to customize sov, copy /usr/share/sov/config to ~/.config/sov/config and edit it.
 ```
-mdir -p ~/.config/sov/config
+mkdir -p ~/.config/sov/config
 cp /usr/share/sov/config ~/.config/sov/config
 ```
 Possible keys :
