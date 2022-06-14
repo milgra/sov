@@ -216,7 +216,7 @@ char* cstr_new_file(char* path)
 	    // and buffer is now officially a string
 	    buffer[string_size] = '\0';
 
-	    if (read_size == 0 || string_size != read_size)
+	    if (read_size != 0 && string_size != read_size)
 	    {
 		// something went wrong, throw away the memory and set
 		// the buffer to NULL
