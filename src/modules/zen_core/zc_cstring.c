@@ -264,7 +264,22 @@ char* cstr_unescape(char* str)
     int    ni     = 0;
     for (int index = 0; index < length; index++)
     {
-	if (str[index] != '\\') result[ni++] = str[index];
+	if (str[index] == '\\')
+	{
+	    if (index < length - 1)
+	    {
+		char n = str[index + 1];
+		if (n == '\\' || n == '"' || n == '\'' || n == '/' || n == '?')
+		{
+		    result[ni++] = next;
+		}
+		index += 1;
+	    }
+	}
+	else
+	{
+	    result[ni++] = str[index];
+	}
     }
     return result;
 }

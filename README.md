@@ -134,6 +134,13 @@ CC=clang meson build --buildtype=debug -Db_sanitize=address -Db_lundef=false
 ninja -C build
 ```
 
+Creating a release :
+```
+meson build --buildtype=release
+cd build
+meson dist
+```
+
 ## Donate ##
 
 paypal : [https://paypal.me/milgra](https://paypal.me/milgra)  
