@@ -13,6 +13,7 @@ char*    cstr_new_readablec(uint32_t length);
 char*    cstr_new_alphanumeric(uint32_t length);
 void     cstr_describe(void* p, int level);
 void     cstr_tolower(char* str);
+char*    cstr_unescape(char* str);
 char*    cstr_append(char* str, char* add);
 char*    cstr_append_sub(char* str, char* add, int from, int len);
 
@@ -254,6 +255,18 @@ void cstr_tolower(char* str)
     {
 	str[index] = tolower(str[index]);
     }
+}
+
+char* cstr_unescape(char* str)
+{
+    size_t length = strlen(str);
+    char*  result = CAL((length + 1) * sizeof(char), NULL, cstr_describe);
+    int    ni     = 0;
+    for (int index = 0; index < length; index++)
+    {
+	if (str[index] != '\\') result[ni++] = str[index];
+    }
+    return result;
 }
 
 /* generates alphanumeric string */
