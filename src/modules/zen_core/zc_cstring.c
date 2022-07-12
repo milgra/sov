@@ -271,7 +271,7 @@ char* cstr_unescape(char* str)
 		char n = str[index + 1];
 		if (n == '\\' || n == '"' || n == '\'' || n == '/' || n == '?')
 		{
-		    result[ni++] = next;
+		    result[ni++] = n;
 		}
 		index += 1;
 	    }
