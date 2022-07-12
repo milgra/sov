@@ -17,7 +17,10 @@ math = cc.find_library('m')
 rt = cc.find_library('rt')
 
 sov_version = '"@0@"'.format(meson.project_version())
-add_project_arguments('-DSOV_VERSION=@0@'.format(sov_version), language: 'c')
+pkg_datadir = join_paths(get_option('prefix'), get_option('datadir')) / 'sov'
+add_project_arguments('-DPKG_DATADIR="' + pkg_datadir + '"',
+		      '-DSOV_VERSION=@0@'.format(sov_version),
+		      language: 'c')
 
 if get_option('buildtype').startswith('debug')
   add_project_arguments('-DDEBUG', language : 'c')
@@ -103,7 +106,7 @@ executable(
   install: true,
 )
 
-install_data('config', install_dir : get_option('datadir') / 'sov')
+install_data('config', install_dir : pkg_datadir )
 
 executable(
   'test_tree',

@@ -33,7 +33,6 @@
 #include "zc_vector.c"
 
 #define CFG_PATH_LOC "~/.config/sov/config"
-#define CFG_PATH_GLO "/usr/share/sov/config"
 #define GET_WORKSPACES_CMD "swaymsg -t get_workspaces"
 #define GET_TREE_CMD "swaymsg -t get_tree"
 
@@ -678,12 +677,12 @@ int main(int argc, char** argv)
     if (getcwd(cwd, sizeof(cwd)) == NULL) printf("Cannot get working directory\n");
 
     char* cfg_path_loc = app.cfg_path ? cstr_new_path_normalize(app.cfg_path, cwd) : cstr_new_path_normalize(CFG_PATH_LOC, getenv("HOME")); // REL 1
-    char* cfg_path_glo = cstr_new_cstring(CFG_PATH_GLO);                                                                                    // REL 2
+    char* cfg_path_glo = cstr_new_path_append(PKG_DATADIR, "config");                                                                       // REL 2
 
     if (config_read(cfg_path_loc) < 0)
     {
 	if (config_read(cfg_path_glo) < 0)
-	    zc_log_warn("No local or global config file found\n");
+	    zc_log_warn("No configuration found ( local : %s , global : %s )\n", cfg_path_loc, cfg_path_glo);
 	else
 	    zc_log_info("Using config file : %s\n", cfg_path_glo);
     }
