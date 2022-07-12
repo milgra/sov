@@ -11,7 +11,9 @@
 #include "zc_log.c"
 #include <getopt.h>
 #include <limits.h>
-#include <linux/limits.h>
+#ifdef __linux__
+    #include <linux/limits.h>
+#endif
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>

@@ -11,7 +11,9 @@ char* fontconfig_new_path(char* face_desc);
 #include "zc_cstring.c"
 #include "zc_memory.c"
 #include <limits.h>
-#include <linux/limits.h>
+#ifdef __linux__
+    #include <linux/limits.h>
+#endif
 #include <stdio.h>
 #include <string.h>
 
