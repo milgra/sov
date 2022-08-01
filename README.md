@@ -29,7 +29,7 @@ Run these commands:
 ```
 git clone git@github.com:milgra/sov.git
 cd sov
-meson build
+meson build --buildtype=release
 ninja -C build
 sudo ninja -C build install
 ```
@@ -84,8 +84,8 @@ bindsym --release $mod+0 exec "echo 0 > /tmp/sovpipe"
 
 If you want to customize sov, copy /usr/share/sov/config to ~/.config/sov/config and edit it.
 ```
-mkdir -p ~/.config/sov/config
-cp /usr/share/sov/config ~/.config/sov/config
+mkdir -p ~/.config/sov
+cp /usr/share/sov/config ~/.config/sov
 ```
 Possible keys :
 
@@ -132,13 +132,6 @@ Creating a debug build :
 ```
 CC=clang meson build --buildtype=debug -Db_sanitize=address -Db_lundef=false
 ninja -C build
-```
-
-Creating a release :
-```
-meson build --buildtype=release
-cd build
-meson dist
 ```
 
 ## Donate ##
