@@ -324,6 +324,12 @@ void text_break_glyphs(glyph_t* glyphs, int count, textstyle_t style, int wth, i
 	// store glyph
 	glyphs[index] = glyph;
 
+	// not enough space to show even one character!
+	if (xpos > wth && index == 0)
+	{
+	    break;
+	}
+
 	if (style.multiline)
 	{
 	    if (cp == '\n' || cp == '\r' || xpos > wth)
