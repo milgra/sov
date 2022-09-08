@@ -66,3 +66,9 @@ empty_color #111111FF
 
 # empty thumb border
 empty_frame_color #555555FF
+
+# corner radius for the popup window
+background_corner_radius 20
+
+# corner radius for workspaces and windows
+tree_corner_radius 8
