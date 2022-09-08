@@ -19,6 +19,8 @@ bm_t* tree_drawer_bm_create(
     uint32_t    border_color,
     uint32_t    empty_color,
     uint32_t    empty_border,
+    int         background_corner_radius,
+    int         tree_corner_radius,
     int         wsnum_dx,
     int         wsnum_dy);
 
@@ -46,6 +48,8 @@ bm_t* tree_drawer_bm_create(
     uint32_t    border_color,
     uint32_t    empty_color,
     uint32_t    empty_border,
+    int         background_corner_radius,
+    int         tree_corner_radius,
     int         wsnum_dx,
     int         wsnum_dy)
 {
@@ -80,7 +84,7 @@ bm_t* tree_drawer_bm_create(
 	0,
 	bm->w,
 	bm->h,
-	20,
+	background_corner_radius,
 	1.0,
 	window_color,
 	0);
@@ -103,8 +107,8 @@ bm_t* tree_drawer_bm_create(
 
 	// gfx_rounded_rect(bm, cx - 1, cy - 1, wsw + 3, wsh + 3, 8, 0.0, empty_color, window_color);
 
-	gfx_rounded_rect(bm, cx, cy, wsw, wsh, 8, 0.0, empty_border, window_color);
-	gfx_rounded_rect(bm, cx + 1, cy + 1, wsw - 2, wsh - 2, 8, 0.0, empty_color, empty_border);
+	gfx_rounded_rect(bm, cx, cy, wsw, wsh, tree_corner_radius, 0.0, empty_border, window_color);
+	gfx_rounded_rect(bm, cx + 1, cy + 1, wsw - 2, wsh - 2, tree_corner_radius, 0.0, empty_color, empty_border);
     }
 
     for (int wsi = 0; wsi < workspaces->length; wsi++)
@@ -118,7 +122,7 @@ bm_t* tree_drawer_bm_create(
 
 	/* draw focused workspace background */
 
-	if (ws->focused) gfx_rounded_rect(bm, cx + 1, cy + 1, wsw - 2, wsh - 2, 8, 0.0, focused_color, empty_border);
+	if (ws->focused) gfx_rounded_rect(bm, cx + 1, cy + 1, wsw - 2, wsh - 2, tree_corner_radius, 0.0, focused_color, empty_border);
 
 	/* draw windows */
 
@@ -167,8 +171,11 @@ bm_t* tree_drawer_bm_create(
 
 		/* draw frame */
 
-		gfx_rounded_rect(bm, wcx, wcy, wiw, wih, 7, 0.0, border_color, 0);
-		gfx_rounded_rect(bm, wcx + 1, wcy + 1, wiw - 2, wih - 2, 7, 0.0, main_style.backcolor, empty_border);
+		// prevent trying to draw a negative radius
+		int frame_radius = tree_corner_radius > 1 ? tree_corner_radius - 1 : 0;
+
+		gfx_rounded_rect(bm, wcx, wcy, wiw, wih, frame_radius, 0.0, border_color, 0);
+		gfx_rounded_rect(bm, wcx + 1, wcy + 1, wiw - 2, wih - 2, frame_radius, 0.0, main_style.backcolor, empty_border);
 
 		/* insert text bitmap */
 
