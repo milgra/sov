@@ -107,6 +107,8 @@ executable(
 )
 
 install_data('config', install_dir : pkg_datadir )
+install_data('contrib/systemd/sov.service', install_dir : get_option('libdir') / 'systemd' / 'user' )
+install_data('contrib/systemd/sov.socket', install_dir : get_option('libdir') / 'systemd' / 'user' )
 
 executable(
   'test_tree',
