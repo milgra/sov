@@ -274,7 +274,7 @@ void gfx_rounded_rect(bm_t* bitmap, int x, int y, int w, int h, int r, float edg
     {
 	// corners
 	gfx_arc_grad(bitmap, x + e + r, y + e + r, 0, r + 1, 3.14, 3.14 * 3 / 2.0, c1, c1);             // left top
-	gfx_arc_grad(bitmap, x + w - e - r - 1, y + e + r, 0, r + 1, 3.14 * 3 / 2.0, 3.14 * 2, c1, c1); // right tp[
+	gfx_arc_grad(bitmap, x + w - e - r - 1, y + e + r, 0, r + 1, 3.14 * 3 / 2.0, 3.14 * 2, c1, c1); // right top
 	gfx_arc_grad(bitmap, x + e + r, y + h - e - r - 1, 0, r + 1, 3.14 / 2.0, 3.14, c1, c1);         // left bottom
 	gfx_arc_grad(bitmap, x + w - e - r - 1, y + h - e - r - 1, 0, r + 1, 0, 3.14 / 2.0, c1, c1);    // right bottom
 

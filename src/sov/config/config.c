@@ -45,6 +45,8 @@ void config_init()
   MPUTR(confmap, "border_color", cstr_new_cstring("#AADDFF6FF"));
   MPUTR(confmap, "background_color", cstr_new_cstring("#000022FF"));
   MPUTR(confmap, "background_color_focused", cstr_new_cstring("#222266FF"));
+  MPUTR(confmap, "background_corner_radius", cstr_new_cstring("20"));
+  MPUTR(confmap, "tree_corner_radius", cstr_new_cstring("7"));
 }
 
 void config_destroy()

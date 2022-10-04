@@ -113,6 +113,8 @@ Possible keys :
 "window_color" : window color  
 "empty_color" :  empty thumb color  
 "empty_frame_color" : empty thumb border  
+"background_corner_radius": corner radius for the background window
+"tree_corner_radius": corner radius for workspaces and for windows within workspaces
 ```
 
 ## Contribution/Development ##
