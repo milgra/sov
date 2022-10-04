@@ -63,31 +63,30 @@ endforeach
 
 sov_inc = include_directories('src/sov/config',
 			      'src/sov/tree',
-			      'src/modules/json',
-			      'src/modules/storage',
-			      'src/modules/zen_core',
-			      'src/modules/zen_text')
+			      'src/sov/json',
+			      'src/sov',
+			      'src/zen_core',
+			      'src/zen_text')
 
 com_sources = ['src/sov/config/config.c',
 	       'src/sov/config/fontconfig.c',
 	       'src/sov/tree/tree_drawer.c',
 	       'src/sov/tree/tree_reader.c',	
-
-	       'src/modules/json/json.c',
-	       'src/modules/json/jsmn.c',
-	       'src/modules/storage/kvlines.c',
-	       'src/modules/zen_core/zc_bitmap.c',
-	       'src/modules/zen_core/zc_channel.c',
-	       'src/modules/zen_core/zc_cstring.c',
-	       'src/modules/zen_core/zc_cstrpath.c',
-	       'src/modules/zen_core/zc_graphics.c',
-	       'src/modules/zen_core/zc_log.c',
-	       'src/modules/zen_core/zc_map.c',
-	       'src/modules/zen_core/zc_memory.c',
-	       'src/modules/zen_core/zc_string.c',
-	       'src/modules/zen_core/zc_vector.c',
-	       'src/modules/zen_core/zc_wrapper.c',
-	       'src/modules/zen_text/text.c']
+	       'src/sov/json/json.c',
+	       'src/sov/json/jsmn.c',
+	       'src/sov/kvlines.c',
+	       'src/zen_core/zc_bitmap.c',
+	       'src/zen_core/zc_channel.c',
+	       'src/zen_core/zc_cstring.c',
+	       'src/zen_core/zc_cstrpath.c',
+	       'src/zen_core/zc_graphics.c',
+	       'src/zen_core/zc_log.c',
+	       'src/zen_core/zc_map.c',
+	       'src/zen_core/zc_memory.c',
+	       'src/zen_core/zc_string.c',
+	       'src/zen_core/zc_vector.c',
+	       'src/zen_core/zc_wrapper.c',
+	       'src/zen_text/text.c']
 
 sov_sources = [com_sources, 'src/sov/main.c']
 tst_sources = [com_sources, 'src/sov/tree_test.c']

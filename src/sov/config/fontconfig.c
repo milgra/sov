@@ -23,8 +23,11 @@ char* fontconfig_new_path(char* face_desc)
     char* filename = cstr_new_cstring("");                                                // REL 0
     char* command  = cstr_new_format(80, "fc-match \"%s\" --format=%%{file}", face_desc); // REL 1
     FILE* pipe     = popen(command, "r");                                                 // CLOSE 0
-    while (fgets(buff, sizeof(buff), pipe) != NULL) filename = cstr_append(filename, buff);
-    pclose(pipe); // CLOSE 0
+    if (pipe)
+    {
+	while (fgets(buff, sizeof(buff), pipe) != NULL) filename = cstr_append(filename, buff);
+	pclose(pipe); // CLOSE 0
+    }
     REL(command); // REL 1
 
     return filename;

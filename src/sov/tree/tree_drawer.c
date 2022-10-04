@@ -19,8 +19,11 @@ bm_t* tree_drawer_bm_create(
     uint32_t    border_color,
     uint32_t    empty_color,
     uint32_t    empty_border,
-    int         background_corner_radius,
-    int         tree_corner_radius,
+    int         window_border_radius,
+    int         window_border_size,
+    uint32_t    window_border_color,
+    int         workspace_border_radius,
+    int         workspace_border_size,
     int         wsnum_dx,
     int         wsnum_dy);
 
@@ -48,8 +51,11 @@ bm_t* tree_drawer_bm_create(
     uint32_t    border_color,
     uint32_t    empty_color,
     uint32_t    empty_border,
-    int         background_corner_radius,
-    int         tree_corner_radius,
+    int         window_border_radius,
+    int         window_border_size,
+    uint32_t    window_border_color,
+    int         workspace_border_radius,
+    int         workspace_border_size,
     int         wsnum_dx,
     int         wsnum_dy)
 {
@@ -78,16 +84,30 @@ bm_t* tree_drawer_bm_create(
 
     bm_t* bm = bm_new(lay_wth, lay_hth); // REL 0
 
+    if (window_border_size > 0)
+    {
+	gfx_rounded_rect(
+	    bm,
+	    0,
+	    0,
+	    bm->w,
+	    bm->h,
+	    window_border_radius,
+	    0.0,
+	    window_border_color,
+	    0);
+    }
+
     gfx_rounded_rect(
 	bm,
-	0,
-	0,
-	bm->w,
-	bm->h,
-	background_corner_radius,
-	1.0,
+	window_border_size,
+	window_border_size,
+	bm->w - 2 * window_border_size,
+	bm->h - 2 * window_border_size,
+	window_border_radius,
+	0.0,
 	window_color,
-	0);
+	window_color);
 
     /* calculate individual ws schema dimensions */
 
@@ -104,11 +124,21 @@ bm_t* tree_drawer_bm_create(
 	int cy = gap + wsi / cols * (wsh + gap);
 
 	zc_log_debug("Drawing background at : %ix%i", cx, cy);
+	zc_log_debug("Border size %i", workspace_border_size);
 
 	// gfx_rounded_rect(bm, cx - 1, cy - 1, wsw + 3, wsh + 3, 8, 0.0, empty_color, window_color);
 
-	gfx_rounded_rect(bm, cx, cy, wsw, wsh, tree_corner_radius, 0.0, empty_border, window_color);
-	gfx_rounded_rect(bm, cx + 1, cy + 1, wsw - 2, wsh - 2, tree_corner_radius, 0.0, empty_color, empty_border);
+	gfx_rounded_rect(bm, cx, cy, wsw, wsh, workspace_border_radius, 0.0, empty_border, window_color);
+	gfx_rounded_rect(
+	    bm,
+	    cx + workspace_border_size,
+	    cy + workspace_border_size,
+	    wsw - 2 * workspace_border_size,
+	    wsh - 2 * workspace_border_size,
+	    workspace_border_radius,
+	    0.0,
+	    empty_color,
+	    empty_border);
     }
 
     for (int wsi = 0; wsi < workspaces->length; wsi++)
@@ -122,7 +152,7 @@ bm_t* tree_drawer_bm_create(
 
 	/* draw focused workspace background */
 
-	if (ws->focused) gfx_rounded_rect(bm, cx + 1, cy + 1, wsw - 2, wsh - 2, tree_corner_radius, 0.0, focused_color, empty_border);
+	if (ws->focused) gfx_rounded_rect(bm, cx + 1, cy + 1, wsw - 2, wsh - 2, workspace_border_radius, 0.0, focused_color, empty_border);
 
 	/* draw windows */
 
@@ -172,10 +202,20 @@ bm_t* tree_drawer_bm_create(
 		/* draw frame */
 
 		// prevent trying to draw a negative radius
-		int frame_radius = tree_corner_radius > 1 ? tree_corner_radius - 1 : 0;
+		int frame_radius = workspace_border_radius > 1 ? workspace_border_radius - 1 : 0;
 
 		gfx_rounded_rect(bm, wcx, wcy, wiw, wih, frame_radius, 0.0, border_color, 0);
-		gfx_rounded_rect(bm, wcx + 1, wcy + 1, wiw - 2, wih - 2, frame_radius, 0.0, main_style.backcolor, empty_border);
+
+		gfx_rounded_rect(
+		    bm,
+		    wcx + workspace_border_size,
+		    wcy + workspace_border_size,
+		    wiw - 2 * workspace_border_size,
+		    wih - 2 * workspace_border_size,
+		    frame_radius,
+		    0.0,
+		    main_style.backcolor,
+		    empty_border);
 
 		/* insert text bitmap */
 

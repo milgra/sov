@@ -157,8 +157,11 @@ int main(int argc, char* argv[])
 	    cstr_color_from_cstring(config_get("border_color")),
 	    cstr_color_from_cstring(config_get("empty_color")),
 	    cstr_color_from_cstring(config_get("empty_frame_color")),
-	    config_get_int("background_corner_radius"),
-	    config_get_int("tree_corner_radius"),
+	    config_get_int("window_border_radius"),
+	    config_get_int("window_border_size"),
+	    config_get_int("window_border_color"),
+	    config_get_int("workspace_border_radius"),
+	    config_get_int("workspace_border_size"),
 	    config_get_int("text_workspace_xshift"),
 	    config_get_int("text_workspace_yshift"));
 
