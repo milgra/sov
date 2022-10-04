@@ -22,10 +22,6 @@ add_project_arguments('-DPKG_DATADIR="' + pkg_datadir + '"',
 		      '-DSOV_VERSION=@0@'.format(sov_version),
 		      language: 'c')
 
-if get_option('buildtype').startswith('debug')
-  add_project_arguments('-DDEBUG', language : 'c')
-endif
-
 wayland_scanner_code = generator(
   wayland_scanner,
   output: '@BASENAME@-protocol.c',
