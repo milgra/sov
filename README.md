@@ -82,6 +82,27 @@ bindsym --release $mod+9 exec "echo 0 > /tmp/sovpipe"
 bindsym --release $mod+0 exec "echo 0 > /tmp/sovpipe"
 ```
 
+### Usage with Systemd
+
+Add this line to your config file:
+
+```
+exec systemctl --user import-environment DISPLAY WAYLAND_DISPLAY SWAYSOCK
+```
+
+Copy systemd unit files (if not provided by your distribution package):
+
+```
+cp contrib/systemd/sov.{service,socket} ~/.local/share/systemd/user/
+systemctl daemon-reload --user
+```
+
+Enable systemd sov socket:
+
+```
+systemctl enable --now --user sov.socket
+```
+
 ## Configuration ##
 
 If you want to customize sov, copy /usr/share/sov/config to ~/.config/sov/config and edit it.
