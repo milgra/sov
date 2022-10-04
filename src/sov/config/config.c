@@ -49,7 +49,7 @@ void config_init()
     MPUTR(confmap, "window_border_size", cstr_new_cstring("1"));
     MPUTR(confmap, "window_border_color", cstr_new_cstring("#000022FF"));
     MPUTR(confmap, "workspace_border_radius", cstr_new_cstring("7"));
-    MPUTR(confmap, "workspace_border_size", cstr_new_cstring("2"));
+    MPUTR(confmap, "workspace_border_size", cstr_new_cstring("1"));
 }
 
 void config_destroy()
