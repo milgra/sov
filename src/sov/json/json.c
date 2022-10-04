@@ -10,6 +10,7 @@ void json_parse(char* string, vec_t* result);
 
 #if __INCLUDE_LEVEL__ == 0
 
+#include "cstr_util.c"
 #include "jsmn.c"
 #include "zc_cstring.c"
 #include "zc_memory.c"

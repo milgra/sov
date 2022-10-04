@@ -1,11 +1,11 @@
 #ifndef tree_drawer_h
 #define tree_drawer_h
 
-#include "text.c"
-#include "zc_bitmap.c"
+#include "zc_bm_rgba.c"
+#include "zc_text.c"
 #include "zc_vector.c"
 
-bm_t* tree_drawer_bm_create(
+bm_rgba_t* tree_drawer_bm_create(
     vec_t*      workspaces,
     int         gap,
     int         cols,
@@ -33,11 +33,11 @@ bm_t* tree_drawer_bm_create(
 
 #include "config.c"
 #include "tree_reader.c"
-#include "zc_graphics.c"
+#include "zc_draw.c"
 #include "zc_log.c"
 #include <math.h>
 
-bm_t* tree_drawer_bm_create(
+bm_rgba_t* tree_drawer_bm_create(
     vec_t*      workspaces,
     int         gap,
     int         cols,
@@ -82,7 +82,7 @@ bm_t* tree_drawer_bm_create(
 
     /* draw rounded background */
 
-    bm_t* bm = bm_new(lay_wth, lay_hth); // REL 0
+    bm_rgba_t* bm = bm_rgba_new(lay_wth, lay_hth); // REL 0
 
     if (window_border_size > 0)
     {
@@ -175,7 +175,7 @@ bm_t* tree_drawer_bm_create(
 	    {
 		/* draw appid */
 
-		bm_t* tbm = bm_new(wiw - 4, wih - 4); // REL 0
+		bm_rgba_t* tbm = bm_rgba_new(wiw - 4, wih - 4); // REL 0
 
 		str_t* str = str_new(); // REL 1
 
@@ -242,9 +242,9 @@ bm_t* tree_drawer_bm_create(
 
 	if (wsw > 0 && wsh > 0)
 	{
-	    bm_t*  tbm      = bm_new(wsw, wsh); // REL 0
-	    str_t* str      = str_new();        // REL 1
-	    char   nums[10] = {0};
+	    bm_rgba_t* tbm      = bm_rgba_new(wsw, wsh); // REL 0
+	    str_t*     str      = str_new();             // REL 1
+	    char       nums[10] = {0};
 
 	    snprintf(nums, 4, "%d", num);
 	    str_add_bytearray(str, nums);

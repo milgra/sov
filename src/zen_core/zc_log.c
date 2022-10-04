@@ -12,13 +12,9 @@ typedef enum
 } zc_log_importance;
 
 void zc_log(zc_log_importance importance, const char* file, int line, const char* fmt, ...);
-
 void zc_log_set_level(zc_log_importance importance);
-
-int zc_log_get_level();
-
+int  zc_log_get_level();
 void zc_log_inc_verbosity(void);
-
 void zc_log_use_colors(bool use_colors);
 
 #define zc_log_debug(...) zc_log(ZC_LOG_DEBUG, __FILE__, __LINE__, __VA_ARGS__)
@@ -34,8 +30,6 @@ void zc_log_use_colors(bool use_colors);
 #endif
 
 #if __INCLUDE_LEVEL__ == 0
-
-#define _POSIX_C_SOURCE 199506L
 
 #define COLOR_RESET "\x1B[0m"
 #define COLOR_WHITE "\x1B[1;37m"
@@ -54,6 +48,9 @@ void zc_log_use_colors(bool use_colors);
 #define COLOR_YELLOW "\x1B[1;33m"
 #define COLOR_GRAY "\x1B[0;30m"
 #define COLOR_LIGHT_GRAY "\x1B[0;37m"
+
+#define __USE_POSIX199309 1
+/* #define _POSIX_C_SOURCE 199506L */
 
 #include <errno.h>
 #include <stdarg.h>
@@ -98,14 +95,16 @@ void zc_log(const zc_log_importance importance, const char* file, const int line
 	ts.tv_nsec = 0;
     }
 
-    // formatting time via localtime() requires open syscall (to read /etc/localtime)
-    // and that is problematic with seccomp rules in place
+    struct tm* my_tm = localtime(&ts.tv_sec);
+
     if (use_colors)
     {
 	fprintf(
 	    stderr,
-	    "%jd.%06ld %s%-5s%s %s%s:%d:%s ",
-	    (intmax_t) ts.tv_sec,
+	    "%.2i:%.2i:%.2i:%.6li %s%-5s%s %s%s:%d:%s ",
+	    my_tm->tm_hour,
+	    my_tm->tm_min,
+	    my_tm->tm_sec,
 	    ts.tv_nsec / 1000,
 	    verbosity_colors[importance],
 	    verbosity_names[importance],

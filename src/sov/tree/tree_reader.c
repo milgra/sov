@@ -33,8 +33,8 @@ void tree_reader_extract(char* ws_json, char* tree_json, vec_t* workspaces);
 
 #include "json.c"
 #include "zc_cstring.c"
-#include "zc_cstrpath.c"
 #include "zc_log.c"
+#include "zc_path.c"
 
 void sway_workspace_del(void* p)
 {
@@ -106,7 +106,7 @@ void tree_reader_extract(char* ws_json, char* tree_json, vec_t* workspaces)
 	{
 	    sway_workspace_t* ws = sway_workspace_new(); // REL 1
 
-	    char* path    = cstr_new_path_remove_last_component(key); // REL 2
+	    char* path    = path_new_remove_last_component(key); // REL 2
 	    int   pathlen = strlen(path);
 
 	    char* wx = cstr_new_format(pathlen + 20, "%srect/x", path);      // REL 3
@@ -166,7 +166,7 @@ void tree_reader_extract(char* ws_json, char* tree_json, vec_t* workspaces)
 	{
 	    if (strcmp(json->data[index + 1], "workspace") == 0)
 	    {
-		char* path    = cstr_new_path_remove_last_component(key); // REL 1
+		char* path    = path_new_remove_last_component(key); // REL 1
 		int   pathlen = strlen(path);
 		char* pathkey = cstr_new_format(pathlen + 20, "%snum", path); // REL 2
 
@@ -185,7 +185,7 @@ void tree_reader_extract(char* ws_json, char* tree_json, vec_t* workspaces)
 	{
 	    sway_window_t* wi = sway_window_new(); // REL 3c
 
-	    char* path    = cstr_new_path_remove_last_component(key); // REL 4
+	    char* path    = path_new_remove_last_component(key); // REL 4
 	    int   pathlen = strlen(path);
 
 	    char* tk = cstr_new_format(pathlen + 20, "%sname", path);        // REL 6

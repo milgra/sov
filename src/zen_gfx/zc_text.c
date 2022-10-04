@@ -1,9 +1,10 @@
 #ifndef text_h
 #define text_h
 
-#include "text.c"
-#include "zc_bitmap.c"
+#include "zc_text.c"
+#include "zc_bm_rgba.c"
 #include "zc_string.c"
+#include <linux/limits.h>
 #include <stdint.h>
 
 typedef enum _textalign_t
@@ -29,7 +30,7 @@ typedef enum _autosize_t
 
 typedef struct _textstyle_t
 {
-    char*       font;
+    char        font[PATH_MAX];
     textalign_t align;
     vertalign_t valign;
     autosize_t  autosize;
@@ -64,29 +65,34 @@ typedef struct _glyph_t
 } glyph_t;
 
 void text_init();
+
 void text_destroy();
 
 void text_break_glyphs(glyph_t* glyphs, int count, textstyle_t style, int wth, int hth, int* nwth, int* nhth);
 
 void text_align_glyphs(glyph_t* glyphs, int count, textstyle_t style, int w, int h);
 
-void text_render_glyph(glyph_t g, textstyle_t style, bm_t* bitmap);
+void text_render_glyph(glyph_t g, textstyle_t style, bm_rgba_t* bitmap);
 
-void text_render_glyphs(glyph_t* glyphs, int count, textstyle_t style, bm_t* bitmap);
+void text_render_glyphs(glyph_t* glyphs, int count, textstyle_t style, bm_rgba_t* bitmap);
 
 void text_layout(glyph_t* glyphs, int count, textstyle_t style, int wth, int hth, int* nwth, int* nhth);
 
-void text_render(str_t* text, textstyle_t style, bm_t* bitmap);
+void text_render(str_t* text, textstyle_t style, bm_rgba_t* bitmap);
 
 void text_measure(str_t* text, textstyle_t style, int w, int h, int* nw, int* nh);
+
+void text_describe_style(textstyle_t style);
+
+void text_describe_glyphs(glyph_t* glyphs, int count);
 
 #endif
 
 #if __INCLUDE_LEVEL__ == 0
 
-#include "text.c"
-#include "zc_graphics.c"
+#include "zc_draw.c"
 #include "zc_map.c"
+#include "zc_text.c"
 #include "zc_wrapper.c"
 #include <stdio.h>
 #include <stdlib.h>
@@ -140,6 +146,7 @@ void text_destroy()
 
 void text_font_load(char* path)
 {
+    assert(path != NULL);
     assert(txt_ft.fonts != NULL);
 
     FT_Library library;
@@ -167,7 +174,7 @@ void text_font_load(char* path)
 	    if (error == FT_Err_Unknown_File_Format) { printf("FT Unknown font file format\n"); }
 	    else if (error)
 	    {
-		printf("FT New Face error\n");
+		printf("FT New Face error %s\n", path);
 	    }
 	}
     }
@@ -324,12 +331,6 @@ void text_break_glyphs(glyph_t* glyphs, int count, textstyle_t style, int wth, i
 	// store glyph
 	glyphs[index] = glyph;
 
-	// not enough space to show even one character!
-	if (xpos > wth && index == 0)
-	{
-	    break;
-	}
-
 	if (style.multiline)
 	{
 	    if (cp == '\n' || cp == '\r' || xpos > wth)
@@ -429,24 +430,28 @@ void text_shift_glyphs(glyph_t* glyphs, int count, textstyle_t style)
     }
 }
 
-void text_render_glyph(glyph_t g, textstyle_t style, bm_t* bitmap)
+void text_render_glyph(glyph_t g, textstyle_t style, bm_rgba_t* bitmap)
 {
+    if ((style.backcolor & 0xFF) > 0) gfx_rect(bitmap, 0, 0, bitmap->w, bitmap->h, style.backcolor, 0);
+
+    wrapper_t* facewrp = MGET(txt_ft.fonts, style.font);
+    wrapper_t* libwrp  = MGET(txt_ft.libs, style.font);
+    if (facewrp == NULL)
+    {
+	text_font_load(style.font);
+	facewrp = MGET(txt_ft.fonts, style.font);
+	libwrp  = MGET(txt_ft.libs, style.font);
+	if (!facewrp) return;
+    }
+    FT_Face    font    = facewrp->data;
+    FT_Library library = libwrp->data;
+
+    // don't write bitmap in case of empty glyphs ( space )
     if (g.w > 0 && g.h > 0)
     {
-	if ((style.backcolor & 0xFF) > 0) gfx_rect(bitmap, 0, 0, bitmap->w, bitmap->h, style.backcolor, 0);
-
-	wrapper_t* facewrp = MGET(txt_ft.fonts, style.font);
-	if (facewrp == NULL)
-	{
-	    text_font_load(style.font);
-	    facewrp = MGET(txt_ft.fonts, style.font);
-	    if (!facewrp) return;
-	}
-	FT_Face font = facewrp->data;
-
 	int size = g.w * g.h;
 
-	// increase glyph baking bitmap size if needed
+	// increase glyph baking bitMap size if needed
 	if (size > txt_ft.gcount)
 	{
 	    txt_ft.gcount = size;
@@ -461,12 +466,30 @@ void text_render_glyph(glyph_t g, textstyle_t style, bm_t* bitmap)
 
 	FT_Bitmap fontmap = font->glyph->bitmap;
 
-	// insert to bitmap
-	gfx_blend_8(bitmap, 0, 0, style.textcolor, fontmap.buffer, g.w, g.h);
+	// printf("blending fontmap width %i height %i mode %i pitch %i\n", fontmap.width, fontmap.rows, fontmap.pixel_mode, fontmap.pitch);
+
+	if (fontmap.pixel_mode == ft_pixel_mode_mono)
+	{
+	    // todo avoid conversion somehow
+	    FT_Bitmap convmap;
+	    FT_Bitmap_New(&convmap);
+
+	    FT_Bitmap_Convert(library, &fontmap, &convmap, 1);
+
+	    // insert to bitmap
+	    gfx_blend_8_1(bitmap, 0, 0, style.textcolor, convmap.buffer, convmap.width, convmap.rows);
+
+	    FT_Bitmap_Done(library, &convmap);
+	}
+	else
+	{
+	    // insert to bitmap
+	    gfx_blend_8(bitmap, 0, 0, style.textcolor, fontmap.buffer, fontmap.width, fontmap.rows);
+	}
     }
 }
 
-void text_render_glyphs(glyph_t* glyphs, int count, textstyle_t style, bm_t* bitmap)
+void text_render_glyphs(glyph_t* glyphs, int count, textstyle_t style, bm_rgba_t* bitmap)
 {
     // if ((style.backcolor & 0xFF) > 0) gfx_rect(bitmap, 0, 0, bitmap->w, bitmap->h, style.backcolor, 0);
 
@@ -555,7 +578,7 @@ void text_layout(glyph_t* glyphs, int count, textstyle_t style, int wth, int hth
     text_shift_glyphs(glyphs, count, style);
 }
 
-void text_render(str_t* text, textstyle_t style, bm_t* bitmap)
+void text_render(str_t* text, textstyle_t style, bm_rgba_t* bitmap)
 {
     glyph_t* glyphs = malloc(sizeof(glyph_t) * text->length); // REL 0
     for (int i = 0; i < text->length; i++) glyphs[i].cp = text->codepoints[i];
@@ -577,6 +600,42 @@ void text_measure(str_t* text, textstyle_t style, int w, int h, int* nw, int* nh
     text_break_glyphs(glyphs, text->length, style, w, h, nw, nh);
 
     free(glyphs); // REL 1
+}
+
+void text_describe_style(textstyle_t style)
+{
+    printf(
+	"font %s\n"
+	"align %i\n"
+	"valign %i\n"
+	"autosize %i\n"
+	"multiline %i\n"
+	"line_height %i\n"
+	"size %f\n"
+	"margin %i\n"
+	"margin_top %i\n"
+	"margin_right %i\n"
+	"margin_bottom %i\n"
+	"margin_left %i\n"
+	"textcolor %x\n"
+	"backcolor %x\n",
+
+	style.font,
+	style.align,
+	style.valign,
+	style.autosize,
+	style.multiline,
+	style.line_height,
+
+	style.size,
+	style.margin,
+	style.margin_top,
+	style.margin_right,
+	style.margin_bottom,
+	style.margin_left,
+
+	style.textcolor,
+	style.backcolor);
 }
 
 #endif

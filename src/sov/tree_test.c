@@ -1,14 +1,16 @@
+#include "bm_rgba_util.c"
 #include "config.c"
+#include "cstr_util.c"
 #include "fontconfig.c"
 #include "kvlines.c"
-#include "text.c"
 #include "tree_drawer.c"
 #include "tree_reader.c"
-#include "zc_bitmap.c"
+#include "zc_bm_rgba.c"
 #include "zc_cstring.c"
-#include "zc_cstrpath.c"
-#include "zc_graphics.c"
+#include "zc_draw.c"
 #include "zc_log.c"
+#include "zc_path.c"
+#include "zc_text.c"
 #include <getopt.h>
 #include <limits.h>
 #ifdef __linux__
@@ -46,10 +48,10 @@ int main(int argc, char* argv[])
 
     while ((option = getopt_long(argc, argv, "c:w:t:o:", long_options, &option_index)) != -1)
     {
-	if (option == 'c') cfg_path = cstr_new_path_normalize(optarg, cwd);       // REL 0
-	if (option == 'w') ws_json_path = cstr_new_path_normalize(optarg, cwd);   // REL 0
-	if (option == 't') tree_json_path = cstr_new_path_normalize(optarg, cwd); // REL 0
-	if (option == 'o') output_path = cstr_new_path_normalize(optarg, cwd);    // REL 0
+	if (option == 'c') cfg_path = path_new_normalize(optarg, cwd);       // REL 0
+	if (option == 'w') ws_json_path = path_new_normalize(optarg, cwd);   // REL 0
+	if (option == 't') tree_json_path = path_new_normalize(optarg, cwd); // REL 0
+	if (option == 'o') output_path = path_new_normalize(optarg, cwd);    // REL 0
 	if (option == '?') printf("-c --config= [path] \t use config file for session\n");
     }
 
@@ -105,7 +107,6 @@ int main(int argc, char* argv[])
 	}
 
 	textstyle_t main_style = {
-	    .font       = font_path,
 	    .margin     = config_get_int("text_margin_size"),
 	    .margin_top = config_get_int("text_margin_top_size"),
 	    .align      = TA_LEFT,
@@ -116,8 +117,9 @@ int main(int argc, char* argv[])
 	    .multiline  = 0,
 	};
 
+	strcpy(main_style.font, font_path);
+
 	textstyle_t sub_style = {
-	    .font        = font_path,
 	    .margin      = config_get_int("text_margin_size"),
 	    .margin_top  = config_get_int("text_margin_top_size") + config_get_int("text_title_size"),
 	    .align       = TA_LEFT,
@@ -129,8 +131,9 @@ int main(int argc, char* argv[])
 	    .multiline   = 1,
 	};
 
+	strcpy(sub_style.font, font_path);
+
 	textstyle_t wsnum_style = {
-	    .font      = font_path,
 	    .margin    = config_get_int("text_margin_size"),
 	    .align     = TA_RIGHT,
 	    .valign    = VA_TOP,
@@ -139,11 +142,13 @@ int main(int argc, char* argv[])
 	    .backcolor = 0x00002200,
 	};
 
+	strcpy(wsnum_style.font, font_path);
+
 	int gap   = config_get_int("gap");
 	int cols  = config_get_int("columns");
 	int ratio = config_get_int("ratio");
 
-	bm_t* bitmap = tree_drawer_bm_create(
+	bm_rgba_t* bitmap = tree_drawer_bm_create(
 	    curr_ws,
 	    gap,
 	    cols,
@@ -166,7 +171,7 @@ int main(int argc, char* argv[])
 	    config_get_int("text_workspace_yshift"));
 
 	char* filename = cstr_new_format(strlen(output_path) + 10, "%s_o%i.bmp", output_path, oi); // REL 9
-	bm_write(bitmap, filename);
+	bm_rgba_write(bitmap, filename);
 	REL(filename);
 	REL(bitmap);
     }

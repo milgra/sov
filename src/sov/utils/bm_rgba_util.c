@@ -1,69 +1,19 @@
-#ifndef zc_bitmap_h
-#define zc_bitmap_h
+#ifndef bm_rgba_util_h
+#define bm_rgba_util_h
 
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include "zc_bm_rgba.c"
+#include <string.h>
 
-typedef struct _bm_t bm_t;
-struct _bm_t
-{
-  int w;
-  int h;
-
-  uint8_t* data;
-  uint32_t size;
-};
-
-bm_t* bm_new(int the_w, int the_h);
-bm_t* bm_new_clone(bm_t* bm);
-bm_t* bm_new_flip_y(bm_t* bm);
-void  bm_reset(bm_t* bm);
-void  bm_describe(void* p, int level);
-void  bm_write(bm_t* bm, char* path);
+bm_rgba_t* bm_rgba_new_flip_y(bm_rgba_t* bm);
+void       bm_rgba_write(bm_rgba_t* bm, char* path);
 
 #endif
 
 #if __INCLUDE_LEVEL__ == 0
 
-#include "zc_memory.c"
-#include <assert.h>
-#include <string.h>
-
-void bm_describe_data(void* p, int level);
-
-void bm_del(void* pointer)
+bm_rgba_t* bm_rgba_new_flip_y(bm_rgba_t* bm)
 {
-  bm_t* bm = pointer;
-
-  if (bm->data != NULL) REL(bm->data); // REL 1
-}
-
-bm_t* bm_new(int the_w, int the_h)
-{
-  assert(the_w > 0 && the_h > 0);
-
-  bm_t* bm = CAL(sizeof(bm_t), bm_del, bm_describe); // REL 0
-
-  bm->w = the_w;
-  bm->h = the_h;
-
-  bm->size = 4 * the_w * the_h;
-  bm->data = CAL(bm->size * sizeof(unsigned char), NULL, bm_describe_data); // REL 1
-
-  return bm;
-}
-
-bm_t* bm_new_clone(bm_t* the_bm)
-{
-  bm_t* bm = bm_new(the_bm->w, the_bm->h);
-  memcpy(bm->data, the_bm->data, the_bm->size);
-  return bm;
-}
-
-bm_t* bm_new_flip_y(bm_t* bm)
-{
-  bm_t* tmp = bm_new(bm->w, bm->h);
+  bm_rgba_t* tmp = bm_rgba_new(bm->w, bm->h);
   for (int y = 0; y < bm->h; y++)
   {
     int src_y = bm->h - y - 1;
@@ -72,23 +22,7 @@ bm_t* bm_new_flip_y(bm_t* bm)
   return tmp;
 }
 
-void bm_reset(bm_t* bm)
-{
-  memset(bm->data, 0, bm->size);
-}
-
-void bm_describe(void* p, int level)
-{
-  bm_t* bm = p;
-  printf("width %i height %i size %u", bm->w, bm->h, bm->size);
-}
-
-void bm_describe_data(void* p, int level)
-{
-  printf("bm data\n");
-}
-
-void bm_write(bm_t* bm, char* path)
+void bm_rgba_write(bm_rgba_t* bm, char* path)
 {
   int w = bm->w;
   int h = bm->h;

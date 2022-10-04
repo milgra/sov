@@ -10,6 +10,7 @@ int kvlines_write(char* libpath, map_t* db);
 
 #if __INCLUDE_LEVEL__ == 0
 
+#include "cstr_util.c"
 #include "zc_cstring.c"
 #include <limits.h>
 #ifdef __linux__

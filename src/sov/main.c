@@ -17,19 +17,20 @@
 #include <unistd.h>
 
 #include "config.c"
+#include "cstr_util.c"
 #include "fontconfig.c"
 #include "kvlines.c"
-#include "text.c"
 #include "tree_drawer.c"
 #include "tree_reader.c"
 #include "wlr-layer-shell-unstable-v1-client-protocol.h"
 #include "xdg-output-unstable-v1-client-protocol.h"
-#include "zc_bitmap.c"
+#include "zc_bm_rgba.c"
 #include "zc_channel.c"
 #include "zc_cstring.c"
-#include "zc_cstrpath.c"
-#include "zc_graphics.c"
+#include "zc_draw.c"
 #include "zc_log.c"
+#include "zc_path.c"
+#include "zc_text.c"
 #include "zc_vector.c"
 
 #define CFG_PATH_LOC "~/.config/sov/config"
@@ -65,6 +66,7 @@ struct sov_output
     uint32_t               wl_name;
     int32_t                width;
     int32_t                height;
+    int                    scaling;
 };
 
 struct sov
@@ -180,6 +182,7 @@ void layer_surface_configure(
 struct sov_surface* sov_surface_create(
     struct sov*       app,
     struct wl_output* wl_output,
+    int               scaling,
     unsigned long     width,
     unsigned long     height,
     unsigned long     margin,
@@ -203,6 +206,8 @@ struct sov_surface* sov_surface_create(
 	zc_log_error("wl_compositor_create_surface failed");
 	exit(EXIT_FAILURE);
     }
+
+    /* wl_surface_set_buffer_scale(sov_surface->wl_surface, scaling); */
 
     sov_surface->wlr_layer_surface = zwlr_layer_shell_v1_get_layer_surface(app->wlr_layer_shell, sov_surface->wl_surface, wl_output, ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY, "sov");
     if (sov_surface->wlr_layer_surface == NULL)
@@ -277,8 +282,22 @@ void xdg_output_handle_size(
 
     zc_log_info("Detected size for %s %i %i", output->name, width, height);
 
-    output->width  = width;
-    output->height = height;
+    output->width   = width;
+    output->height  = height;
+    output->scaling = 1;
+}
+
+void xdg_output_handle_scale(
+    void*                  data,
+    struct zxdg_output_v1* xdg_output,
+    int32_t                scale)
+{
+
+    struct sov_output* output = (struct sov_output*) data;
+
+    zc_log_info("Detected scale for %s %i", output->name, scale);
+
+    output->scaling = scale;
 }
 
 void xdg_output_handle_done(
@@ -302,8 +321,9 @@ void handle_global(
 	.logical_position = noop,
 	.logical_size     = xdg_output_handle_size,
 	.name             = xdg_output_handle_name,
-	.description      = noop,
-	.done             = xdg_output_handle_done,
+	/* .scale            = xdg_output_handle_scale, */
+	.description = noop,
+	.done        = xdg_output_handle_done,
     };
 
     struct sov* app = (struct sov*) data;
@@ -447,7 +467,6 @@ int sov_show(struct sov* app)
 	zc_log_debug("showing %i workspaces on output %s wth %i hth %i", curr_ws->length, output->name, wth, hth);
 
 	textstyle_t main_style = {
-	    .font       = app->font_path,
 	    .margin     = config_get_int("text_margin_size"),
 	    .margin_top = config_get_int("text_margin_top_size"),
 	    .align      = TA_LEFT,
@@ -458,8 +477,9 @@ int sov_show(struct sov* app)
 	    .multiline  = 0,
 	};
 
+	strcpy(main_style.font, app->font_path);
+
 	textstyle_t sub_style = {
-	    .font        = app->font_path,
 	    .margin      = config_get_int("text_margin_size"),
 	    .margin_top  = config_get_int("text_margin_top_size") + config_get_int("text_title_size"),
 	    .align       = TA_LEFT,
@@ -471,21 +491,24 @@ int sov_show(struct sov* app)
 	    .multiline   = 1,
 	};
 
+	strcpy(sub_style.font, app->font_path);
+
 	textstyle_t wsnum_style = {
-	    .font      = app->font_path,
 	    .margin    = config_get_int("text_margin_size"),
 	    .align     = TA_RIGHT,
 	    .valign    = VA_TOP,
 	    .size      = config_get_int("text_workspace_size"),
 	    .textcolor = cstr_color_from_cstring(config_get("text_workspace_color")),
-	    .backcolor = 0x00002200,
+	    .backcolor = 0,
 	};
+
+	strcpy(wsnum_style.font, app->font_path);
 
 	int gap   = config_get_int("gap");
 	int cols  = config_get_int("columns");
 	int ratio = config_get_int("ratio");
 
-	bm_t* bitmap = tree_drawer_bm_create(
+	bm_rgba_t* bitmap = tree_drawer_bm_create(
 	    curr_ws,
 	    gap,
 	    cols,
@@ -513,8 +536,8 @@ int sov_show(struct sov* app)
 	{
 	    struct wl_buffer* wl_buffer = NULL;
 
-	    uint32_t size   = bitmap->w * bitmap->h * 4;
-	    uint32_t stride = bitmap->w * 4;
+	    uint32_t size   = bitmap->w * output->scaling * bitmap->h * output->scaling * 4;
+	    uint32_t stride = bitmap->w * output->scaling * 4;
 
 	    struct wl_shm_pool* pool = wl_shm_create_pool(app->wl_shm, app->shmid, size);
 	    if (pool == NULL)
@@ -547,7 +570,7 @@ int sov_show(struct sov* app)
 	    }
 
 	    // create surface
-	    output->sov_surface = sov_surface_create(app, output->wl_output, bitmap->w, bitmap->h, app->sov_geom.margin, app->sov_geom.anchor);
+	    output->sov_surface = sov_surface_create(app, output->wl_output, output->scaling, bitmap->w, bitmap->h, app->sov_geom.margin, app->sov_geom.anchor);
 
 	    if (wl_display_roundtrip(app->wl_display) == -1)
 	    {
@@ -681,8 +704,8 @@ int main(int argc, char** argv)
     char cwd[PATH_MAX];
     if (getcwd(cwd, sizeof(cwd)) == NULL) printf("Cannot get working directory\n");
 
-    char* cfg_path_loc = app.cfg_path ? cstr_new_path_normalize(app.cfg_path, cwd) : cstr_new_path_normalize(CFG_PATH_LOC, getenv("HOME")); // REL 1
-    char* cfg_path_glo = cstr_new_path_append(PKG_DATADIR, "config");                                                                       // REL 2
+    char* cfg_path_loc = app.cfg_path ? path_new_normalize(app.cfg_path, cwd) : path_new_normalize(CFG_PATH_LOC, getenv("HOME")); // REL 1
+    char* cfg_path_glo = path_new_append(PKG_DATADIR, "config");                                                                  // REL 2
 
     if (config_read(cfg_path_loc) < 0)
     {

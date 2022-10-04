@@ -64,9 +64,10 @@ endforeach
 sov_inc = include_directories('src/sov/config',
 			      'src/sov/tree',
 			      'src/sov/json',
+			      'src/sov/utils',
 			      'src/sov',
 			      'src/zen_core',
-			      'src/zen_text')
+			      'src/zen_gfx')
 
 com_sources = ['src/sov/config/config.c',
 	       'src/sov/config/fontconfig.c',
@@ -74,19 +75,21 @@ com_sources = ['src/sov/config/config.c',
 	       'src/sov/tree/tree_reader.c',	
 	       'src/sov/json/json.c',
 	       'src/sov/json/jsmn.c',
+	       'src/sov/utils/bm_rgba_util.c',
+	       'src/sov/utils/cstr_util.c',
 	       'src/sov/kvlines.c',
-	       'src/zen_core/zc_bitmap.c',
+	       'src/zen_core/zc_bm_rgba.c',
 	       'src/zen_core/zc_channel.c',
 	       'src/zen_core/zc_cstring.c',
-	       'src/zen_core/zc_cstrpath.c',
-	       'src/zen_core/zc_graphics.c',
 	       'src/zen_core/zc_log.c',
 	       'src/zen_core/zc_map.c',
 	       'src/zen_core/zc_memory.c',
+	       'src/zen_core/zc_path.c',
 	       'src/zen_core/zc_string.c',
 	       'src/zen_core/zc_vector.c',
 	       'src/zen_core/zc_wrapper.c',
-	       'src/zen_text/text.c']
+	       'src/zen_gfx/zc_text.c',
+	       'src/zen_gfx/zc_draw.c']
 
 sov_sources = [com_sources, 'src/sov/main.c']
 tst_sources = [com_sources, 'src/sov/tree_test.c']
