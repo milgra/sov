@@ -71,7 +71,7 @@ window_color #000000AA
 window_border_radius 20
 
 # color of the popup window
-window_border_color #55555511
+window_border_color #000000AA
 
 # border size of the popup window
 window_border_size 0

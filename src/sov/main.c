@@ -120,7 +120,7 @@ int sov_shm_create()
     char shm_name[NAME_MAX];
     for (int i = 0; i < UCHAR_MAX; ++i)
     {
-	if (snprintf(shm_name, NAME_MAX, "/wob-%d", i) >= NAME_MAX)
+	if (snprintf(shm_name, NAME_MAX, "/sov-%d", i) >= NAME_MAX)
 	{
 	    break;
 	}
@@ -870,10 +870,25 @@ int main(int argc, char** argv)
 			break;
 		    }
 
-		    if (state == 2)
+		    if (state == 3)
 		    {
 			if (!hidden) sov_hide(&app);
 			alive = false;
+			break;
+		    }
+
+		    if (state == 2)
+		    {
+			if (!hidden)
+			{
+			    hidden = 1;
+			    sov_hide(&app);
+			}
+			else
+			{
+			    hidden = 0;
+			    sov_show(&app);
+			}
 			break;
 		    }
 
