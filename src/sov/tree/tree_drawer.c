@@ -195,7 +195,7 @@ bm_rgba_t* tree_drawer_bm_create(
 		if (wi->title && strcmp(wi->title, "null") != 0)
 		    str_add_bytearray(str, wi->title);
 		else
-		    str_add_bytearray(str, "unkown");
+		    str_add_bytearray(str, "unknown");
 
 		text_render(str, sub_style, tbm);
 
