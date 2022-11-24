@@ -1,0 +1,81 @@
+#main {
+    border-radius: 10px;
+    background-color: #00000044;
+}
+
+#base {
+    margin: 15px;
+}
+
+.fullscale {
+    height: 100%;
+    width: 100%;
+}
+
+.colflex {
+    display: flex;
+    flex-direction: column;
+}
+
+.rowflex {
+    display: flex;
+    flex-direction: row;
+}
+
+.workspace {
+    margin: 10px;
+    border-radius: 8px;
+    background-color: #000000FF;
+    border-width: 1px;
+    border-color: #555555FF;
+}
+
+.window {
+    width: 100px;
+    height: 80px;
+    background-color: #222222FF;
+    border-radius: 8px;
+    border-width: 1px;
+    border-color: #BCBCBCFF;
+}
+
+.window_active {
+    width: 100px;
+    height: 80px;
+    background-color: #444444FF;
+    border-radius: 8px;
+    border-width: 1px;
+    border-color: #BCBCBCFF;
+}
+
+.title {
+    width: 100%;
+    height: 21px;
+    margin-top: 4px;
+    margin-left: 4px;
+    color: #FFFFFFFF;
+    font-size: 14px;
+    font-family: "Terminus (TTF):style=Bold";
+}
+
+.content {
+    width: 100%;
+    height: 100%;
+    margin-left: 4px;
+    color: #999999FF;
+    vertical-align: top;
+    font-size: 12px;
+    font-family: "Terminus (TTF):style=Bold";
+    word-wrap: break-word;
+    line-height: 12px;
+}
+
+.number {
+    width: 20px;
+    height: 20px;
+    right: -14px;
+    top: -9px;
+    color: #FFFFFFFF;
+    font-size: 18px;
+    font-family: "Terminus (TTF):style=Bold";
+}

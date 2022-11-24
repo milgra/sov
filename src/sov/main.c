@@ -26,8 +26,8 @@ struct sov
 {
     mt_vector_t* workspaces; /* workspaces for current frame draw event */
 
-    char* cfg_path;
-    int   timeout;
+    int timeout;
+    int request; /* show requested */
 
     ku_window_t* kuwindow;  /* kinetic ui window for building up workspaces for each display */
     mt_vector_t* wlwindows; /* wayland layers for each output */
@@ -46,7 +46,11 @@ struct sov
     ku_view_t* row;
     ku_view_t* view_base;
     ku_view_t* base;
-} sov;
+
+    int   ratio;
+    char* anchor;
+    int   margin;
+} sov = {0};
 
 /* asks for sway workspaces and tree */
 
@@ -110,6 +114,46 @@ void init(wl_event_t event)
     ku_window_add(sov.kuwindow, sov.view_base);
 }
 
+void create_layers()
+{
+    printf("CREATE LAYERS\n");
+    ku_wayland_set_time_event_delay(0);
+
+    if (sov.workspaces == NULL) sov.workspaces = VNEW(); // REL 0
+    mt_vector_reset(sov.workspaces);
+
+    sov_read_tree(sov.workspaces);
+
+    // show layer over all workspaces
+
+    for (int m = 0; m < sov.monitor_count; m++)
+    {
+	struct monitor_info* monitor = sov.monitors[m];
+
+	mt_vector_t* workspaces = VNEW(); // REL 1
+
+	for (int index = 0; index < sov.workspaces->length; index++)
+	{
+	    sway_workspace_t* ws = sov.workspaces->data[index];
+	    if (strcmp(ws->output, monitor->name) == 0) VADD(workspaces, ws);
+	}
+
+	/* calculate full width */
+
+	int cols   = config_get_int("columns");
+	int rows   = (int) ceilf((float) workspaces->length / cols);
+	int width  = cols * (monitor->logical_width / sov.ratio) + (cols + 1);
+	int height = rows * (monitor->logical_height / sov.ratio) + (rows + 1);
+
+	mt_log_debug("Creating layer for %s : workspaces %i cols %i rows %i ratio %i width %i height %i", monitor->name, workspaces->length, cols, rows, sov.ratio, width, height);
+
+	wl_window_t* wlwindow = ku_wayland_create_generic_layer(monitor, width, height, sov.margin, sov.anchor, 1);
+	VADD(sov.wlwindows, wlwindow);
+
+	REL(workspaces);
+    }
+}
+
 /* window update */
 
 void update(ku_event_t ev)
@@ -130,9 +174,8 @@ void update(ku_event_t ev)
 
 	int cols   = config_get_int("columns");
 	int rows   = (int) ceilf((float) workspaces->length / cols);
-	int ratio  = config_get_int("ratio");
-	int width  = cols * (info->monitor->logical_width / ratio) + (cols + 1);
-	int height = rows * (info->monitor->logical_height / ratio) + (rows + 1);
+	int width  = cols * (info->monitor->logical_width / sov.ratio) + (cols + 1);
+	int height = rows * (info->monitor->logical_height / sov.ratio) + (rows + 1);
 
 	mt_log_debug(
 	    "Drawing layer %s : workspaces %i cols %i rows %i ratio %i width %i height %i",
@@ -140,7 +183,7 @@ void update(ku_event_t ev)
 	    workspaces->length,
 	    cols,
 	    rows,
-	    ratio,
+	    sov.ratio,
 	    width,
 	    height);
 
@@ -301,53 +344,37 @@ void update(ku_event_t ev)
 	REL(workspaces);
     }
 
+    if (ev.type == KU_EVENT_TIME)
+    {
+	create_layers();
+    }
+
     if (ev.type == KU_EVENT_STDIN)
     {
-	if (ev.text[0] == '1' && sov.wlwindows->length == 0)
+	if (ev.text[0] == '1' && sov.wlwindows->length == 0 && sov.request == 0)
 	{
-	    if (sov.workspaces == NULL) sov.workspaces = VNEW(); // REL 0
-	    mt_vector_reset(sov.workspaces);
-
-	    sov_read_tree(sov.workspaces);
-
-	    // show layer over all workspaces
-
-	    for (int m = 0; m < sov.monitor_count; m++)
-	    {
-		struct monitor_info* monitor = sov.monitors[m];
-
-		mt_vector_t* workspaces = VNEW(); // REL 1
-
-		for (int index = 0; index < sov.workspaces->length; index++)
-		{
-		    sway_workspace_t* ws = sov.workspaces->data[index];
-		    if (strcmp(ws->output, monitor->name) == 0) VADD(workspaces, ws);
-		}
-
-		/* calculate full width */
-
-		int cols   = config_get_int("columns");
-		int rows   = (int) ceilf((float) workspaces->length / cols);
-		int ratio  = config_get_int("ratio");
-		int width  = cols * (monitor->logical_width / ratio) + (cols + 1);
-		int height = rows * (monitor->logical_height / ratio) + (rows + 1);
-
-		mt_log_debug("Creating layer for %s : workspaces %i cols %i rows %i ratio %i width %i height %i", monitor->name, workspaces->length, cols, rows, ratio, width, height);
-
-		wl_window_t* wlwindow = ku_wayland_create_generic_layer(monitor, width, height, 0, "", 1);
-		VADD(sov.wlwindows, wlwindow);
-
-		REL(workspaces);
-	    }
+	    sov.request = 1;
+	    printf("SHOW %i\n", sov.timeout);
+	    if (sov.timeout == 0)
+		create_layers();
+	    else
+		ku_wayland_set_time_event_delay(sov.timeout);
 	}
-	else if (ev.text[0] == '2' && sov.wlwindows->length > 0)
+	else if (ev.text[0] == '2')
 	{
-	    for (int w = 0; w < sov.wlwindows->length; w++)
+	    ku_wayland_set_time_event_delay(0);
+	    sov.request = 0;
+
+	    if (sov.wlwindows->length > 0)
 	    {
-		wl_window_t* window = sov.wlwindows->data[w];
-		ku_wayland_delete_window(window);
+
+		for (int w = 0; w < sov.wlwindows->length; w++)
+		{
+		    wl_window_t* window = sov.wlwindows->data[w];
+		    ku_wayland_delete_window(window);
+		}
+		mt_vector_reset(sov.wlwindows);
 	    }
-	    mt_vector_reset(sov.wlwindows);
 	}
 	else if (ev.text[0] == '3')
 	{
@@ -371,15 +398,23 @@ int main(int argc, char** argv)
     const char* usage =
 	"Usage: sov [options]\n"
 	"\n"
-	"  -c  --config= [path]                Use config file for session.\n"
-	"  -h, --help                          Show help message and quit.\n"
-	"  -v                                  Increase verbosity of messages, defaults to errors and warnings only.\n"
-	"  -r, --resources=[resources folder]  Resources dir for current session\n"
+	"  -h, --help                            Show help message and quit.\n"
+	"  -v                                    Increase verbosity of messages, defaults to errors and warnings only.\n"
+	"  -c,                                   Location of html folder for styling.\n"
+	"  -a, --anchor=[lrtp]                   Anchor window to window edge in directions, use rt for right top\n"
+	"  -m, --margin=[size]                   Margin\n"
+	"  -r, --ratio=[ratio]                   Overlay to screen ratio, positive integer\n"
+	"  -t, --timeout=[millisecs]             Milliseconds to wait for showing up overlays, positive integer\n"
 	"\n";
+
+    sov.ratio = 8;
 
     /* parse options */
 
-    char* res_par = NULL;
+    char* cfg_path = NULL;
+    char* res_par  = NULL;
+    char* mrg_par  = NULL;
+    char* anc_par  = NULL;
 
     int c, option_index = 0;
 
@@ -387,28 +422,44 @@ int main(int argc, char** argv)
 	{"help", no_argument, NULL, 'h'},
 	{"config", required_argument, NULL, 'c'},
 	{"verbose", no_argument, NULL, 'v'},
+	{"anchor", optional_argument, NULL, 'a'},
+	{"margin", optional_argument, NULL, 'm'},
+	{"ratio", optional_argument, NULL, 's'},
+	{"timeout", optional_argument, NULL, 't'},
 	{"resources", optional_argument, 0, 'r'}};
 
-    while ((c = getopt_long(argc, argv, "c:vho:r:", long_options, &option_index)) != -1)
+    while ((c = getopt_long(argc, argv, "c:vho:r:s:a:m:t:", long_options, &option_index)) != -1)
     {
 	switch (c)
 	{
 	    case 'c':
-		sov.cfg_path = mt_string_new_cstring(optarg);
-		if (errno == ERANGE || sov.cfg_path == NULL)
+		cfg_path = mt_string_new_cstring(optarg);
+		if (errno == ERANGE || cfg_path == NULL)
 		{
 		    mt_log_error("Invalid config path value", ULONG_MAX);
 		    return EXIT_FAILURE;
 		}
 		break;
+	    case 't': sov.timeout = atoi(optarg); break;
 	    case 'h': printf("%s", usage); return EXIT_SUCCESS;
 	    case 'v': mt_log_inc_verbosity(); break;
 	    case 'r': res_par = mt_string_new_cstring(optarg); break;
+	    case 'a': anc_par = mt_string_new_cstring(optarg); break;
+	    case 'm': mrg_par = mt_string_new_cstring(optarg); break;
+	    case 's': sov.ratio = atoi(optarg); break;
 	    default: fprintf(stderr, "%s", usage); return EXIT_FAILURE;
 	}
     }
 
-    printf("RESPAR %s\n", res_par);
+    if (anc_par)
+	sov.anchor = anc_par;
+    else
+	sov.anchor = "";
+
+    if (mrg_par != NULL)
+    {
+	sov.margin = atoi(mrg_par);
+    }
 
     /* init config */
 
@@ -417,54 +468,37 @@ int main(int argc, char** argv)
     char cwd[PATH_MAX];
     if (getcwd(cwd, sizeof(cwd)) == NULL) printf("Cannot get working directory\n");
 
-    char* cfg_path_loc = sov.cfg_path ? mt_path_new_normalize(sov.cfg_path, cwd) : mt_path_new_normalize(CFG_PATH_LOC, getenv("HOME")); // REL 1
-    char* cfg_path_glo = mt_path_new_append(PKG_DATADIR, "config");                                                                     // REL 2
+    char* cfg_path_loc = cfg_path ? mt_path_new_normalize(cfg_path, cwd) : mt_path_new_normalize(CFG_PATH_LOC, getenv("HOME")); // REL 1
+    char* cfg_path_glo = mt_path_new_append(PKG_DATADIR, "config");                                                             // REL 2
 
-    if (config_read(cfg_path_loc) < 0)
+    DIR* dir = opendir(cfg_path_loc);
+    if (dir)
     {
-	if (config_read(cfg_path_glo) < 0)
-	    mt_log_warn("No configuration found ( local : %s , global : %s )\n", cfg_path_loc, cfg_path_glo);
-	else
-	    mt_log_info("Using config file : %s\n", cfg_path_glo);
+	cfg_path = cfg_path_loc;
+	closedir(dir);
     }
     else
-	mt_log_info("Using config file : %s\n", cfg_path_loc);
+	cfg_path = cfg_path_glo;
+
+    char* css_path  = mt_path_new_append(cfg_path, "html/main.css");  // REL 6
+    char* html_path = mt_path_new_append(cfg_path, "html/main.html"); // REL 7
+    char* img_path  = mt_path_new_append(cfg_path, "img");            // REL 6
 
     REL(cfg_path_glo); // REL 2
     REL(cfg_path_loc); // REL 1
 
-    char* res_path = NULL;
-    char* wrk_path = mt_path_new_normalize(cwd, NULL); // REL 3
-
-    char* res_path_loc = res_par ? mt_path_new_normalize(res_par, wrk_path) : mt_path_new_normalize("~/.config/wcp", getenv("HOME")); // REL 4
-    char* res_path_glo = mt_string_new_cstring(PKG_DATADIR);                                                                          // REL 5
-
-    DIR* dir = opendir(res_path_loc);
-    if (dir)
-    {
-	res_path = res_path_loc;
-	closedir(dir);
-    }
-    else
-	res_path = res_path_glo;
-
-    char* css_path  = mt_path_new_append(res_path, "html/main.css");  // REL 6
-    char* html_path = mt_path_new_append(res_path, "html/main.html"); // REL 7
-    char* img_path  = mt_path_new_append(res_path, "img");            // REL 6
-
-    config_set("res_path", res_path);
+    config_set("cfg_path", cfg_path);
     config_set("css_path", css_path);
     config_set("html_path", html_path);
     config_set("img_path", img_path);
 
-    printf("resource path : %s\n", res_path);
+    printf("config path : %s\n", cfg_path);
     printf("css path      : %s\n", css_path);
     printf("html path     : %s\n", html_path);
     printf("image path    : %s\n", img_path);
-
-    /* get timout from config */
-
-    sov.timeout = config_get_int("timeout");
+    printf("anchor        : %s\n", sov.anchor);
+    printf("margin        : %i\n", sov.margin);
+    printf("timeout       : %i\n", sov.timeout);
 
     sov.wlwindows = VNEW();
 
@@ -478,7 +512,7 @@ int main(int argc, char** argv)
 
     config_destroy();
     ku_text_destroy();
-    if (sov.cfg_path) REL(sov.cfg_path);
+    if (cfg_path) REL(cfg_path);
 
 #ifdef MT_MEMORY_DEBUG
     mt_memory_stats();
