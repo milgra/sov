@@ -4,6 +4,7 @@
 #include "ku_text.c"
 #include "ku_view.c"
 #include "ku_window.c"
+#include "mt_bitmap_ext.c"
 #include "mt_log.c"
 #include "mt_path.c"
 #include "mt_string.c"
@@ -33,21 +34,25 @@ int main(int argc, char** argv)
     char* anc_par  = NULL;
     char* tree_par = NULL;
     char* ws_par   = NULL;
+    char* res_par  = NULL;
 
     int c, option_index = 0;
 
     static struct option long_options[] = {
 	{"tree", required_argument, NULL, 't'},
 	{"workspace", required_argument, NULL, 'w'},
-	{"style", required_argument, NULL, 's'}};
+	{"style", required_argument, NULL, 's'},
+	{"result", required_argument, NULL, 'r'},
+    };
 
-    while ((c = getopt_long(argc, argv, "s:t:w:", long_options, &option_index)) != -1)
+    while ((c = getopt_long(argc, argv, "s:t:w:r:", long_options, &option_index)) != -1)
     {
 	switch (c)
 	{
 	    case 's': cfg_par = mt_string_new_cstring(optarg); break;
 	    case 't': tree_par = mt_string_new_cstring(optarg); break;
 	    case 'w': ws_par = mt_string_new_cstring(optarg); break;
+	    case 'r': res_par = mt_string_new_cstring(optarg); break;
 	}
     }
 
@@ -67,6 +72,7 @@ int main(int argc, char** argv)
     printf("image path    : %s\n", img_path);
     printf("tree path     : %s\n", tree_par);
     printf("ws path       : %s\n", ws_par);
+    printf("res path      : %s\n", res_par);
 
     /* init text rendering */
 
@@ -85,6 +91,8 @@ int main(int argc, char** argv)
     tree_reader_extract(ws_json, tree_json, workspaces);
 
     printf("WORKSPACES LENGTH %i\n", workspaces->length);
+
+    /* extract outputs */
 
     /* create window */
 
@@ -299,6 +307,16 @@ int main(int argc, char** argv)
     }
 
     ku_view_layout(view_base);
+
+    ku_window_update(kuwindow, 0);
+
+    ku_bitmap_t* bitmap = ku_bitmap_new(kuwindow->width, kuwindow->height);
+
+    ku_renderer_software_render(kuwindow->views, bitmap, view_base->frame.local);
+
+    char* tgt_path = mt_path_new_append(res_par, "render0.bmp");
+
+    bm_write(bitmap, tgt_path);
 
     /* cleanup */
 
