@@ -173,10 +173,19 @@ com_sources = ['src/sov/jsmn.c',
 	       'src/kinetic_ui/ku_gen_textstyle.c'] + protos_src + protos_headers
 
 sov_sources = [com_sources, 'src/sov/main.c']
+draw_sources = [com_sources, 'src/sov/draw.c']
 
 executable(
   'sov',
   sov_sources,
+  include_directories: [sov_inc],
+  dependencies: sov_dependencies,
+  install: true,
+)
+
+executable(
+  'draw',
+  draw_sources,
   include_directories: [sov_inc],
   dependencies: sov_dependencies,
   install: true,
