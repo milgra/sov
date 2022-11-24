@@ -2,21 +2,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "config.c"
 #include "ku_connector_wayland.c"
 #include "ku_gen_css.c"
 #include "ku_gen_html.c"
 #include "ku_gen_type.c"
 #include "ku_renderer_soft.c"
 #include "ku_window.c"
-#include "kvlines.c"
 #include "mt_log.c"
 #include "mt_path.c"
 #include "mt_string.c"
 #include "mt_vector.c"
 #include "tg_css.c"
 #include "tg_text.c"
-#include "tree_reader.c"
+#include "tree.c"
 
 #define GET_WORKSPACES_CMD "swaymsg -t get_workspaces"
 #define GET_TREE_CMD "swaymsg -t get_tree"
@@ -47,6 +45,12 @@ struct sov
     ku_view_t* view_base;
     ku_view_t* base;
 
+    char* cfg_path;
+    char* img_path;
+    char* css_path;
+    char* html_path;
+
+    int   columns;
     int   ratio;
     char* anchor;
     int   margin;
@@ -86,8 +90,8 @@ void init(wl_event_t event)
 
     mt_vector_t* view_list = VNEW();
 
-    ku_gen_html_parse(config_get("html_path"), view_list);
-    ku_gen_css_apply(view_list, config_get("css_path"), config_get("img_path"), 1.0);
+    ku_gen_html_parse(sov.html_path, view_list);
+    ku_gen_css_apply(view_list, sov.css_path, sov.img_path, 1.0);
     ku_gen_type_apply(view_list, NULL, NULL);
 
     sov.view_base = mt_vector_head(view_list);
@@ -128,7 +132,7 @@ void create_layout(wl_window_t* info)
 
     /* calculate full width */
 
-    int cols   = config_get_int("columns");
+    int cols   = sov.columns;
     int rows   = (int) ceilf((float) workspaces->length / cols);
     int width  = cols * (info->monitor->logical_width / sov.ratio + sov.workspace->style.margin);
     int height = rows * (info->monitor->logical_height / sov.ratio + sov.workspace->style.margin);
@@ -327,7 +331,7 @@ void create_layers()
 
 	/* calculate full width */
 
-	int cols   = config_get_int("columns");
+	int cols   = sov.columns;
 	int rows   = (int) ceilf((float) workspaces->length / cols);
 	int width  = cols * (monitor->logical_width / sov.ratio + sov.workspace->style.margin);
 	int height = rows * (monitor->logical_height / sov.ratio + sov.workspace->style.margin);
@@ -431,19 +435,20 @@ int main(int argc, char** argv)
 	"\n"
 	"  -h, --help                            Show help message and quit.\n"
 	"  -v                                    Increase verbosity of messages, defaults to errors and warnings only.\n"
-	"  -c,                                   Location of html folder for styling.\n"
+	"  -s,                                   Location of html folder for styling.\n"
+	"  -c, --columns=[columns]               Number of thumbnail columns\n"
 	"  -a, --anchor=[lrtp]                   Anchor window to window edge in directions, use rt for right top\n"
 	"  -m, --margin=[size]                   Margin\n"
 	"  -r, --ratio=[ratio]                   Overlay to screen ratio, positive integer\n"
 	"  -t, --timeout=[millisecs]             Milliseconds to wait for showing up overlays, positive integer\n"
 	"\n";
 
-    sov.ratio = 8;
+    sov.ratio   = 8;
+    sov.columns = 5;
 
     /* parse options */
 
     char* cfg_par = NULL;
-    char* res_par = NULL;
     char* mrg_par = NULL;
     char* anc_par = NULL;
 
@@ -451,19 +456,19 @@ int main(int argc, char** argv)
 
     static struct option long_options[] = {
 	{"help", no_argument, NULL, 'h'},
-	{"config", required_argument, NULL, 'c'},
+	{"style", required_argument, NULL, 's'},
 	{"verbose", no_argument, NULL, 'v'},
+	{"columns", optional_argument, NULL, 'c'},
 	{"anchor", optional_argument, NULL, 'a'},
 	{"margin", optional_argument, NULL, 'm'},
 	{"ratio", optional_argument, NULL, 's'},
-	{"timeout", optional_argument, NULL, 't'},
-	{"resources", optional_argument, 0, 'r'}};
+	{"timeout", optional_argument, NULL, 'r'}};
 
-    while ((c = getopt_long(argc, argv, "c:vho:r:s:a:m:t:", long_options, &option_index)) != -1)
+    while ((c = getopt_long(argc, argv, "vho:r:s:a:m:t:c:", long_options, &option_index)) != -1)
     {
 	switch (c)
 	{
-	    case 'c':
+	    case 's':
 		cfg_par = mt_string_new_cstring(optarg);
 		if (errno == ERANGE || cfg_par == NULL)
 		{
@@ -474,10 +479,10 @@ int main(int argc, char** argv)
 	    case 't': sov.timeout = atoi(optarg); break;
 	    case 'h': printf("%s", usage); return EXIT_SUCCESS;
 	    case 'v': mt_log_inc_verbosity(); break;
-	    case 'r': res_par = mt_string_new_cstring(optarg); break;
 	    case 'a': anc_par = mt_string_new_cstring(optarg); break;
 	    case 'm': mrg_par = mt_string_new_cstring(optarg); break;
-	    case 's': sov.ratio = atoi(optarg); break;
+	    case 'c': sov.columns = atoi(optarg); break;
+	    case 'r': sov.ratio = atoi(optarg); break;
 	    default: fprintf(stderr, "%s", usage); return EXIT_FAILURE;
 	}
     }
@@ -494,12 +499,9 @@ int main(int argc, char** argv)
 
     /* init config */
 
-    config_init(); // DESTROY 0
-
     char cwd[PATH_MAX];
     if (getcwd(cwd, sizeof(cwd)) == NULL) printf("Cannot get working directory\n");
 
-    char* cfg_path     = NULL;
     char* cfg_path_loc = cfg_par ? mt_path_new_normalize(cfg_par, cwd) : mt_path_new_normalize(CFG_PATH_LOC, getenv("HOME")); // REL 1
     char* cfg_path_glo = mt_path_new_append(PKG_DATADIR, "config");                                                           // REL 2
 
@@ -508,35 +510,25 @@ int main(int argc, char** argv)
     DIR* dir = opendir(cfg_path_loc);
     if (dir)
     {
-	cfg_path = cfg_path_loc;
+	sov.cfg_path = cfg_path_loc;
 	closedir(dir);
     }
     else
-	cfg_path = cfg_path_glo;
+	sov.cfg_path = cfg_path_glo;
 
-    char* css_path  = mt_path_new_append(cfg_path, "html/main.css");  // REL 6
-    char* html_path = mt_path_new_append(cfg_path, "html/main.html"); // REL 7
-    char* img_path  = mt_path_new_append(cfg_path, "img");            // REL 6
+    sov.css_path  = mt_path_new_append(sov.cfg_path, "html/main.css");  // REL 6
+    sov.html_path = mt_path_new_append(sov.cfg_path, "html/main.html"); // REL 7
+    sov.img_path  = mt_path_new_append(sov.cfg_path, "img");            // REL 6
 
-    config_set("cfg_path", cfg_path);
-    config_set("css_path", css_path);
-    config_set("html_path", html_path);
-    config_set("img_path", img_path);
-
-    REL(cfg_path_glo); // REL 2
-    REL(cfg_path_loc); // REL 1
-    REL(css_path);
-    REL(html_path);
-    REL(img_path);
-
-    printf("config path   : %s\n", cfg_path);
-    printf("css path      : %s\n", css_path);
-    printf("html path     : %s\n", html_path);
-    printf("image path    : %s\n", img_path);
+    printf("config path   : %s\n", sov.cfg_path);
+    printf("css path      : %s\n", sov.css_path);
+    printf("html path     : %s\n", sov.html_path);
+    printf("image path    : %s\n", sov.img_path);
     printf("ratio         : %i\n", sov.ratio);
     printf("anchor        : %s\n", sov.anchor);
     printf("margin        : %i\n", sov.margin);
     printf("timeout       : %i\n", sov.timeout);
+    printf("columns       : %i\n", sov.columns);
 
     sov.wlwindows = VNEW();
 
@@ -548,7 +540,12 @@ int main(int argc, char** argv)
 
     /* cleanup */
 
-    config_destroy();
+    REL(cfg_path_glo); // REL 2
+    REL(cfg_path_loc); // REL 1
+    REL(sov.css_path);
+    REL(sov.html_path);
+    REL(sov.img_path);
+
     ku_text_destroy();
 
 #ifdef MT_MEMORY_DEBUG

@@ -101,11 +101,9 @@ sov_inc = include_directories(
 	'src/mt_core_ext')
 
 
-com_sources = ['src/sov/config.c',
-	       'src/sov/jsmn.c',
+com_sources = ['src/sov/jsmn.c',
 	       'src/sov/json.c',
-	       'src/sov/kvlines.c',
-	       'src/sov/tree_reader.c',
+	       'src/sov/tree.c',
 
 	       'src/mt_core_ext/mt_bitmap_ext.c',
 	       'src/mt_core_ext/mt_string_ext.c',
@@ -184,7 +182,6 @@ executable(
   install: true,
 )
 
-install_data('config', install_dir : pkg_datadir )
 install_data('contrib/systemd/sov.service', install_dir : get_option('libdir') / 'systemd' / 'user' )
 install_data('contrib/systemd/sov.socket', install_dir : get_option('libdir') / 'systemd' / 'user' )
 

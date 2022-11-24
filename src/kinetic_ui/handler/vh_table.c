@@ -81,9 +81,9 @@ mt_vector_t* vh_table_get_fields(
 
 #if __INCLUDE_LEVEL__ == 0
 
-#include "config.c"
 #include "ku_gen_textstyle.c"
 #include "mt_log.c"
+#include "mt_map.c"
 #include "mt_memory.c"
 #include "mt_number.c"
 #include "mt_string.c"
@@ -316,8 +316,10 @@ ku_view_t* vh_table_item_create(
 
 		wth += size->intv + 2;
 
-		if (value) tg_text_set(cellview, value, style);
-		else tg_text_set(cellview, "", style); // reset old value
+		if (value)
+		    tg_text_set(cellview, value, style);
+		else
+		    tg_text_set(cellview, "", style); // reset old value
 	    }
 
 	    ku_view_set_frame(rowview, (ku_rect_t){0, 0, wth, style.line_height});
@@ -749,7 +751,8 @@ void vh_table_attach(
 		vh);
 	}
     }
-    else mt_log_error("Not enough subviews for creating a table ( scrollv,scrollh,rowa,rowb,rowselected needed and rowhead is optional");
+    else
+	mt_log_error("Not enough subviews for creating a table ( scrollv,scrollh,rowa,rowb,rowselected needed and rowhead is optional");
 }
 
 /* data items have to be maps containing the same keys */
