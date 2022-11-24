@@ -66,6 +66,8 @@
     vertical-align: top;
     font-size: 12px;
     font-family: "Terminus (TTF):style=Bold";
+    word-wrap: break-word;
+    line-height: 12px;
 }
 
 .number {
