@@ -21,6 +21,7 @@ struct _ku_window_t
 };
 
 ku_window_t* ku_window_create(int width, int height);
+void         ku_window_resize(ku_window_t* window, int width, int height);
 void         ku_window_add(ku_window_t* window, ku_view_t* view);
 void         ku_window_remove(ku_window_t* window, ku_view_t* view);
 void         ku_window_activate(ku_window_t* window, ku_view_t* view);
@@ -64,6 +65,13 @@ ku_window_t* ku_window_create(int width, int height)
     win->height = height;
 
     return win;
+}
+
+void ku_window_resize(ku_window_t* window, int width, int height)
+{
+    window->width  = width;
+    window->height = height;
+    ku_view_set_frame(window->root, (ku_rect_t){0.0, 0.0, width, height});
 }
 
 void ku_window_add(ku_window_t* win, ku_view_t* view)
