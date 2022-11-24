@@ -1,6 +1,7 @@
 /* define posix standard for strdup */
 #define _POSIX_C_SOURCE 200809L
 
+#include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <getopt.h>
@@ -17,91 +18,54 @@
 #include <unistd.h>
 
 #include "config.c"
-#include "cstr_util.c"
-#include "fontconfig.c"
+#include "ku_bitmap.c"
+#include "ku_connector_wayland.c"
+#include "ku_draw.c"
+#include "ku_fontconfig.c"
+#include "ku_gen_css.c"
+#include "ku_gen_html.c"
+#include "ku_gen_type.c"
+#include "ku_renderer_soft.c"
+#include "ku_text.c"
+#include "ku_window.c"
 #include "kvlines.c"
-#include "tree_drawer.c"
+#include "mt_channel.c"
+#include "mt_log.c"
+#include "mt_path.c"
+#include "mt_string.c"
+#include "mt_string_ext.c"
+#include "mt_vector.c"
+#include "tg_css.c"
+#include "tg_text.c"
 #include "tree_reader.c"
-#include "wlr-layer-shell-unstable-v1-client-protocol.h"
-#include "xdg-output-unstable-v1-client-protocol.h"
-#include "zc_bm_rgba.c"
-#include "zc_channel.c"
-#include "zc_cstring.c"
-#include "zc_draw.c"
-#include "zc_log.c"
-#include "zc_path.c"
-#include "zc_text.c"
-#include "zc_vector.c"
 
 #define CFG_PATH_LOC "~/.config/sov/config"
 #define GET_WORKSPACES_CMD "swaymsg -t get_workspaces"
 #define GET_TREE_CMD "swaymsg -t get_tree"
 
-struct sov_geom
-{
-    unsigned long anchor;
-    unsigned long margin;
-};
-
-struct sov_output_config
-{
-    char*          name;
-    struct wl_list link;
-};
-
-struct sov_surface
-{
-    struct zwlr_layer_surface_v1* wlr_layer_surface;
-    struct wl_surface*            wl_surface;
-};
-
-struct sov_output
-{
-    char*                  name;
-    struct wl_list         link;
-    struct wl_output*      wl_output;
-    struct sov*            app;
-    struct sov_surface*    sov_surface;
-    struct zxdg_output_v1* xdg_output;
-    uint32_t               wl_name;
-    int32_t                width;
-    int32_t                height;
-    int                    scaling;
-};
-
 struct sov
 {
-    char*                          cfg_path;
-    char*                          font_path;
-    int                            timeout;
-    int                            shmid;
-    struct wl_compositor*          wl_compositor;
-    struct wl_display*             wl_display;
-    struct wl_list                 sov_outputs;
-    struct wl_list                 output_configs;
-    struct wl_registry*            wl_registry;
-    struct wl_shm*                 wl_shm;
-    struct sov_geom                sov_geom;
-    struct zwlr_layer_shell_v1*    wlr_layer_shell;
-    struct zxdg_output_manager_v1* xdg_output_manager;
-    struct sov_surface*            fallback_sov_surface;
+    char*          cfg_path;
+    char*          font_path;
+    int            timeout;
+    struct wl_list output_configs;
 };
 
-void sov_read_tree(vec_t* workspaces)
+void sov_read_tree(mt_vector_t* workspaces)
 {
     char  buff[100];
     char* ws_json   = NULL; // REL 0
     char* tree_json = NULL; // REL 1
 
     FILE* pipe = popen(GET_WORKSPACES_CMD, "r"); // CLOSE 0
-    ws_json    = cstr_new_cstring("{\"items\":");
-    while (fgets(buff, sizeof(buff), pipe) != NULL) ws_json = cstr_append(ws_json, buff);
-    ws_json = cstr_append(ws_json, "}");
+    ws_json    = mt_string_new_cstring("{\"items\":");
+    while (fgets(buff, sizeof(buff), pipe) != NULL) ws_json = mt_string_append(ws_json, buff);
+    ws_json = mt_string_append(ws_json, "}");
     pclose(pipe); // CLOSE 0
 
     pipe      = popen(GET_TREE_CMD, "r"); // CLOSE 0
-    tree_json = cstr_new_cstring("");
-    while (fgets(buff, sizeof(buff), pipe) != NULL) tree_json = cstr_append(tree_json, buff);
+    tree_json = mt_string_new_cstring("");
+    while (fgets(buff, sizeof(buff), pipe) != NULL) tree_json = mt_string_append(tree_json, buff);
     pclose(pipe); // CLOSE 0
 
     tree_reader_extract(ws_json, tree_json, workspaces);
@@ -110,544 +74,342 @@ void sov_read_tree(vec_t* workspaces)
     REL(tree_json); // REL 1
 }
 
-void noop()
-{ /* intentionally left blank */
+ku_window_t*          kuwindow;
+struct monitor_info** monitors;
+int                   monitor_count;
+struct wl_window*     wlwindow;
+
+ku_view_t* workspace;
+ku_view_t* number;
+ku_view_t* window;
+ku_view_t* window_active;
+ku_view_t* title;
+ku_view_t* content;
+ku_view_t* row;
+ku_view_t* view_base;
+ku_view_t* base;
+
+mt_vector_t* workspaces;
+
+void init(wl_event_t event)
+{
+    monitors      = event.monitors;
+    monitor_count = event.monitor_count;
+    printf("init\n");
+
+    kuwindow = ku_window_create(500, 200);
+
+    mt_vector_t* view_list = VNEW();
+
+    ku_gen_html_parse(config_get("html_path"), view_list);
+    ku_gen_css_apply(view_list, config_get("css_path"), config_get("img_path"), 1.0);
+    ku_gen_type_apply(view_list, NULL, NULL);
+
+    view_base = mt_vector_head(view_list);
+
+    workspace     = RET(GETV(view_base, "workspace"));
+    window        = RET(GETV(view_base, "window"));
+    window_active = RET(GETV(view_base, "window_active"));
+    number        = RET(GETV(view_base, "number"));
+    title         = RET(GETV(view_base, "title"));
+    base          = RET(GETV(view_base, "base"));
+    content       = RET(GETV(view_base, "content"));
+    row           = RET(GETV(view_base, "row"));
+
+    ku_view_remove_from_parent(content);
+    ku_view_remove_from_parent(title);
+    ku_view_remove_from_parent(window);
+    ku_view_remove_from_parent(window_active);
+    ku_view_remove_from_parent(number);
+    ku_view_remove_from_parent(workspace);
+    ku_view_remove_from_parent(row);
+
+    /* initial layout of views */
+
+    ku_window_add(kuwindow, view_base);
+
+    /* ku_view_set_frame(view_base, (ku_rect_t){0.0, 0.0, 1200, 600}); */
+    /* ku_view_layout(view_base); */
+
+    /* ku_view_describe(view_base, 0); */
 }
 
-int sov_shm_create()
+struct sov   app    = {0};
+ku_bitmap_t* bitmap = NULL;
+ku_rect_t    dirtyrect;
+
+/* window update */
+
+void update(ku_event_t ev)
 {
-    int  shmid = -1;
-    char shm_name[NAME_MAX];
-    for (int i = 0; i < UCHAR_MAX; ++i)
+    printf("event\n");
+
+    if (ev.type == KU_EVENT_FRAME)
     {
-	if (snprintf(shm_name, NAME_MAX, "/sov-%d", i) >= NAME_MAX)
+	struct wl_window* info = ev.window;
+
+	if (info == wlwindow)
 	{
-	    break;
-	}
-	shmid = shm_open(shm_name, O_RDWR | O_CREAT | O_EXCL, 0600);
-	if (shmid > 0 || errno != EEXIST)
-	{
-	    break;
-	}
-    }
+	    mt_vector_t* curr_ws = VNEW();
 
-    if (shmid < 0)
-    {
-	zc_log_error("shm_open() failed: %s", strerror(errno));
-	return -1;
-    }
+	    printf("WS %i\n", workspaces->length);
 
-    if (shm_unlink(shm_name) != 0)
-    {
-	zc_log_error("shm_unlink() failed: %s", strerror(errno));
-	return -1;
-    }
-
-    return shmid;
-}
-
-void* sov_shm_alloc(const int shmid, const size_t size)
-{
-    if (ftruncate(shmid, size) != 0)
-    {
-	zc_log_error("ftruncate() failed: %s", strerror(errno));
-	return NULL;
-    }
-
-    void* buffer = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, shmid, 0);
-    if (buffer == MAP_FAILED)
-    {
-	zc_log_error("mmap() failed: %s", strerror(errno));
-	return NULL;
-    }
-
-    return buffer;
-}
-
-int sov_shm_dealloc(void* buffer, const size_t size)
-{
-    return munmap(buffer, size);
-}
-
-void layer_surface_configure(
-    void*                         data,
-    struct zwlr_layer_surface_v1* surface,
-    uint32_t                      serial,
-    uint32_t                      w,
-    uint32_t                      h)
-{
-    zwlr_layer_surface_v1_ack_configure(surface, serial);
-}
-
-struct sov_surface* sov_surface_create(
-    struct sov*       app,
-    struct wl_output* wl_output,
-    int               scaling,
-    unsigned long     width,
-    unsigned long     height,
-    unsigned long     margin,
-    unsigned long     anchor)
-{
-    const static struct zwlr_layer_surface_v1_listener zwlr_layer_surface_listener = {
-	.configure = layer_surface_configure,
-	.closed    = noop,
-    };
-
-    struct sov_surface* sov_surface = calloc(1, sizeof(struct sov_surface));
-    if (sov_surface == NULL)
-    {
-	zc_log_error("calloc failed");
-	exit(EXIT_FAILURE);
-    }
-
-    sov_surface->wl_surface = wl_compositor_create_surface(app->wl_compositor);
-    if (sov_surface->wl_surface == NULL)
-    {
-	zc_log_error("wl_compositor_create_surface failed");
-	exit(EXIT_FAILURE);
-    }
-
-    /* wl_surface_set_buffer_scale(sov_surface->wl_surface, scaling); */
-
-    sov_surface->wlr_layer_surface = zwlr_layer_shell_v1_get_layer_surface(app->wlr_layer_shell, sov_surface->wl_surface, wl_output, ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY, "sov");
-    if (sov_surface->wlr_layer_surface == NULL)
-    {
-	zc_log_error("wlr_layer_shell_v1_get_layer_surface failed");
-	exit(EXIT_FAILURE);
-    }
-
-    zwlr_layer_surface_v1_set_size(sov_surface->wlr_layer_surface, width, height);
-    zwlr_layer_surface_v1_set_anchor(sov_surface->wlr_layer_surface, anchor);
-    zwlr_layer_surface_v1_set_margin(sov_surface->wlr_layer_surface, margin, margin, margin, margin);
-    zwlr_layer_surface_v1_add_listener(sov_surface->wlr_layer_surface, &zwlr_layer_surface_listener, app);
-    wl_surface_commit(sov_surface->wl_surface);
-
-    return sov_surface;
-}
-
-void sov_surface_destroy(
-    struct sov_surface* sov_surface)
-{
-    if (sov_surface == NULL) { return; }
-
-    zwlr_layer_surface_v1_destroy(sov_surface->wlr_layer_surface);
-    wl_surface_destroy(sov_surface->wl_surface);
-
-    sov_surface->wl_surface        = NULL;
-    sov_surface->wlr_layer_surface = NULL;
-}
-
-void sov_output_destroy(
-    struct sov_output* output)
-{
-    sov_surface_destroy(output->sov_surface);
-    zxdg_output_v1_destroy(output->xdg_output);
-    wl_output_destroy(output->wl_output);
-
-    free(output->name);
-    free(output->sov_surface);
-
-    output->sov_surface = NULL;
-    output->wl_output   = NULL;
-    output->xdg_output  = NULL;
-    output->name        = NULL;
-
-    free(output);
-}
-
-void xdg_output_handle_name(
-    void*                  data,
-    struct zxdg_output_v1* xdg_output,
-    const char*            name)
-{
-    zc_log_info("Detected output %s", name);
-
-    struct sov_output* output = (struct sov_output*) data;
-    output->name              = strdup(name);
-    if (output->name == NULL)
-    {
-	zc_log_error("strdup failed\n");
-	exit(EXIT_FAILURE);
-    }
-}
-
-void xdg_output_handle_size(
-    void*                  data,
-    struct zxdg_output_v1* xdg_output,
-    int32_t                width,
-    int32_t                height)
-{
-
-    struct sov_output* output = (struct sov_output*) data;
-
-    zc_log_info("Detected size for %s %i %i", output->name, width, height);
-
-    output->width   = width;
-    output->height  = height;
-    output->scaling = 1;
-}
-
-void xdg_output_handle_scale(
-    void*                  data,
-    struct zxdg_output_v1* xdg_output,
-    int32_t                scale)
-{
-
-    struct sov_output* output = (struct sov_output*) data;
-
-    zc_log_info("Detected scale for %s %i", output->name, scale);
-
-    output->scaling = scale;
-}
-
-void xdg_output_handle_done(
-    void*                  data,
-    struct zxdg_output_v1* xdg_output)
-{
-    struct sov_output* output = (struct sov_output*) data;
-
-    wl_list_insert(&output->app->sov_outputs, &output->link);
-    zc_log_info("Adding output %s", output->name);
-}
-
-void handle_global(
-    void*               data,
-    struct wl_registry* registry,
-    uint32_t            name,
-    const char*         interface,
-    uint32_t            version)
-{
-    const static struct zxdg_output_v1_listener xdg_output_listener = {
-	.logical_position = noop,
-	.logical_size     = xdg_output_handle_size,
-	.name             = xdg_output_handle_name,
-	/* .scale            = xdg_output_handle_scale, */
-	.description = noop,
-	.done        = xdg_output_handle_done,
-    };
-
-    struct sov* app = (struct sov*) data;
-
-    if (strcmp(interface, wl_shm_interface.name) == 0)
-    {
-	app->wl_shm = wl_registry_bind(registry, name, &wl_shm_interface, 1);
-    }
-    else if (strcmp(interface, wl_compositor_interface.name) == 0)
-    {
-	app->wl_compositor = wl_registry_bind(registry, name, &wl_compositor_interface, 1);
-    }
-    else if (strcmp(interface, "wl_output") == 0)
-    {
-	struct sov_output* output = calloc(1, sizeof(struct sov_output));
-	output->wl_output         = wl_registry_bind(registry, name, &wl_output_interface, 1);
-	output->app               = app;
-	output->wl_name           = name;
-
-	output->xdg_output = zxdg_output_manager_v1_get_xdg_output(app->xdg_output_manager, output->wl_output);
-	zxdg_output_v1_add_listener(output->xdg_output, &xdg_output_listener, output);
-
-	if (wl_display_roundtrip(app->wl_display) == -1)
-	{
-	    zc_log_error("wl_display_roundtrip failed");
-	    exit(EXIT_FAILURE);
-	}
-	else
-	    zc_log_debug("wl_display_roundtrip success");
-    }
-    else if (strcmp(interface, zwlr_layer_shell_v1_interface.name) == 0)
-    {
-	app->wlr_layer_shell = wl_registry_bind(registry, name, &zwlr_layer_shell_v1_interface, 1);
-    }
-    else if (strcmp(interface, zxdg_output_manager_v1_interface.name) == 0)
-    {
-	app->xdg_output_manager = wl_registry_bind(registry, name, &zxdg_output_manager_v1_interface, 2);
-    }
-}
-
-void handle_global_remove(
-    void*               data,
-    struct wl_registry* registry,
-    uint32_t            name)
-{
-    struct sov*        app = (struct sov*) data;
-    struct sov_output *output, *tmp;
-    wl_list_for_each_safe(output, tmp, &(app->sov_outputs), link)
-    {
-	if (output->wl_name == name)
-	{
-	    wl_list_remove(&output->link);
-	    sov_output_destroy(output);
-	    break;
-	}
-    }
-}
-
-int sov_connect_display(struct sov* app)
-{
-    const static struct wl_registry_listener wl_registry_listener = {
-	.global        = handle_global,
-	.global_remove = handle_global_remove,
-    };
-
-    app->wl_display = wl_display_connect(NULL);
-    if (app->wl_display == NULL)
-    {
-	zc_log_error("wl_display_connect failed");
-	return EXIT_FAILURE;
-    }
-
-    app->wl_registry = wl_display_get_registry(app->wl_display);
-    if (app->wl_registry == NULL)
-    {
-	zc_log_error("wl_display_get_registry failed");
-	return EXIT_FAILURE;
-    }
-
-    wl_registry_add_listener(app->wl_registry, &wl_registry_listener, app);
-
-    wl_list_init(&app->sov_outputs);
-    if (wl_display_roundtrip(app->wl_display) == -1)
-    {
-	zc_log_error("wl_display_roundtrip failed");
-	return EXIT_FAILURE;
-    }
-
-    return 0;
-}
-
-bool sov_parse_input(const char* input_buffer, unsigned long* state)
-{
-    char *input_ptr, *newline_position;
-
-    newline_position = strchr(input_buffer, '\n');
-    if (newline_position == NULL) { return false; }
-
-    if (newline_position == input_buffer) { return false; }
-
-    *state = strtoul(input_buffer, &input_ptr, 10);
-    if (input_ptr == newline_position) { return true; }
-    else
-	return false;
-}
-
-int sov_show(struct sov* app)
-{
-    // get tree first
-
-    vec_t* workspaces = VNEW(); // REL 0
-
-    sov_read_tree(workspaces);
-
-    // go through outputs
-
-    struct sov_output *output, *tmp;
-    wl_list_for_each_safe(output, tmp, &(app->sov_outputs), link)
-    {
-	// get workspaces for output, get biggest number and biggest ws dimension
-
-	vec_t* curr_ws = VNEW(); // REL 1
-
-	int wth = 0;
-	int hth = 0;
-
-	for (int index = 0; index < workspaces->length; index++)
-	{
-	    sway_workspace_t* ws = workspaces->data[index];
-	    if (strcmp(ws->output, output->name) == 0)
+	    for (int index = 0; index < workspaces->length; index++)
 	    {
-		VADD(curr_ws, ws);
-		if (ws->width > wth || ws->height > hth)
+		sway_workspace_t* ws = workspaces->data[index];
+		if (strcmp(ws->output, info->monitor->name) == 0) VADD(curr_ws, ws);
+	    }
+
+	    /* calculate full width */
+
+	    int cols   = config_get_int("columns");
+	    int rows   = (int) ceilf((float) curr_ws->length / cols);
+	    int ratio  = config_get_int("ratio");
+	    int width  = cols * (info->monitor->logical_width / ratio) + (cols + 1);
+	    int height = rows * (info->monitor->logical_height / ratio) + (rows + 1);
+
+	    printf("DRAWING LAYER FOR %s : workspaces %i cols %i rows %i ratio %i width %i height %i\n", info->monitor->name, curr_ws->length, cols, rows, ratio, width, height);
+
+	    /* resize window */
+
+	    ku_view_set_frame(view_base, (ku_rect_t){0.0, 0.0, width, height});
+
+	    /* add rows */
+
+	    int wsi = 0;
+
+	    for (int rowi = 0; rowi < rows; rowi++)
+	    {
+		char name[100] = {0};
+		snprintf(name, 100, "row%i", rowi);
+		ku_view_t* rowview = ku_view_new(name, (ku_rect_t){0, 0, 100, 100});
+		rowview->style     = row->style;
+
+		printf("adding row %s\n", name);
+		ku_view_add_subview(base, rowview);
+
+		/* add workspaces */
+
+		for (int coli = 0; coli < cols; coli++)
 		{
-		    wth = ws->width;
-		    hth = ws->height;
+		    char name[100] = {0};
+		    snprintf(name, 100, "workspace%i", wsi);
+		    ku_view_t* wsview = ku_view_new(name, (ku_rect_t){0, 0, 100, 100});
+		    wsview->style     = workspace->style;
+		    tg_css_add(wsview);
+
+		    ku_view_add_subview(rowview, wsview);
+
+		    /* add number */
+
+		    if (wsi < curr_ws->length)
+		    {
+			sway_workspace_t* ws = curr_ws->data[wsi];
+
+			char numname[100] = {0};
+			char numnumb[10]  = {0};
+			snprintf(numname, 100, "number%i%i", wsi, 0);
+			snprintf(numnumb, 10, "%i", ws->number);
+			ku_view_t* numview = ku_view_new(numname, (ku_rect_t){0, 0, number->frame.local.w, number->frame.local.h});
+			numview->style     = number->style;
+			tg_text_add(numview);
+			tg_text_set1(numview, numnumb);
+
+			ku_view_add_subview(wsview, numview);
+		    }
+
+		    wsi += 1;
+		}
+	    }
+
+	    /* finalize workspace sizes by layouting */
+
+	    ku_view_layout(view_base);
+
+	    /* add windows */
+
+	    wsi = 0;
+
+	    for (int rowi = 0; rowi < rows; rowi++)
+	    {
+		ku_view_t* rowview = base->views->data[rowi];
+
+		for (int coli = 0; coli < cols; coli++)
+		{
+		    ku_view_t* wsview = rowview->views->data[coli];
+
+		    if (wsi < curr_ws->length)
+		    {
+			sway_workspace_t* ws = curr_ws->data[wsi];
+
+			for (int wii = 0; wii < ws->windows->length; wii++)
+			{
+			    sway_window_t* wi = ws->windows->data[wii];
+
+			    int wiw = roundf(((float) wi->width / (float) ws->width) * wsview->frame.local.w);
+			    int wih = roundf(((float) wi->height / (float) ws->height) * wsview->frame.local.h);
+			    int wix = roundf((((float) wi->x) / (float) ws->width) * wsview->frame.local.w);
+			    int wiy = roundf((((float) wi->y) / (float) ws->height) * wsview->frame.local.h);
+
+			    if (wiw > 5 && wih > 5)
+			    {
+				char* titlestr = STRNC("");
+
+				if (wi->appid && strcmp(wi->appid, "null") != 0)
+				    titlestr = mt_string_append(titlestr, wi->appid);
+				else if (wi->title && strcmp(wi->title, "null") != 0)
+				    titlestr = mt_string_append(titlestr, wi->title);
+				else
+				    titlestr = mt_string_append(titlestr, "unknown");
+
+				char* contentstr = STRNC("");
+
+				if (wi->title && strcmp(wi->title, "null") != 0)
+				    contentstr = mt_string_append(contentstr, wi->title);
+				else
+				    contentstr = mt_string_append(contentstr, "unkown");
+
+				/* frame */
+
+				char winname[100]     = {0};
+				char titlename[100]   = {0};
+				char contentname[100] = {0};
+				snprintf(winname, 100, "window%i", wii);
+				snprintf(titlename, 100, "title%i", wii);
+				snprintf(contentname, 100, "content%i", wii);
+
+				ku_view_t* winview = ku_view_new(winname, (ku_rect_t){wix, wiy, wiw, wih});
+				winview->style     = window->style;
+				if (ws->focused) winview->style = window_active->style;
+				winview->style.left   = wix;
+				winview->style.top    = wiy;
+				winview->style.width  = wiw;
+				winview->style.height = wih;
+				tg_css_add(winview);
+
+				ku_view_t* titleview = ku_view_new(titlename, (ku_rect_t){0, 0, wiw, wih});
+				titleview->style     = title->style;
+				tg_text_add(titleview);
+
+				ku_view_t* contentview = ku_view_new(contentname, (ku_rect_t){0, 0, wiw, wih});
+				contentview->style     = content->style;
+				tg_text_add(contentview);
+
+				ku_view_insert_subview(wsview, winview, 0);
+				ku_view_add_subview(winview, titleview);
+				ku_view_add_subview(winview, contentview);
+
+				tg_text_set1(titleview, titlestr);
+				tg_text_set1(contentview, contentstr);
+
+				REL(titlestr);
+				REL(contentstr);
+
+				printf("DRAWING WINDOW FOR %s %i : %i %i %i %i %s\n", info->monitor->name, wsi, wix, wiy, wiw, wih, titlestr);
+			    }
+			}
+		    }
+
+		    /* increase workspace index */
+
+		    wsi++;
+		}
+	    }
+
+	    ku_view_layout(view_base);
+
+	    ku_view_describe(view_base, 0);
+
+	    ku_window_event(kuwindow, ev);
+
+	    if (wlwindow->frame_cb == NULL)
+	    {
+		ku_rect_t dirty = ku_window_update(kuwindow, 0);
+
+		if (dirty.w > 0 && dirty.h > 0)
+		{
+		    ku_rect_t sum = ku_rect_add(dirty, dirtyrect);
+
+		    /* mt_log_debug("drt %i %i %i %i", (int) dirty.x, (int) dirty.y, (int) dirty.w, (int) dirty.h); */
+		    /* mt_log_debug("drt prev %i %i %i %i", (int) wcp.dirtyrect.x, (int) wcp.dirtyrect.y, (int) wcp.dirtyrect.w, (int) wcp.dirtyrect.h); */
+		    /* mt_log_debug("sum aftr %i %i %i %i", (int) sum.x, (int) sum.y, (int) sum.w, (int) sum.h); */
+
+		    /* mt_time(NULL); */
+		    ku_renderer_software_render(kuwindow->views, &wlwindow->bitmap, sum);
+		    /* mt_time("Render"); */
+
+		    printf("DRAW WINDOW\n");
+
+		    ku_wayland_draw_window(wlwindow, (int) sum.x, (int) sum.y, (int) sum.w, (int) sum.h);
+
+		    dirtyrect = dirty;
 		}
 	    }
 	}
-
-	zc_log_debug("showing %i workspaces on output %s wth %i hth %i", curr_ws->length, output->name, wth, hth);
-
-	textstyle_t main_style = {
-	    .margin     = config_get_int("text_margin_size"),
-	    .margin_top = config_get_int("text_margin_top_size"),
-	    .align      = TA_LEFT,
-	    .valign     = VA_TOP,
-	    .size       = config_get_int("text_title_size"),
-	    .textcolor  = cstr_color_from_cstring(config_get("text_title_color")),
-	    .backcolor  = 0,
-	    .multiline  = 0,
-	};
-
-	strcpy(main_style.font, app->font_path);
-
-	textstyle_t sub_style = {
-	    .margin      = config_get_int("text_margin_size"),
-	    .margin_top  = config_get_int("text_margin_top_size") + config_get_int("text_title_size"),
-	    .align       = TA_LEFT,
-	    .valign      = VA_TOP,
-	    .size        = config_get_int("text_description_size"),
-	    .textcolor   = cstr_color_from_cstring(config_get("text_description_color")),
-	    .backcolor   = 0,
-	    .line_height = config_get_int("text_description_size"),
-	    .multiline   = 1,
-	};
-
-	strcpy(sub_style.font, app->font_path);
-
-	textstyle_t wsnum_style = {
-	    .margin    = config_get_int("text_margin_size"),
-	    .align     = TA_RIGHT,
-	    .valign    = VA_TOP,
-	    .size      = config_get_int("text_workspace_size"),
-	    .textcolor = cstr_color_from_cstring(config_get("text_workspace_color")),
-	    .backcolor = 0,
-	};
-
-	strcpy(wsnum_style.font, app->font_path);
-
-	int gap   = config_get_int("gap");
-	int cols  = config_get_int("columns");
-	int ratio = config_get_int("ratio");
-
-	bm_rgba_t* bitmap = tree_drawer_bm_create(
-	    curr_ws,
-	    gap,
-	    cols,
-	    ratio,
-	    main_style,
-	    sub_style,
-	    wsnum_style,
-	    cstr_color_from_cstring(config_get("window_color")),
-	    cstr_color_from_cstring(config_get("background_color")),
-	    cstr_color_from_cstring(config_get("background_color_focused")),
-	    cstr_color_from_cstring(config_get("border_color")),
-	    cstr_color_from_cstring(config_get("empty_color")),
-	    cstr_color_from_cstring(config_get("empty_frame_color")),
-	    config_get_int("window_border_radius"),
-	    config_get_int("window_border_size"),
-	    cstr_color_from_cstring(config_get("window_border_color")),
-	    config_get_int("workspace_border_radius"),
-	    config_get_int("workspace_border_size"),
-	    config_get_int("text_workspace_xshift"),
-	    config_get_int("text_workspace_yshift"));
-
-	REL(curr_ws); // REL 1
-
-	if (bitmap)
+	else
 	{
-	    struct wl_buffer* wl_buffer = NULL;
+	    printf("frame event for %s\n", info->monitor->name);
 
-	    uint32_t size   = bitmap->w * output->scaling * bitmap->h * output->scaling * 4;
-	    uint32_t stride = bitmap->w * output->scaling * 4;
+	    ku_bitmap_insert(
+		&info->bitmap,
+		(bmr_t){0, 0, info->bitmap.w, info->bitmap.h},
+		bitmap,
+		(bmr_t){0, 0, bitmap->w, bitmap->h},
+		0,
+		0);
 
-	    struct wl_shm_pool* pool = wl_shm_create_pool(app->wl_shm, app->shmid, size);
-	    if (pool == NULL)
-	    {
-		zc_log_error("wl_shm_create_pool failed");
-		return EXIT_FAILURE;
-	    }
-
-	    wl_buffer = wl_shm_pool_create_buffer(pool, 0, bitmap->w, bitmap->h, stride, WL_SHM_FORMAT_ARGB8888);
-	    wl_shm_pool_destroy(pool);
-
-	    if (wl_buffer == NULL)
-	    {
-		zc_log_error("wl_shm_pool_create_buffer failed");
-		return EXIT_FAILURE;
-	    }
-
-	    uint8_t* argb = sov_shm_alloc(app->shmid, size);
-	    if (argb == NULL) { return EXIT_FAILURE; }
-
-	    // memcpy((uint8_t*)app->argb, bitmap->data, bitmap->size);
-	    // we have to do this until RGBA8888 is working for buffer format
-
-	    for (int i = 0; i < bitmap->size; i += 4)
-	    {
-		argb[i]     = bitmap->data[i + 2];
-		argb[i + 1] = bitmap->data[i + 1];
-		argb[i + 2] = bitmap->data[i];
-		argb[i + 3] = bitmap->data[i + 3];
-	    }
-
-	    // create surface
-	    output->sov_surface = sov_surface_create(app, output->wl_output, output->scaling, bitmap->w, bitmap->h, app->sov_geom.margin, app->sov_geom.anchor);
-
-	    if (wl_display_roundtrip(app->wl_display) == -1)
-	    {
-		zc_log_error("wl_display_roundtrip failed");
-		return EXIT_FAILURE;
-	    }
-
-	    zc_log_info("Showing on output %s", output->name);
-
-	    // flush
-	    wl_surface_attach(output->sov_surface->wl_surface, wl_buffer, 0, 0);
-	    wl_surface_damage(output->sov_surface->wl_surface, 0, 0, bitmap->w, bitmap->h);
-	    wl_surface_commit(output->sov_surface->wl_surface);
-
-	    /* cleanup */
-
-	    wl_buffer_destroy(wl_buffer);
-
-	    if (wl_display_dispatch(app->wl_display) == -1)
-	    {
-		zc_log_error("wl_display_dispatch failed");
-		return EXIT_FAILURE;
-	    }
-
-	    REL(bitmap); // REL 1
-
-	    sov_shm_dealloc(argb, size);
+	    ku_wayland_draw_window(info, 0, 0, info->width, info->height);
 	}
     }
 
-    REL(workspaces); // REL 0
+    if (ev.type == KU_EVENT_STDIN)
+    {
+	if (ev.text[0] == '1')
+	{
+	    if (workspaces == NULL) workspaces = VNEW(); // REL 0
+	    mt_vector_reset(workspaces);
 
-    return 0;
+	    sov_read_tree(workspaces);
+
+	    // show layer over all workspaces
+
+	    for (int m = 0; m < monitor_count; m++)
+	    {
+		struct monitor_info* monitor = monitors[m];
+
+		if (wlwindow == NULL)
+		{
+		    mt_vector_t* curr_ws = VNEW(); // REL 1
+
+		    for (int index = 0; index < workspaces->length; index++)
+		    {
+			sway_workspace_t* ws = workspaces->data[index];
+			if (strcmp(ws->output, monitor->name) == 0) VADD(curr_ws, ws);
+		    }
+
+		    /* calculate full width */
+
+		    int cols   = config_get_int("columns");
+		    int rows   = (int) ceilf((float) curr_ws->length / cols);
+		    int ratio  = config_get_int("ratio");
+		    int width  = cols * (monitor->logical_width / ratio) + (cols + 1);
+		    int height = rows * (monitor->logical_height / ratio) + (rows + 1);
+
+		    printf("CREATING LAYER FOR %s : workspaces %i cols %i rows %i ratio %i width %i height %i\n", monitor->name, curr_ws->length, cols, rows, ratio, width, height);
+
+		    wlwindow = ku_wayland_create_generic_layer(monitor, width, height, 0, "", 1);
+		    /* struct wl_window* window = ku_wayland_create_generic_layer(monitor, bitmap->w, bitmap->h, 0, "", 1); */
+
+		    REL(curr_ws);
+		}
+	    }
+	}
+    }
+    if (ev.text[0] == '3') ku_wayland_exit();
 }
 
-int sov_hide(struct sov* app)
+void destroy()
 {
-    struct sov_output *output, *tmp;
-    wl_list_for_each_safe(output, tmp, &app->sov_outputs, link)
-    {
-	zc_log_info("Hiding on output %s", output->name);
-	sov_surface_destroy(output->sov_surface);
-	free(output->sov_surface);
-	output->sov_surface = NULL;
-    }
-
-    if (wl_display_roundtrip(app->wl_display) == -1)
-    {
-	zc_log_error("wl_display_roundtrip failed");
-	return EXIT_FAILURE;
-    }
-
-    return 0;
-}
-
-void sov_destroy(struct sov* app)
-{
-    struct sov_output *output, *output_tmp;
-    wl_list_for_each_safe(output, output_tmp, &app->sov_outputs, link)
-    {
-	sov_output_destroy(output);
-    }
-
-    struct sov_output_config *config, *config_tmp;
-    wl_list_for_each_safe(config, config_tmp, &app->output_configs, link)
-    {
-	free(config->name);
-	free(config);
-    }
-
-    zwlr_layer_shell_v1_destroy(app->wlr_layer_shell);
-    wl_registry_destroy(app->wl_registry);
-    wl_compositor_destroy(app->wl_compositor);
-    wl_shm_destroy(app->wl_shm);
-    zxdg_output_manager_v1_destroy(app->xdg_output_manager);
-
-    wl_display_disconnect(app->wl_display);
 }
 
 int main(int argc, char** argv)
@@ -655,8 +417,8 @@ int main(int argc, char** argv)
     printf("swayoverview v" SOV_VERSION " by Milan Toth ( www.milgra.com )\n");
     printf("listens on standard input for '0' - hide panel '1' - show panel '2' - quit\n");
 
-    zc_log_use_colors(isatty(STDERR_FILENO));
-    zc_log_level_info();
+    mt_log_use_colors(isatty(STDERR_FILENO));
+    mt_log_level_info();
 
     const char* usage =
 	"Usage: sov [options]\n"
@@ -664,11 +426,12 @@ int main(int argc, char** argv)
 	"  -c  --config= [path]                Use config file for session.\n"
 	"  -h, --help                          Show help message and quit.\n"
 	"  -v                                  Increase verbosity of messages, defaults to errors and warnings only.\n"
+	"  -r, --resources=[resources folder]  Resources dir for current session\n"
 	"\n";
 
-    struct sov app = {0};
-
     /* parse options */
+
+    char* res_par = NULL;
 
     int c, option_index = 0;
 
@@ -677,25 +440,29 @@ int main(int argc, char** argv)
     static struct option long_options[] = {
 	{"help", no_argument, NULL, 'h'},
 	{"config", required_argument, NULL, 'c'},
-	{"verbose", no_argument, NULL, 'v'}};
+	{"verbose", no_argument, NULL, 'v'},
+	{"resources", optional_argument, 0, 'r'}};
 
-    while ((c = getopt_long(argc, argv, "c:vho:", long_options, &option_index)) != -1)
+    while ((c = getopt_long(argc, argv, "c:vho:r:", long_options, &option_index)) != -1)
     {
 	switch (c)
 	{
 	    case 'c':
-		app.cfg_path = cstr_new_cstring(optarg);
+		app.cfg_path = mt_string_new_cstring(optarg);
 		if (errno == ERANGE || app.cfg_path == NULL)
 		{
-		    zc_log_error("Invalid config path value", ULONG_MAX);
+		    mt_log_error("Invalid config path value", ULONG_MAX);
 		    return EXIT_FAILURE;
 		}
 		break;
 	    case 'h': printf("%s", usage); return EXIT_SUCCESS;
-	    case 'v': zc_log_inc_verbosity(); break;
+	    case 'v': mt_log_inc_verbosity(); break;
+	    case 'r': res_par = mt_string_new_cstring(optarg); break;
 	    default: fprintf(stderr, "%s", usage); return EXIT_FAILURE;
 	}
     }
+
+    printf("RESPAR %s\n", res_par);
 
     /* init config */
 
@@ -704,222 +471,78 @@ int main(int argc, char** argv)
     char cwd[PATH_MAX];
     if (getcwd(cwd, sizeof(cwd)) == NULL) printf("Cannot get working directory\n");
 
-    char* cfg_path_loc = app.cfg_path ? path_new_normalize(app.cfg_path, cwd) : path_new_normalize(CFG_PATH_LOC, getenv("HOME")); // REL 1
-    char* cfg_path_glo = path_new_append(PKG_DATADIR, "config");                                                                  // REL 2
+    char* cfg_path_loc = app.cfg_path ? mt_path_new_normalize(app.cfg_path, cwd) : mt_path_new_normalize(CFG_PATH_LOC, getenv("HOME")); // REL 1
+    char* cfg_path_glo = mt_path_new_append(PKG_DATADIR, "config");                                                                     // REL 2
 
     if (config_read(cfg_path_loc) < 0)
     {
 	if (config_read(cfg_path_glo) < 0)
-	    zc_log_warn("No configuration found ( local : %s , global : %s )\n", cfg_path_loc, cfg_path_glo);
+	    mt_log_warn("No configuration found ( local : %s , global : %s )\n", cfg_path_loc, cfg_path_glo);
 	else
-	    zc_log_info("Using config file : %s\n", cfg_path_glo);
+	    mt_log_info("Using config file : %s\n", cfg_path_glo);
     }
     else
-	zc_log_info("Using config file : %s\n", cfg_path_loc);
+	mt_log_info("Using config file : %s\n", cfg_path_loc);
 
     REL(cfg_path_glo); // REL 2
     REL(cfg_path_loc); // REL 1
 
-    /* get anchor and margin values from config */
+    char* res_path = NULL;
+    char* wrk_path = mt_path_new_normalize(cwd, NULL); // REL 3
 
-    app.sov_geom.margin = config_get_int("margin");
-    char* anchor        = config_get("anchor");
-    if (anchor)
+    char* res_path_loc = res_par ? mt_path_new_normalize(res_par, wrk_path) : mt_path_new_normalize("~/.config/wcp", getenv("HOME")); // REL 4
+    char* res_path_glo = mt_string_new_cstring(PKG_DATADIR);                                                                          // REL 5
+
+    DIR* dir = opendir(res_path_loc);
+    if (dir)
     {
-	if (strcmp(anchor, "left") == 0) app.sov_geom.anchor |= ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT;
-	if (strcmp(anchor, "right") == 0) app.sov_geom.anchor |= ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT;
-	if (strcmp(anchor, "top") == 0) app.sov_geom.anchor |= ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP;
-	if (strcmp(anchor, "bottom") == 0) app.sov_geom.anchor |= ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM;
+	res_path = res_path_loc;
+	closedir(dir);
     }
+    else
+	res_path = res_path_glo;
 
-    if (zc_log_get_level() == 2) config_describe();
+    char* css_path  = mt_path_new_append(res_path, "html/main.css");  // REL 6
+    char* html_path = mt_path_new_append(res_path, "html/main.html"); // REL 7
+    char* img_path  = mt_path_new_append(res_path, "img");            // REL 6
+
+    config_set("res_path", res_path);
+    config_set("css_path", css_path);
+    config_set("html_path", html_path);
+    config_set("img_path", img_path);
+
+    printf("resource path : %s\n", res_path);
+    printf("css path      : %s\n", css_path);
+    printf("html path     : %s\n", html_path);
+    printf("image path    : %s\n", img_path);
 
     /* get timout from config */
 
     app.timeout = config_get_int("timeout");
 
-    /* init text rendeing */
+    /* init text rendering */
 
-    text_init(); // DESTROY 1
+    ku_text_init(); // DESTROY 1
 
     char* font_face = config_get("font_face");
-    app.font_path   = fontconfig_new_path(font_face ? font_face : ""); // REL 3
+    app.font_path   = ku_fontconfig_path(font_face ? font_face : ""); // REL 3
 
     if (!app.font_path)
     {
-	zc_log_error("No font files found.");
+	mt_log_error("No font files found.");
 	return EXIT_FAILURE;
     }
 
-    /* init wayland */
-
-    int shmid = sov_shm_create();
-    if (shmid < 0) return EXIT_FAILURE;
-
-    app.shmid = shmid;
-
-    if (sov_connect_display(&app) < 0) return EXIT_FAILURE;
-
-    if (app.wl_shm == NULL ||
-	app.wl_compositor == NULL ||
-	app.wlr_layer_shell == NULL)
-    {
-	zc_log_error("Wayland compositor doesn't support all required protocols");
-	return EXIT_FAILURE;
-    }
-
-    /* create display and stdin file descriptors */
-
-    struct pollfd fds[2] = {
-	{
-	    .fd     = wl_display_get_fd(app.wl_display),
-	    .events = POLLIN,
-	},
-	{
-	    .fd     = STDIN_FILENO,
-	    .events = POLLIN,
-	},
-    };
-
-    bool showup = false;
-    bool hidden = true;
-    bool alive  = true;
-
-    while (alive)
-    {
-	unsigned long state           = 0;
-	char          input_buffer[3] = {0};
-	char*         fgets_rv;
-
-	switch (poll(fds, 2, !showup ? -1 : app.timeout))
-	{
-	    case -1:
-	    {
-		zc_log_error("poll() failed: %s", strerror(errno));
-
-		alive = false;
-		break;
-	    }
-	    case 0:
-	    {
-		if (hidden && showup)
-		{
-		    if (sov_show(&app) < 0) alive = false;
-		    showup = false;
-		    hidden = false;
-		}
-
-		break;
-	    }
-	    default:
-	    {
-		if (fds[0].revents)
-		{
-		    if (!(fds[0].revents & POLLIN))
-		    {
-			zc_log_error("WL_DISPLAY_FD unexpectedly closed, revents = %hd", fds[0].revents);
-			alive = false;
-			break;
-		    }
-
-		    if (wl_display_dispatch(app.wl_display) == -1)
-		    {
-			alive = false;
-			break;
-		    }
-		}
-
-		if (fds[1].revents)
-		{
-		    if (!(fds[1].revents & POLLIN))
-		    {
-			zc_log_error("STDIN unexpectedly closed, revents = %hd", fds[1].revents);
-			if (!hidden) sov_hide(&app);
-
-			alive = false;
-			break;
-		    }
-
-		    fgets_rv = fgets(input_buffer, 3, stdin);
-
-		    if (feof(stdin))
-		    {
-			zc_log_info("Received EOF");
-			if (!hidden) sov_hide(&app);
-
-			alive = false;
-			break;
-		    }
-
-		    if (fgets_rv == NULL)
-		    {
-			zc_log_error("fgets() failed: %s", strerror(errno));
-			if (!hidden) sov_hide(&app);
-
-			alive = false;
-			break;
-		    }
-
-		    if (!sov_parse_input(input_buffer, &state))
-		    {
-			zc_log_error("Received invalid input");
-
-			if (!hidden) sov_hide(&app);
-
-			alive = false;
-			break;
-		    }
-
-		    if (state == 3)
-		    {
-			if (!hidden) sov_hide(&app);
-			alive = false;
-			break;
-		    }
-
-		    if (state == 2)
-		    {
-			if (!hidden)
-			{
-			    hidden = 1;
-			    sov_hide(&app);
-			}
-			else
-			{
-			    hidden = 0;
-			    sov_show(&app);
-			}
-			break;
-		    }
-
-		    if (state == 1)
-		    {
-			if (showup == 0) showup = 1;
-		    }
-
-		    if (state == 0)
-		    {
-			if (!hidden)
-			{
-			    hidden = true;
-			    sov_hide(&app);
-			}
-			showup = 0;
-		    }
-		}
-	    }
-	}
-    }
+    ku_wayland_init(init, update, destroy, 0);
 
     /* cleanup */
 
     config_destroy();
-    text_destroy();
+    ku_text_destroy();
     REL(app.font_path);
     if (app.cfg_path) REL(app.cfg_path);
-    sov_destroy(&app);
 
-#ifdef DEBUG
-    mem_stats();
+#ifdef MT_MEMORY_DEBUG
+    mt_memory_stats();
 #endif
 }

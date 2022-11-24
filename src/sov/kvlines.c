@@ -1,27 +1,27 @@
 #ifndef kvlines_h
 #define kvlines_h
 
-#include "zc_map.c"
+#include "mt_map.c"
 
-int kvlines_read(char* libpath, map_t* db);
-int kvlines_write(char* libpath, map_t* db);
+int kvlines_read(char* libpath, mt_map_t* db);
+int kvlines_write(char* libpath, mt_map_t* db);
 
 #endif
 
 #if __INCLUDE_LEVEL__ == 0
 
-#include "cstr_util.c"
-#include "zc_cstring.c"
+#include "mt_string.c"
+#include "mt_string_ext.c"
 #include <limits.h>
 #ifdef __linux__
     #include <linux/limits.h>
 #endif
 #include <stdio.h>
 
-int kvlines_read(char* libpath, map_t* db)
+int kvlines_read(char* libpath, mt_map_t* db)
 {
     int   retv  = -1;
-    char* dbstr = cstr_new_file(libpath); // REL 0
+    char* dbstr = mt_string_new_file(libpath); // REL 0
 
     if (dbstr)
     {
@@ -75,13 +75,13 @@ int kvlines_read(char* libpath, map_t* db)
 		store_word = 0;
 		if (key == NULL)
 		{
-		    key = cstr_new_cstring("");
-		    key = cstr_append_sub(key, dbstr, word_index, index - word_index);
+		    key = mt_string_new_cstring("");
+		    key = mt_string_append_sub(key, dbstr, word_index, index - word_index);
 		}
 		else if (val == NULL)
 		{
-		    val = cstr_new_cstring("");
-		    val = cstr_append_sub(val, dbstr, word_index, index - word_index);
+		    val = mt_string_new_cstring("");
+		    val = mt_string_append_sub(val, dbstr, word_index, index - word_index);
 
 		    MPUT(db, key, val);
 
@@ -100,24 +100,24 @@ int kvlines_read(char* libpath, map_t* db)
     return retv;
 }
 
-int kvlines_write(char* libpath, map_t* db)
+int kvlines_write(char* libpath, mt_map_t* db)
 {
     int   retv = -1;
-    char* path = cstr_new_format(PATH_MAX + NAME_MAX, "%snew", libpath); // REL 0
-    FILE* file = fopen(path, "w");                                       // CLOSE 0
+    char* path = mt_string_new_format(PATH_MAX + NAME_MAX, "%snew", libpath); // REL 0
+    FILE* file = fopen(path, "w");                                            // CLOSE 0
 
     if (file)
     {
-	retv        = 0;
-	vec_t* vals = VNEW(); // REL 1
-	map_values(db, vals);
+	retv              = 0;
+	mt_vector_t* vals = VNEW(); // REL 1
+	mt_map_values(db, vals);
 
 	for (int vali = 0; vali < vals->length; vali++)
 	{
-	    map_t* entry = vals->data[vali];
-	    vec_t* keys  = VNEW(); // REL 2
+	    mt_map_t*    entry = vals->data[vali];
+	    mt_vector_t* keys  = VNEW(); // REL 2
 
-	    map_keys(entry, keys);
+	    mt_map_keys(entry, keys);
 
 	    for (int keyi = 0; keyi < keys->length; keyi++)
 	    {
