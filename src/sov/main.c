@@ -114,9 +114,186 @@ void init(wl_event_t event)
     ku_window_add(sov.kuwindow, sov.view_base);
 }
 
+void create_layout(wl_window_t* info)
+{
+    mt_vector_t* workspaces = VNEW(); // REL!
+
+    for (int index = 0; index < sov.workspaces->length; index++)
+    {
+	sway_workspace_t* ws = sov.workspaces->data[index];
+	if (strcmp(ws->output, info->monitor->name) == 0) VADD(workspaces, ws);
+    }
+
+    /* calculate full width */
+
+    int cols   = config_get_int("columns");
+    int rows   = (int) ceilf((float) workspaces->length / cols);
+    int width  = cols * (info->monitor->logical_width / sov.ratio) + (cols + 1);
+    int height = rows * (info->monitor->logical_height / sov.ratio) + (rows + 1);
+
+    mt_log_debug(
+	"Drawing layer %s : workspaces %i cols %i rows %i ratio %i width %i height %i",
+	info->monitor->name,
+	workspaces->length,
+	cols,
+	rows,
+	sov.ratio,
+	width,
+	height);
+
+    /* resize window */
+
+    ku_window_resize(sov.kuwindow, width, height);
+    ku_view_set_frame(sov.view_base, (ku_rect_t){0.0, 0.0, width, height});
+
+    /* add rows */
+
+    int wsi = 0;
+
+    for (int rowi = 0; rowi < rows; rowi++)
+    {
+	char name[100] = {0};
+	snprintf(name, 100, "row%i", rowi);
+	ku_view_t* rowview = ku_view_new(name, (ku_rect_t){0, 0, 100, 100});
+	rowview->style     = sov.row->style;
+
+	mt_log_debug("adding row %s", name);
+
+	ku_view_add_subview(sov.base, rowview);
+
+	/* add workspaces */
+
+	for (int coli = 0; coli < cols; coli++)
+	{
+	    char name[100] = {0};
+	    snprintf(name, 100, "workspace%i", wsi);
+	    ku_view_t* wsview = ku_view_new(name, (ku_rect_t){0, 0, 100, 100});
+	    wsview->style     = sov.workspace->style;
+	    tg_css_add(wsview);
+
+	    ku_view_add_subview(rowview, wsview);
+
+	    /* add number */
+
+	    if (wsi < workspaces->length)
+	    {
+		sway_workspace_t* ws = workspaces->data[wsi];
+
+		char numname[100] = {0};
+		char numnumb[10]  = {0};
+		snprintf(numname, 100, "number%i%i", wsi, 0);
+		snprintf(numnumb, 10, "%i", ws->number);
+		ku_view_t* numview = ku_view_new(numname, (ku_rect_t){0, 0, sov.number->frame.local.w, sov.number->frame.local.h});
+		numview->style     = sov.number->style;
+		tg_text_add(numview);
+		tg_text_set1(numview, numnumb);
+
+		ku_view_add_subview(wsview, numview);
+	    }
+
+	    wsi += 1;
+	}
+    }
+
+    /* finalize workspace sizes by layouting */
+
+    ku_view_layout(sov.view_base);
+
+    /* add windows */
+
+    wsi = 0;
+
+    for (int rowi = 0; rowi < rows; rowi++)
+    {
+	ku_view_t* rowview = sov.base->views->data[rowi];
+
+	for (int coli = 0; coli < cols; coli++)
+	{
+	    ku_view_t* wsview = rowview->views->data[coli];
+
+	    if (wsi < workspaces->length)
+	    {
+		sway_workspace_t* ws = workspaces->data[wsi];
+
+		for (int wii = 0; wii < ws->windows->length; wii++)
+		{
+		    sway_window_t* wi = ws->windows->data[wii];
+
+		    int wiw = roundf(((float) wi->width / (float) ws->width) * wsview->frame.local.w);
+		    int wih = roundf(((float) wi->height / (float) ws->height) * wsview->frame.local.h);
+		    int wix = roundf((((float) wi->x) / (float) ws->width) * wsview->frame.local.w);
+		    int wiy = roundf((((float) wi->y) / (float) ws->height) * wsview->frame.local.h);
+
+		    if (wiw > 5 && wih > 5)
+		    {
+			char* titlestr = STRNC("");
+
+			if (wi->appid && strcmp(wi->appid, "null") != 0)
+			    titlestr = mt_string_append(titlestr, wi->appid);
+			else if (wi->title && strcmp(wi->title, "null") != 0)
+			    titlestr = mt_string_append(titlestr, wi->title);
+			else
+			    titlestr = mt_string_append(titlestr, "unknown");
+
+			char* contentstr = STRNC("");
+
+			if (wi->title && strcmp(wi->title, "null") != 0)
+			    contentstr = mt_string_append(contentstr, wi->title);
+			else
+			    contentstr = mt_string_append(contentstr, "unkown");
+
+			/* frame */
+
+			char winname[100]     = {0};
+			char titlename[100]   = {0};
+			char contentname[100] = {0};
+			snprintf(winname, 100, "window%i", wii);
+			snprintf(titlename, 100, "title%i", wii);
+			snprintf(contentname, 100, "content%i", wii);
+
+			ku_view_t* winview = ku_view_new(winname, (ku_rect_t){wix, wiy, wiw, wih});
+			winview->style     = sov.window->style;
+			if (ws->focused) winview->style = sov.window_active->style;
+			winview->style.left   = wix;
+			winview->style.top    = wiy;
+			winview->style.width  = wiw;
+			winview->style.height = wih;
+			tg_css_add(winview);
+
+			ku_view_t* titleview = ku_view_new(titlename, (ku_rect_t){0, 0, wiw, wih});
+			titleview->style     = sov.title->style;
+			tg_text_add(titleview);
+
+			ku_view_t* contentview = ku_view_new(contentname, (ku_rect_t){0, 0, wiw, wih});
+			contentview->style     = sov.content->style;
+			tg_text_add(contentview);
+
+			ku_view_insert_subview(wsview, winview, wsview->views->length - 1);
+			ku_view_add_subview(winview, titleview);
+			ku_view_add_subview(winview, contentview);
+
+			tg_text_set1(titleview, titlestr);
+			tg_text_set1(contentview, contentstr);
+
+			REL(titlestr);
+			REL(contentstr);
+
+			mt_log_debug("Drawing window for %s %i : %i %i %i %i %s", info->monitor->name, wsi, wix, wiy, wiw, wih, titlestr);
+		    }
+		}
+	    }
+
+	    /* increase workspace index */
+
+	    wsi++;
+	}
+    }
+
+    REL(workspaces);
+}
+
 void create_layers()
 {
-    printf("CREATE LAYERS\n");
     ku_wayland_set_time_event_delay(0);
 
     if (sov.workspaces == NULL) sov.workspaces = VNEW(); // REL 0
@@ -162,186 +339,13 @@ void update(ku_event_t ev)
     {
 	wl_window_t* info = ev.window;
 
-	mt_vector_t* workspaces = VNEW(); // REL!
-
-	for (int index = 0; index < sov.workspaces->length; index++)
-	{
-	    sway_workspace_t* ws = sov.workspaces->data[index];
-	    if (strcmp(ws->output, info->monitor->name) == 0) VADD(workspaces, ws);
-	}
-
-	/* calculate full width */
-
-	int cols   = config_get_int("columns");
-	int rows   = (int) ceilf((float) workspaces->length / cols);
-	int width  = cols * (info->monitor->logical_width / sov.ratio) + (cols + 1);
-	int height = rows * (info->monitor->logical_height / sov.ratio) + (rows + 1);
-
-	mt_log_debug(
-	    "Drawing layer %s : workspaces %i cols %i rows %i ratio %i width %i height %i",
-	    info->monitor->name,
-	    workspaces->length,
-	    cols,
-	    rows,
-	    sov.ratio,
-	    width,
-	    height);
-
-	/* resize window */
-
-	ku_window_resize(sov.kuwindow, width, height);
-	ku_view_set_frame(sov.view_base, (ku_rect_t){0.0, 0.0, width, height});
-
-	/* add rows */
-
-	int wsi = 0;
-
-	for (int rowi = 0; rowi < rows; rowi++)
-	{
-	    char name[100] = {0};
-	    snprintf(name, 100, "row%i", rowi);
-	    ku_view_t* rowview = ku_view_new(name, (ku_rect_t){0, 0, 100, 100});
-	    rowview->style     = sov.row->style;
-
-	    mt_log_debug("adding row %s", name);
-
-	    ku_view_add_subview(sov.base, rowview);
-
-	    /* add workspaces */
-
-	    for (int coli = 0; coli < cols; coli++)
-	    {
-		char name[100] = {0};
-		snprintf(name, 100, "workspace%i", wsi);
-		ku_view_t* wsview = ku_view_new(name, (ku_rect_t){0, 0, 100, 100});
-		wsview->style     = sov.workspace->style;
-		tg_css_add(wsview);
-
-		ku_view_add_subview(rowview, wsview);
-
-		/* add number */
-
-		if (wsi < workspaces->length)
-		{
-		    sway_workspace_t* ws = workspaces->data[wsi];
-
-		    char numname[100] = {0};
-		    char numnumb[10]  = {0};
-		    snprintf(numname, 100, "number%i%i", wsi, 0);
-		    snprintf(numnumb, 10, "%i", ws->number);
-		    ku_view_t* numview = ku_view_new(numname, (ku_rect_t){0, 0, sov.number->frame.local.w, sov.number->frame.local.h});
-		    numview->style     = sov.number->style;
-		    tg_text_add(numview);
-		    tg_text_set1(numview, numnumb);
-
-		    ku_view_add_subview(wsview, numview);
-		}
-
-		wsi += 1;
-	    }
-	}
-
-	/* finalize workspace sizes by layouting */
-
-	ku_view_layout(sov.view_base);
-
-	/* add windows */
-
-	wsi = 0;
-
-	for (int rowi = 0; rowi < rows; rowi++)
-	{
-	    ku_view_t* rowview = sov.base->views->data[rowi];
-
-	    for (int coli = 0; coli < cols; coli++)
-	    {
-		ku_view_t* wsview = rowview->views->data[coli];
-
-		if (wsi < workspaces->length)
-		{
-		    sway_workspace_t* ws = workspaces->data[wsi];
-
-		    for (int wii = 0; wii < ws->windows->length; wii++)
-		    {
-			sway_window_t* wi = ws->windows->data[wii];
-
-			int wiw = roundf(((float) wi->width / (float) ws->width) * wsview->frame.local.w);
-			int wih = roundf(((float) wi->height / (float) ws->height) * wsview->frame.local.h);
-			int wix = roundf((((float) wi->x) / (float) ws->width) * wsview->frame.local.w);
-			int wiy = roundf((((float) wi->y) / (float) ws->height) * wsview->frame.local.h);
-
-			if (wiw > 5 && wih > 5)
-			{
-			    char* titlestr = STRNC("");
-
-			    if (wi->appid && strcmp(wi->appid, "null") != 0)
-				titlestr = mt_string_append(titlestr, wi->appid);
-			    else if (wi->title && strcmp(wi->title, "null") != 0)
-				titlestr = mt_string_append(titlestr, wi->title);
-			    else
-				titlestr = mt_string_append(titlestr, "unknown");
-
-			    char* contentstr = STRNC("");
-
-			    if (wi->title && strcmp(wi->title, "null") != 0)
-				contentstr = mt_string_append(contentstr, wi->title);
-			    else
-				contentstr = mt_string_append(contentstr, "unkown");
-
-			    /* frame */
-
-			    char winname[100]     = {0};
-			    char titlename[100]   = {0};
-			    char contentname[100] = {0};
-			    snprintf(winname, 100, "window%i", wii);
-			    snprintf(titlename, 100, "title%i", wii);
-			    snprintf(contentname, 100, "content%i", wii);
-
-			    ku_view_t* winview = ku_view_new(winname, (ku_rect_t){wix, wiy, wiw, wih});
-			    winview->style     = sov.window->style;
-			    if (ws->focused) winview->style = sov.window_active->style;
-			    winview->style.left   = wix;
-			    winview->style.top    = wiy;
-			    winview->style.width  = wiw;
-			    winview->style.height = wih;
-			    tg_css_add(winview);
-
-			    ku_view_t* titleview = ku_view_new(titlename, (ku_rect_t){0, 0, wiw, wih});
-			    titleview->style     = sov.title->style;
-			    tg_text_add(titleview);
-
-			    ku_view_t* contentview = ku_view_new(contentname, (ku_rect_t){0, 0, wiw, wih});
-			    contentview->style     = sov.content->style;
-			    tg_text_add(contentview);
-
-			    ku_view_insert_subview(wsview, winview, wsview->views->length - 1);
-			    ku_view_add_subview(winview, titleview);
-			    ku_view_add_subview(winview, contentview);
-
-			    tg_text_set1(titleview, titlestr);
-			    tg_text_set1(contentview, contentstr);
-
-			    REL(titlestr);
-			    REL(contentstr);
-
-			    mt_log_debug("Drawing window for %s %i : %i %i %i %i %s", info->monitor->name, wsi, wix, wiy, wiw, wih, titlestr);
-			}
-		    }
-		}
-
-		/* increase workspace index */
-
-		wsi++;
-	    }
-	}
+	create_layout(info);
 
 	ku_view_layout(sov.view_base);
 	ku_view_describe(sov.view_base, 0);
 	ku_window_update(sov.kuwindow, 0);
 	ku_renderer_software_render(sov.kuwindow->views, &info->bitmap, sov.view_base->frame.local);
 	ku_wayland_draw_window(info, 0, 0, info->width, info->height);
-
-	REL(workspaces);
     }
 
     if (ev.type == KU_EVENT_TIME)
