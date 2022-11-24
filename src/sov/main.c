@@ -302,6 +302,8 @@ void create_layout(wl_window_t* info)
 	}
     }
 
+    ku_view_layout(sov.view_base);
+
     REL(workspaces);
 }
 
@@ -356,15 +358,13 @@ void update(ku_event_t ev)
 	/* reset window */
 	for (int index = sov.base->views->length - 1; index > -1; index--)
 	{
-	    printf("index %i\n", index);
 	    ku_view_t* view = sov.base->views->data[index];
 	    ku_view_remove_from_parent(view);
 	}
 
 	create_layout(info);
 
-	ku_view_layout(sov.view_base);
-	ku_view_describe(sov.view_base, 0);
+	/* ku_view_describe(sov.view_base, 0); */
 	ku_window_update(sov.kuwindow, 0);
 	ku_renderer_software_render(sov.kuwindow->views, &info->bitmap, sov.view_base->frame.local);
 	ku_wayland_draw_window(info, 0, 0, info->width, info->height);
@@ -520,7 +520,7 @@ int main(int argc, char** argv)
     sov.html_path = mt_path_new_append(sov.cfg_path, "html/main.html"); // REL 7
     sov.img_path  = mt_path_new_append(sov.cfg_path, "img");            // REL 6
 
-    printf("config path   : %s\n", sov.cfg_path);
+    printf("style path    : %s\n", sov.cfg_path);
     printf("css path      : %s\n", sov.css_path);
     printf("html path     : %s\n", sov.html_path);
     printf("image path    : %s\n", sov.img_path);
