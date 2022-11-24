@@ -42,6 +42,7 @@ void ku_gen_css_apply_style(ku_view_t* view, mt_map_t* style, char* imgpath, flo
 	{
 	    char* url = CAL(sizeof(char) * strlen(val), NULL, mt_string_describe); // REL 0
 	    memcpy(view->style.font_family, val + 1, strlen(val) - 2);
+	    REL(url);
 	}
 	else if (strcmp(key, "color") == 0)
 	{

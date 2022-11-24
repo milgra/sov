@@ -112,6 +112,8 @@ void init(wl_event_t event)
     /* initial layout of views */
 
     ku_window_add(sov.kuwindow, sov.view_base);
+
+    REL(view_list);
 }
 
 void create_layout(wl_window_t* info)
@@ -128,8 +130,8 @@ void create_layout(wl_window_t* info)
 
     int cols   = config_get_int("columns");
     int rows   = (int) ceilf((float) workspaces->length / cols);
-    int width  = cols * (info->monitor->logical_width / sov.ratio) + (cols + 1);
-    int height = rows * (info->monitor->logical_height / sov.ratio) + (rows + 1);
+    int width  = cols * (info->monitor->logical_width / sov.ratio + sov.workspace->style.margin);
+    int height = rows * (info->monitor->logical_height / sov.ratio + sov.workspace->style.margin);
 
     mt_log_debug(
 	"Drawing layer %s : workspaces %i cols %i rows %i ratio %i width %i height %i",
@@ -160,6 +162,7 @@ void create_layout(wl_window_t* info)
 	mt_log_debug("adding row %s", name);
 
 	ku_view_add_subview(sov.base, rowview);
+	REL(rowview);
 
 	/* add workspaces */
 
@@ -172,6 +175,7 @@ void create_layout(wl_window_t* info)
 	    tg_css_add(wsview);
 
 	    ku_view_add_subview(rowview, wsview);
+	    REL(wsview);
 
 	    /* add number */
 
@@ -189,6 +193,7 @@ void create_layout(wl_window_t* info)
 		tg_text_set1(numview, numnumb);
 
 		ku_view_add_subview(wsview, numview);
+		REL(numview);
 	    }
 
 	    wsi += 1;
@@ -272,6 +277,10 @@ void create_layout(wl_window_t* info)
 			ku_view_add_subview(winview, titleview);
 			ku_view_add_subview(winview, contentview);
 
+			REL(winview);
+			REL(titleview);
+			REL(contentview);
+
 			tg_text_set1(titleview, titlestr);
 			tg_text_set1(contentview, contentstr);
 
@@ -298,6 +307,7 @@ void create_layers()
 
     if (sov.workspaces == NULL) sov.workspaces = VNEW(); // REL 0
     mt_vector_reset(sov.workspaces);
+    mt_vector_reset(sov.wlwindows);
 
     sov_read_tree(sov.workspaces);
 
@@ -319,13 +329,13 @@ void create_layers()
 
 	int cols   = config_get_int("columns");
 	int rows   = (int) ceilf((float) workspaces->length / cols);
-	int width  = cols * (monitor->logical_width / sov.ratio) + (cols + 1);
-	int height = rows * (monitor->logical_height / sov.ratio) + (rows + 1);
+	int width  = cols * (monitor->logical_width / sov.ratio + sov.workspace->style.margin);
+	int height = rows * (monitor->logical_height / sov.ratio + sov.workspace->style.margin);
 
 	mt_log_debug("Creating layer for %s : workspaces %i cols %i rows %i ratio %i width %i height %i", monitor->name, workspaces->length, cols, rows, sov.ratio, width, height);
 
 	wl_window_t* wlwindow = ku_wayland_create_generic_layer(monitor, width, height, sov.margin, sov.anchor, 1);
-	VADD(sov.wlwindows, wlwindow);
+	VADDR(sov.wlwindows, wlwindow);
 
 	REL(workspaces);
     }
@@ -338,6 +348,14 @@ void update(ku_event_t ev)
     if (ev.type == KU_EVENT_FRAME)
     {
 	wl_window_t* info = ev.window;
+
+	/* reset window */
+	for (int index = sov.base->views->length - 1; index > -1; index--)
+	{
+	    printf("index %i\n", index);
+	    ku_view_t* view = sov.base->views->data[index];
+	    ku_view_remove_from_parent(view);
+	}
 
 	create_layout(info);
 
@@ -355,16 +373,7 @@ void update(ku_event_t ev)
 
     if (ev.type == KU_EVENT_STDIN)
     {
-	if (ev.text[0] == '1' && sov.wlwindows->length == 0 && sov.request == 0)
-	{
-	    sov.request = 1;
-	    printf("SHOW %i\n", sov.timeout);
-	    if (sov.timeout == 0)
-		create_layers();
-	    else
-		ku_wayland_set_time_event_delay(sov.timeout);
-	}
-	else if (ev.text[0] == '2')
+	if (ev.text[0] == '0')
 	{
 	    ku_wayland_set_time_event_delay(0);
 	    sov.request = 0;
@@ -380,7 +389,15 @@ void update(ku_event_t ev)
 		mt_vector_reset(sov.wlwindows);
 	    }
 	}
-	else if (ev.text[0] == '3')
+	else if (ev.text[0] == '1' && sov.wlwindows->length == 0 && sov.request == 0)
+	{
+	    sov.request = 1;
+	    if (sov.timeout == 0)
+		create_layers();
+	    else
+		ku_wayland_set_time_event_delay(sov.timeout);
+	}
+	else if (ev.text[0] == '2')
 	{
 	    ku_wayland_exit();
 	}
@@ -393,11 +410,21 @@ void destroy()
 
 int main(int argc, char** argv)
 {
-    printf("swayoverview v" SOV_VERSION " by Milan Toth ( www.milgra.com )\n");
-    printf("listens on standard input for '0' - hide panel '1' - show panel '2' - quit\n");
-
     mt_log_use_colors(isatty(STDERR_FILENO));
     mt_log_level_info();
+    mt_time(NULL);
+
+    printf("Sway Overview v" SOV_VERSION
+	   " by Milan Toth ( www.milgra.com )\n"
+	   "If you like this app try :\n"
+	   "- Wayland Control Panel ( github.com/milgra/wcp )\n"
+	   "- Visual Music Player (github.com/milgra/vmp)\n"
+	   "- Multimedia File Manager (github.com/milgra/mmfm)\n"
+	   "- SwayOS (swayos.github.io)\n"
+	   "Games :\n"
+	   "- Brawl (github.com/milgra/brawl)\n"
+	   "- Cortex ( github.com/milgra/cortex )\n"
+	   "- Termite (github.com/milgra/termite)\n\n");
 
     const char* usage =
 	"Usage: sov [options]\n"
@@ -415,10 +442,10 @@ int main(int argc, char** argv)
 
     /* parse options */
 
-    char* cfg_path = NULL;
-    char* res_par  = NULL;
-    char* mrg_par  = NULL;
-    char* anc_par  = NULL;
+    char* cfg_par = NULL;
+    char* res_par = NULL;
+    char* mrg_par = NULL;
+    char* anc_par = NULL;
 
     int c, option_index = 0;
 
@@ -437,8 +464,8 @@ int main(int argc, char** argv)
 	switch (c)
 	{
 	    case 'c':
-		cfg_path = mt_string_new_cstring(optarg);
-		if (errno == ERANGE || cfg_path == NULL)
+		cfg_par = mt_string_new_cstring(optarg);
+		if (errno == ERANGE || cfg_par == NULL)
 		{
 		    mt_log_error("Invalid config path value", ULONG_MAX);
 		    return EXIT_FAILURE;
@@ -472,8 +499,11 @@ int main(int argc, char** argv)
     char cwd[PATH_MAX];
     if (getcwd(cwd, sizeof(cwd)) == NULL) printf("Cannot get working directory\n");
 
-    char* cfg_path_loc = cfg_path ? mt_path_new_normalize(cfg_path, cwd) : mt_path_new_normalize(CFG_PATH_LOC, getenv("HOME")); // REL 1
-    char* cfg_path_glo = mt_path_new_append(PKG_DATADIR, "config");                                                             // REL 2
+    char* cfg_path     = NULL;
+    char* cfg_path_loc = cfg_par ? mt_path_new_normalize(cfg_par, cwd) : mt_path_new_normalize(CFG_PATH_LOC, getenv("HOME")); // REL 1
+    char* cfg_path_glo = mt_path_new_append(PKG_DATADIR, "config");                                                           // REL 2
+
+    if (cfg_par) REL(cfg_par);
 
     DIR* dir = opendir(cfg_path_loc);
     if (dir)
@@ -488,18 +518,22 @@ int main(int argc, char** argv)
     char* html_path = mt_path_new_append(cfg_path, "html/main.html"); // REL 7
     char* img_path  = mt_path_new_append(cfg_path, "img");            // REL 6
 
-    REL(cfg_path_glo); // REL 2
-    REL(cfg_path_loc); // REL 1
-
     config_set("cfg_path", cfg_path);
     config_set("css_path", css_path);
     config_set("html_path", html_path);
     config_set("img_path", img_path);
 
-    printf("config path : %s\n", cfg_path);
+    REL(cfg_path_glo); // REL 2
+    REL(cfg_path_loc); // REL 1
+    REL(css_path);
+    REL(html_path);
+    REL(img_path);
+
+    printf("config path   : %s\n", cfg_path);
     printf("css path      : %s\n", css_path);
     printf("html path     : %s\n", html_path);
     printf("image path    : %s\n", img_path);
+    printf("ratio         : %i\n", sov.ratio);
     printf("anchor        : %s\n", sov.anchor);
     printf("margin        : %i\n", sov.margin);
     printf("timeout       : %i\n", sov.timeout);
@@ -516,7 +550,6 @@ int main(int argc, char** argv)
 
     config_destroy();
     ku_text_destroy();
-    if (cfg_path) REL(cfg_path);
 
 #ifdef MT_MEMORY_DEBUG
     mt_memory_stats();
