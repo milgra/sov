@@ -104,6 +104,7 @@ sov_inc = include_directories(
 com_sources = ['src/sov/jsmn.c',
 	       'src/sov/json.c',
 	       'src/sov/tree.c',
+	       'src/sov/layout.c',
 
 	       'src/mt_core_ext/mt_bitmap_ext.c',
 	       'src/mt_core_ext/mt_string_ext.c',

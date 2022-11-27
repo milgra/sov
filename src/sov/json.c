@@ -1,4 +1,3 @@
-
 #ifndef json_h
 #define json_h
 
