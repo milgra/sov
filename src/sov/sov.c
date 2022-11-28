@@ -2,9 +2,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "gen.c"
 #include "ku_connector_wayland.c"
 #include "ku_text.c"
-#include "layout.c"
 #include "mt_log.c"
 #include "mt_path.c"
 #include "mt_string.c"
@@ -68,7 +68,7 @@ void init(wl_event_t event)
     sov.monitors      = event.monitors;
     sov.monitor_count = event.monitor_count;
 
-    layout_init(sov.html_path, sov.css_path, sov.img_path);
+    gen_init(sov.html_path, sov.css_path, sov.img_path);
 }
 
 void create_layers()
@@ -103,7 +103,7 @@ void create_layers()
 	int width  = 0;
 	int height = 0;
 
-	layout_calc_size(
+	gen_calc_size(
 	    monitor->logical_width / sov.ratio,
 	    monitor->logical_height / sov.ratio,
 	    cols,
@@ -147,7 +147,7 @@ void update(ku_event_t ev)
 	    rows,
 	    sov.ratio);
 
-	layout_render(
+	gen_render(
 	    info->monitor->logical_width / sov.ratio,
 	    info->monitor->logical_height / sov.ratio,
 	    cols,
@@ -199,7 +199,7 @@ void update(ku_event_t ev)
 
 void destroy()
 {
-    layout_destroy();
+    gen_destroy();
 }
 
 int main(int argc, char** argv)

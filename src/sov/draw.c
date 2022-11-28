@@ -1,6 +1,6 @@
+#include "gen.c"
 #include "ku_renderer_soft.c"
 #include "ku_text.c"
-#include "layout.c"
 #include "mt_bitmap_ext.c"
 #include "mt_log.c"
 #include "mt_path.c"
@@ -25,8 +25,6 @@ int main(int argc, char** argv)
     /* parse options */
 
     char* cfg_par  = NULL;
-    char* mrg_par  = NULL;
-    char* anc_par  = NULL;
     char* tree_par = NULL;
     char* ws_par   = NULL;
     char* res_par  = NULL;
@@ -87,14 +85,14 @@ int main(int argc, char** argv)
 
     printf("WORKSPACES LENGTH %i\n", workspaces->length);
 
-    layout_init(html_path, css_path, img_path);
+    gen_init(html_path, css_path, img_path);
 
     int cols = 5;
     int rows = (int) ceilf((float) workspaces->length / cols);
 
     ku_bitmap_t* bitmap = ku_bitmap_new(1000, 500);
 
-    layout_render(
+    gen_render(
 	100,
 	50,
 	cols,

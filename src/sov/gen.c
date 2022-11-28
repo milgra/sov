@@ -1,14 +1,14 @@
-#ifndef layout_h
-#define layout_h
+#ifndef gen_h
+#define gen_h
 
 #include "ku_bitmap.c"
 #include "ku_window.c"
 #include "mt_vector.c"
 
-void layout_init(char* html_path, char* css_path, char* img_path);
-void layout_render(int twidth, int theight, int cols, int rows, mt_vector_t* workspaces, ku_bitmap_t* bitmap);
-void layout_destroy();
-void layout_calc_size(int twidth, int theight, int cols, int rows, int* width, int* height);
+void gen_init(char* html_path, char* css_path, char* img_path);
+void gen_render(int twidth, int theight, int cols, int rows, mt_vector_t* workspaces, ku_bitmap_t* bitmap);
+void gen_destroy();
+void gen_calc_size(int twidth, int theight, int cols, int rows, int* width, int* height);
 
 #endif
 
@@ -41,7 +41,7 @@ ku_view_t*   view_base;
 ku_view_t*   base;
 mt_vector_t* view_list;
 
-void layout_init(char* html_path, char* css_path, char* img_path)
+void gen_init(char* html_path, char* css_path, char* img_path)
 {
     view_list = VNEW();
 
@@ -72,7 +72,7 @@ void layout_init(char* html_path, char* css_path, char* img_path)
     ku_window_add(kuwindow, view_base);
 }
 
-void layout_destroy()
+void gen_destroy()
 {
     /* reset window */
 
@@ -94,13 +94,13 @@ void layout_destroy()
     REL(view_list);
 }
 
-void layout_calc_size(int twidth, int theight, int cols, int rows, int* width, int* height)
+void gen_calc_size(int twidth, int theight, int cols, int rows, int* width, int* height)
 {
     *width  = cols * twidth + 2 * (cols + 1) * workspace->style.margin;
     *height = rows * theight + 2 * (rows + 1) * workspace->style.margin;
 }
 
-void layout_render(
+void gen_render(
     int          twidth,
     int          theight,
     int          cols,

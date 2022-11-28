@@ -104,7 +104,7 @@ sov_inc = include_directories(
 com_sources = ['src/sov/jsmn.c',
 	       'src/sov/json.c',
 	       'src/sov/tree.c',
-	       'src/sov/layout.c',
+	       'src/sov/gen.c',
 
 	       'src/mt_core_ext/mt_bitmap_ext.c',
 	       'src/mt_core_ext/mt_string_ext.c',
@@ -173,7 +173,7 @@ com_sources = ['src/sov/jsmn.c',
 	       'src/kinetic_ui/ku_text.c',
 	       'src/kinetic_ui/ku_gen_textstyle.c'] + protos_src + protos_headers
 
-sov_sources = [com_sources, 'src/sov/main.c']
+sov_sources = [com_sources, 'src/sov/sov.c']
 draw_sources = [com_sources, 'src/sov/draw.c']
 
 executable(
@@ -195,6 +195,6 @@ executable(
 install_data('contrib/systemd/sov.service', install_dir : get_option('libdir') / 'systemd' / 'user' )
 install_data('contrib/systemd/sov.socket', install_dir : get_option('libdir') / 'systemd' / 'user' )
 
-e = executable('maintest', 'src/tests/test.c')
+e = executable('maintest', 'src/tests/test_mt_core.c')
 
 test('MAIN TEST', e)
