@@ -199,6 +199,7 @@ void update(ku_event_t ev)
 
 void destroy()
 {
+    layout_destroy();
 }
 
 int main(int argc, char** argv)

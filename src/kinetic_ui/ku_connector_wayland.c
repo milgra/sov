@@ -24,6 +24,7 @@
 #include <unistd.h>
 #include <wayland-cursor.h>
 #include <wayland-egl.h>
+#include <wayland-server.h>
 #include <xkbcommon/xkbcommon.h>
 
 #include "mt_log.c"
@@ -888,6 +889,8 @@ void ku_wayland_show_window(wl_window_t* info)
 
 	    zwlr_layer_surface_v1_add_listener(info->layer_surface, &layer_surface_listener, info);
 
+	    /* zwlr_layer_surface_v1_set_keyboard_interactivity(info->layer_surface, 1); */
+
 	    wl_surface_commit(info->surface);
 
 	    info->frame_cb = wl_surface_frame(info->surface);
@@ -1675,17 +1678,17 @@ void ku_wayland_init(
 	    }
 
 	    (*wlc.destroy)();
+
+	    wl_surface_destroy(wlc.cursor_surface);
+	    if (wlc.cursor_theme) wl_cursor_theme_destroy(wlc.cursor_theme);
+
+	    wl_compositor_destroy(wlc.compositor);
 	}
 	else
 	    mt_log_error("compositor not found");
 
 	for (int m = 0; m < wlc.monitor_count; m++) free(wlc.monitors[m]);
 	for (int w = 0; w < wlc.monitor_count; w++) free(wlc.windows[w]);
-
-	wl_surface_destroy(wlc.cursor_surface);
-	if (wlc.cursor_theme) wl_cursor_theme_destroy(wlc.cursor_theme);
-
-	wl_compositor_destroy(wlc.compositor);
 
 	wl_display_disconnect(wlc.display);
     }

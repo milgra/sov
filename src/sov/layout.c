@@ -5,11 +5,10 @@
 #include "ku_window.c"
 #include "mt_vector.c"
 
-void         layout_init(char* html_path, char* css_path, char* img_path);
-void         layout_render(int twidth, int theight, int cols, int rows, mt_vector_t* workspaces, ku_bitmap_t* bitmap);
-void         layout_delete();
-ku_window_t* layout_window();
-void         layout_calc_size(int twidth, int theight, int cols, int rows, int* width, int* height);
+void layout_init(char* html_path, char* css_path, char* img_path);
+void layout_render(int twidth, int theight, int cols, int rows, mt_vector_t* workspaces, ku_bitmap_t* bitmap);
+void layout_destroy();
+void layout_calc_size(int twidth, int theight, int cols, int rows, int* width, int* height);
 
 #endif
 
@@ -31,19 +30,20 @@ ku_window_t* kuwindow; /* kinetic ui window for building up workspaces for each 
 
 /* master views */
 
-ku_view_t* workspace;
-ku_view_t* number;
-ku_view_t* window;
-ku_view_t* window_active;
-ku_view_t* title;
-ku_view_t* content;
-ku_view_t* row;
-ku_view_t* view_base;
-ku_view_t* base;
+ku_view_t*   workspace;
+ku_view_t*   number;
+ku_view_t*   window;
+ku_view_t*   window_active;
+ku_view_t*   title;
+ku_view_t*   content;
+ku_view_t*   row;
+ku_view_t*   view_base;
+ku_view_t*   base;
+mt_vector_t* view_list;
 
 void layout_init(char* html_path, char* css_path, char* img_path)
 {
-    mt_vector_t* view_list = VNEW();
+    view_list = VNEW();
 
     ku_gen_html_parse(html_path, view_list);
     ku_gen_css_apply(view_list, css_path, img_path, 1.0);
@@ -70,6 +70,28 @@ void layout_init(char* html_path, char* css_path, char* img_path)
     ku_view_remove_from_parent(row);
 
     ku_window_add(kuwindow, view_base);
+}
+
+void layout_destroy()
+{
+    /* reset window */
+
+    for (int index = base->views->length - 1; index > -1; index--)
+    {
+	ku_view_t* view = base->views->data[index];
+	ku_view_remove_from_parent(view);
+    }
+
+    REL(workspace);
+    REL(window);
+    REL(window_active);
+    REL(number);
+    REL(title);
+    REL(base);
+    REL(content);
+    REL(row);
+
+    REL(view_list);
 }
 
 void layout_calc_size(int twidth, int theight, int cols, int rows, int* width, int* height)

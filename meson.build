@@ -22,7 +22,7 @@ egl = cc.find_library('EGL',static:false)
 
 xkbcommon = dependency('xkbcommon')
 
-wayland_client      = dependency('wayland-client')
+wayland_client      = dependency('wayland-client',version : '>=1.21.0')
 wayland_cursor      = dependency('wayland-cursor')
 wayland_protos      = dependency('wayland-protocols')
 wayland_scanner_dep = dependency('wayland-scanner')
