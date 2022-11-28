@@ -1,3 +1,7 @@
+#!/bin/bash
+
+cd ..
+
 build/draw -s tst/stylea -t tst/a_tree.json -w tst/a_workspace.json -r tst/result/a_result_a.bmp
 build/draw -s tst/styleb -t tst/a_tree.json -w tst/a_workspace.json -r tst/result/a_result_b.bmp
 
@@ -20,3 +24,14 @@ build/draw -s tst/stylea -t tst/rotated_tree.json -w tst/rotated_workspace.json 
 build/draw -s tst/styleb -t tst/rotated_tree.json -w tst/rotated_workspace.json -r tst/result/rotated_result_b.bmp
 
 diff tst/master tst/result
+
+error=$?
+if [ $error -eq 0 ]
+then
+    exit 0
+elif [ $error -eq 1 ]
+then
+    exit 1
+else
+    exit 1
+fi

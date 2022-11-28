@@ -199,5 +199,7 @@ install_data('contrib/systemd/sov.service', install_dir : get_option('libdir') /
 install_data('contrib/systemd/sov.socket', install_dir : get_option('libdir') / 'systemd' / 'user' )
 
 e = executable('maintest', 'src/tests/test_mt_core.c')
+scripttests = find_program('tst/runtests.sh')
 
 test('MAIN TEST', e)
+test('SCRIPTED TESTS', script	tests, timeout: 0)
