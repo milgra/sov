@@ -39,10 +39,10 @@ sov
 
 ### Usage with sway wm
 
-Launch sov in the config connected to a named pipe, but remove the named pipe first to avoid mkfifo errors.
+Launch sov in the config connected to a named pipe, but remove the named pipe first to avoid mkfifo errors. Add parameters it you want to tune some behaviour.
 
 ```
-exec rm -f /tmp/sovpipe && mkfifo /tmp/sovpipe && tail -f /tmp/sovpipe | sov
+exec rm -f /tmp/sovpipe && mkfifo /tmp/sovpipe && tail -f /tmp/sovpipe | sov -t 500
 ```
 
 Set up your sway config so that on workspace button press and release it writes 1 and 0 into the pipe:
