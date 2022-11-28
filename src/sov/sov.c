@@ -106,6 +106,7 @@ void create_layers()
 	gen_calc_size(
 	    monitor->logical_width / sov.ratio,
 	    monitor->logical_height / sov.ratio,
+	    1.0,
 	    cols,
 	    rows,
 	    &width,
@@ -150,6 +151,7 @@ void update(ku_event_t ev)
 	gen_render(
 	    info->monitor->logical_width / sov.ratio,
 	    info->monitor->logical_height / sov.ratio,
+	    (float) info->monitor->scale,
 	    cols,
 	    rows,
 	    workspaces,

@@ -12,6 +12,7 @@
 typedef struct _tg_text_t
 {
     char*       text;
+    float       scale;
     textstyle_t style;
 } tg_text_t;
 
@@ -38,11 +39,20 @@ void tg_text_gen(ku_view_t* view)
     tg_text_t* gen = view->tex_gen_data;
     if (view->frame.local.w > 0 && view->frame.local.h > 0)
     {
+	if (gen->scale != view->style.scale)
+	{
+	    float ratio = view->style.scale / gen->scale;
+	    gen->style.size *= ratio;
+	    gen->scale = view->style.scale;
+	}
+
 	ku_bitmap_t* fontmap = ku_bitmap_new((int) view->frame.local.w, (int) view->frame.local.h); // REL 0
 	textstyle_t  style   = gen->style;
 
-	if ((style.textcolor & 0xFF) < 0xFF || (style.backcolor & 0xFF) < 0xFF) view->texture.transparent = 1;
-	else view->texture.transparent = 0;
+	if ((style.textcolor & 0xFF) < 0xFF || (style.backcolor & 0xFF) < 0xFF)
+	    view->texture.transparent = 1;
+	else
+	    view->texture.transparent = 0;
 
 	if ((gen->text != NULL) && strlen(gen->text) > 0)
 	{
@@ -76,7 +86,8 @@ void tg_text_add(ku_view_t* view)
 
     tg_text_t* gen = CAL(sizeof(tg_text_t), tg_text_del, tg_text_desc);
 
-    gen->text = NULL; // REL 1
+    gen->text  = NULL; // REL 1
+    gen->scale = 1.0;
 
     view->tex_gen_data = gen;
     view->tex_gen      = tg_text_gen;

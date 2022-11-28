@@ -4,7 +4,7 @@
 #include "ku_view.c"
 #include "mt_vector.c"
 
-void ku_gen_css_apply(mt_vector_t* views, char* csspath, char* imgpath, float scale);
+void ku_gen_css_apply(mt_vector_t* views, char* csspath, char* imgpath);
 
 #endif
 
@@ -14,7 +14,7 @@ void ku_gen_css_apply(mt_vector_t* views, char* csspath, char* imgpath, float sc
 #include "mt_log.c"
 #include <limits.h>
 
-void ku_gen_css_apply_style(ku_view_t* view, mt_map_t* style, char* imgpath, float scale)
+void ku_gen_css_apply_style(ku_view_t* view, mt_map_t* style, char* imgpath)
 {
     mt_vector_t* keys = VNEW(); // REL 0
     mt_map_keys(style, keys);
@@ -52,12 +52,12 @@ void ku_gen_css_apply_style(ku_view_t* view, mt_map_t* style, char* imgpath, flo
 	else if (strcmp(key, "font-size") == 0)
 	{
 	    float size            = atof(val);
-	    view->style.font_size = size * scale;
+	    view->style.font_size = size;
 	}
 	else if (strcmp(key, "line-height") == 0)
 	{
 	    float size              = atof(val);
-	    view->style.line_height = size * scale;
+	    view->style.line_height = size;
 	}
 	else if (strcmp(key, "word-wrap") == 0)
 	{
@@ -89,7 +89,7 @@ void ku_gen_css_apply_style(ku_view_t* view, mt_map_t* style, char* imgpath, flo
 	    else if (strstr(val, "px") != NULL)
 	    {
 		int   pix           = atoi(val);
-		float fpix          = (int) ((float) pix * scale);
+		float fpix          = (int) ((float) pix);
 		view->style.width   = fpix;
 		view->frame.local.w = fpix;
 	    }
@@ -104,7 +104,7 @@ void ku_gen_css_apply_style(ku_view_t* view, mt_map_t* style, char* imgpath, flo
 	    else if (strstr(val, "px") != NULL)
 	    {
 		int   pix           = atoi(val);
-		float fpix          = (int) ((float) pix * scale);
+		float fpix          = (int) ((float) pix);
 		view->style.height  = fpix;
 		view->frame.local.h = fpix;
 	    }
@@ -137,7 +137,7 @@ void ku_gen_css_apply_style(ku_view_t* view, mt_map_t* style, char* imgpath, flo
 	    else if (strstr(val, "px") != NULL)
 	    {
 		int   pix                 = atoi(val);
-		float fpix                = (int) ((float) pix * scale);
+		float fpix                = (int) ((float) pix);
 		view->style.margin        = fpix;
 		view->style.margin_top    = fpix;
 		view->style.margin_left   = fpix;
@@ -150,7 +150,7 @@ void ku_gen_css_apply_style(ku_view_t* view, mt_map_t* style, char* imgpath, flo
 	    if (strstr(val, "px") != NULL)
 	    {
 		int   pix       = atoi(val);
-		float fpix      = (int) ((float) pix * scale);
+		float fpix      = (int) ((float) pix);
 		view->style.top = fpix;
 	    }
 	}
@@ -159,7 +159,7 @@ void ku_gen_css_apply_style(ku_view_t* view, mt_map_t* style, char* imgpath, flo
 	    if (strstr(val, "px") != NULL)
 	    {
 		int   pix        = atoi(val);
-		float fpix       = (int) ((float) pix * scale);
+		float fpix       = (int) ((float) pix);
 		view->style.left = fpix;
 	    }
 	}
@@ -168,7 +168,7 @@ void ku_gen_css_apply_style(ku_view_t* view, mt_map_t* style, char* imgpath, flo
 	    if (strstr(val, "px") != NULL)
 	    {
 		int   pix         = atoi(val);
-		float fpix        = (int) ((float) pix * scale);
+		float fpix        = (int) ((float) pix);
 		view->style.right = fpix;
 	    }
 	}
@@ -177,7 +177,7 @@ void ku_gen_css_apply_style(ku_view_t* view, mt_map_t* style, char* imgpath, flo
 	    if (strstr(val, "px") != NULL)
 	    {
 		int   pix          = atoi(val);
-		float fpix         = (int) ((float) pix * scale);
+		float fpix         = (int) ((float) pix);
 		view->style.bottom = fpix;
 	    }
 	}
@@ -186,7 +186,7 @@ void ku_gen_css_apply_style(ku_view_t* view, mt_map_t* style, char* imgpath, flo
 	    if (strstr(val, "px") != NULL)
 	    {
 		int   pix              = atoi(val);
-		float fpix             = (int) ((float) pix * scale);
+		float fpix             = (int) ((float) pix);
 		view->style.margin_top = fpix;
 	    }
 	}
@@ -195,7 +195,7 @@ void ku_gen_css_apply_style(ku_view_t* view, mt_map_t* style, char* imgpath, flo
 	    if (strstr(val, "px") != NULL)
 	    {
 		int   pix               = atoi(val);
-		float fpix              = (int) ((float) pix * scale);
+		float fpix              = (int) ((float) pix);
 		view->style.margin_left = fpix;
 	    }
 	}
@@ -204,7 +204,7 @@ void ku_gen_css_apply_style(ku_view_t* view, mt_map_t* style, char* imgpath, flo
 	    if (strstr(val, "px") != NULL)
 	    {
 		int   pix                = atoi(val);
-		float fpix               = (int) ((float) pix * scale);
+		float fpix               = (int) ((float) pix);
 		view->style.margin_right = fpix;
 	    }
 	}
@@ -213,7 +213,7 @@ void ku_gen_css_apply_style(ku_view_t* view, mt_map_t* style, char* imgpath, flo
 	    if (strstr(val, "px") != NULL)
 	    {
 		int   pix                 = atoi(val);
-		float fpix                = (int) ((float) pix * scale);
+		float fpix                = (int) ((float) pix);
 		view->style.margin_bottom = fpix;
 	    }
 	}
@@ -222,7 +222,7 @@ void ku_gen_css_apply_style(ku_view_t* view, mt_map_t* style, char* imgpath, flo
 	    if (strstr(val, "px") != NULL)
 	    {
 		int   pix                 = atoi(val);
-		float fpix                = (int) ((float) pix * scale);
+		float fpix                = (int) ((float) pix);
 		view->style.border_radius = fpix;
 	    }
 	}
@@ -231,7 +231,7 @@ void ku_gen_css_apply_style(ku_view_t* view, mt_map_t* style, char* imgpath, flo
 	    if (strstr(val, "px") != NULL)
 	    {
 		int   pix                = atoi(val);
-		float fpix               = (int) ((float) pix * scale);
+		float fpix               = (int) ((float) pix);
 		view->style.border_width = fpix;
 	    }
 	}
@@ -277,7 +277,7 @@ void ku_gen_css_apply_style(ku_view_t* view, mt_map_t* style, char* imgpath, flo
     REL(keys);
 }
 
-void ku_gen_css_apply(mt_vector_t* views, char* csspath, char* imgpath, float scale)
+void ku_gen_css_apply(mt_vector_t* views, char* csspath, char* imgpath)
 {
     mt_map_t* styles = ku_css_new(csspath);
     mt_map_t* style;
@@ -293,7 +293,7 @@ void ku_gen_css_apply(mt_vector_t* views, char* csspath, char* imgpath, float sc
 	style = MGET(styles, cssid);
 	if (style)
 	{
-	    ku_gen_css_apply_style(view, style, imgpath, scale);
+	    ku_gen_css_apply_style(view, style, imgpath);
 	}
 
 	if (view->class)
@@ -313,7 +313,7 @@ void ku_gen_css_apply(mt_vector_t* views, char* csspath, char* imgpath, float sc
 		// mt_log_debug("applying class %s to %s", cls, view->id);
 		if (style)
 		{
-		    ku_gen_css_apply_style(view, style, imgpath, scale);
+		    ku_gen_css_apply_style(view, style, imgpath);
 		}
 	    } while ((token = strtok(NULL, " ")));
 	}

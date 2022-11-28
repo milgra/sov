@@ -849,6 +849,7 @@ void ku_wayland_show_window(wl_window_t* info)
 {
     if (info->hidden == 1)
     {
+	info->hidden  = 0;
 	info->surface = wl_compositor_create_surface(wlc.compositor);
 
 	if (info->type == WL_WINDOW_LAYER)
@@ -905,7 +906,7 @@ wl_window_t* ku_wayland_create_generic_layer(struct monitor_info* monitor, int w
 
     wlc.windows[0] = info;
 
-    info->new_scale  = 1;
+    info->new_scale  = monitor->scale;
     info->new_width  = width;
     info->new_height = height;
     info->margin     = margin;
@@ -917,6 +918,7 @@ wl_window_t* ku_wayland_create_generic_layer(struct monitor_info* monitor, int w
 
     if (show) ku_wayland_show_window(info);
 
+    wl_surface_set_buffer_scale(info->surface, info->new_scale);
     return info;
 }
 

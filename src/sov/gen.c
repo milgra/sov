@@ -6,9 +6,9 @@
 #include "mt_vector.c"
 
 void gen_init(char* html_path, char* css_path, char* img_path);
-void gen_render(int twidth, int theight, int cols, int rows, mt_vector_t* workspaces, ku_bitmap_t* bitmap);
+void gen_render(int twidth, int theight, float scale, int cols, int rows, mt_vector_t* workspaces, ku_bitmap_t* bitmap);
 void gen_destroy();
-void gen_calc_size(int twidth, int theight, int cols, int rows, int* width, int* height);
+void gen_calc_size(int twidth, int theight, float scale, int cols, int rows, int* width, int* height);
 
 #endif
 
@@ -46,10 +46,10 @@ void gen_init(char* html_path, char* css_path, char* img_path)
     view_list = VNEW();
 
     ku_gen_html_parse(html_path, view_list);
-    ku_gen_css_apply(view_list, css_path, img_path, 1.0);
+    ku_gen_css_apply(view_list, css_path, img_path);
     ku_gen_type_apply(view_list, NULL, NULL);
 
-    kuwindow  = ku_window_create(500, 500);
+    kuwindow  = ku_window_create(500, 500, 1.0);
     view_base = mt_vector_head(view_list);
 
     workspace     = RET(GETV(view_base, "workspace"));
@@ -94,22 +94,23 @@ void gen_destroy()
     REL(view_list);
 }
 
-void gen_calc_size(int twidth, int theight, int cols, int rows, int* width, int* height)
+void gen_calc_size(int twidth, int theight, float scale, int cols, int rows, int* width, int* height)
 {
-    *width  = cols * twidth + 2 * (cols + 1) * workspace->style.margin;
-    *height = rows * theight + 2 * (rows + 1) * workspace->style.margin;
+    *width  = cols * twidth + 2 * (cols + 1) * workspace->style.margin * scale;
+    *height = rows * theight + 2 * (rows + 1) * workspace->style.margin * scale;
 }
 
 void gen_render(
     int          twidth,
     int          theight,
+    float        scale,
     int          cols,
     int          rows,
     mt_vector_t* workspaces,
     ku_bitmap_t* bitmap)
 {
-    int width  = cols * twidth + 2 * (cols + 1) * workspace->style.margin;
-    int height = rows * theight + 2 * (rows + 1) * workspace->style.margin;
+    int width  = (cols * twidth + 2 * (cols + 1) * workspace->style.margin) * scale;
+    int height = (rows * theight + 2 * (rows + 1) * workspace->style.margin) * scale;
 
     /* reset window */
 
@@ -121,7 +122,7 @@ void gen_render(
 
     /* resize window */
 
-    ku_window_resize(kuwindow, width, height);
+    ku_window_resize(kuwindow, width, height, scale);
     ku_view_set_frame(view_base, (ku_rect_t){0.0, 0.0, width, height});
 
     /* add rows */
@@ -178,7 +179,7 @@ void gen_render(
 
     /* finalize workspace sizes by layouting */
 
-    ku_view_layout(view_base);
+    ku_view_layout(view_base, scale);
 
     /* add windows */
 
@@ -200,10 +201,10 @@ void gen_render(
 		{
 		    sway_window_t* wi = ws->windows->data[wii];
 
-		    int wiw = roundf(((float) wi->width / (float) ws->width) * wsview->frame.local.w);
-		    int wih = roundf(((float) wi->height / (float) ws->height) * wsview->frame.local.h);
-		    int wix = roundf((((float) wi->x) / (float) ws->width) * wsview->frame.local.w);
-		    int wiy = roundf((((float) wi->y) / (float) ws->height) * wsview->frame.local.h);
+		    int wiw = roundf(((float) wi->width / (float) ws->width / scale) * wsview->frame.local.w);
+		    int wih = roundf(((float) wi->height / (float) ws->height / scale) * wsview->frame.local.h);
+		    int wix = roundf((((float) wi->x) / (float) ws->width / scale) * wsview->frame.local.w);
+		    int wiy = roundf((((float) wi->y) / (float) ws->height / scale) * wsview->frame.local.h);
 
 		    if (wiw > 5 && wih > 5)
 		    {
@@ -272,7 +273,7 @@ void gen_render(
 	}
     }
 
-    ku_view_layout(view_base);
+    ku_view_layout(view_base, scale);
 
     ku_view_describe(view_base, 0);
     ku_window_update(kuwindow, 0);

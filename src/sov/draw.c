@@ -102,6 +102,7 @@ int main(int argc, char** argv)
     gen_calc_size(
 	ws->width / 7,
 	ws->height / 7,
+	1.0,
 	cols,
 	rows,
 	&width,
@@ -114,6 +115,7 @@ int main(int argc, char** argv)
     gen_render(
 	ws->width / 7,
 	ws->height / 7,
+	1.0,
 	cols,
 	rows,
 	workspaces,

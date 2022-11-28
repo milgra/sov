@@ -13,15 +13,16 @@ struct _ku_window_t
     mt_vector_t* focusable;
     ku_view_t*   focused;
 
-    int width;
-    int height;
+    int   width;
+    int   height;
+    float scale;
 
     mt_vector_t* ptrqueue; // views collected by mouse uo and down
     mt_vector_t* movqueue; // views collected by movement events
 };
 
-ku_window_t* ku_window_create(int width, int height);
-void         ku_window_resize(ku_window_t* window, int width, int height);
+ku_window_t* ku_window_create(int width, int height, float scale);
+void         ku_window_resize(ku_window_t* window, int width, int height, float scale);
 void         ku_window_add(ku_window_t* window, ku_view_t* view);
 void         ku_window_remove(ku_window_t* window, ku_view_t* view);
 void         ku_window_activate(ku_window_t* window, ku_view_t* view);
@@ -52,7 +53,7 @@ void ku_window_del(void* p)
     if (win->focusable) REL(win->focusable);
 }
 
-ku_window_t* ku_window_create(int width, int height)
+ku_window_t* ku_window_create(int width, int height, float scale)
 {
     ku_window_t* win = CAL(sizeof(ku_window_t), ku_window_del, NULL);
 
@@ -61,14 +62,16 @@ ku_window_t* ku_window_create(int width, int height)
     win->ptrqueue = VNEW();
     win->movqueue = VNEW();
 
+    win->scale  = scale;
     win->width  = width;
     win->height = height;
 
     return win;
 }
 
-void ku_window_resize(ku_window_t* window, int width, int height)
+void ku_window_resize(ku_window_t* window, int width, int height, float scale)
 {
+    window->scale  = scale;
     window->width  = width;
     window->height = height;
     ku_view_set_frame(window->root, (ku_rect_t){0.0, 0.0, width, height});
@@ -79,7 +82,7 @@ void ku_window_add(ku_window_t* win, ku_view_t* view)
     ku_view_add_subview(win->root, view);
 
     // layout, window could be resized since
-    ku_view_layout(win->root);
+    ku_view_layout(win->root, win->scale);
 }
 
 void ku_window_remove(ku_window_t* win, ku_view_t* view)
@@ -116,7 +119,7 @@ void ku_window_event(ku_window_t* win, ku_event_t ev)
 	    rf.h != (float) ev.h)
 	{
 	    ku_view_set_frame(win->root, (ku_rect_t){0.0, 0.0, (float) ev.w, (float) ev.h});
-	    ku_view_layout(win->root);
+	    ku_view_layout(win->root, win->scale);
 	    ku_view_evt(win->root, ev);
 
 	    win->width  = ev.w;

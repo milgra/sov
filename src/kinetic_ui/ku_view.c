@@ -46,8 +46,9 @@ struct _vstyle_t
 {
     /* css dimension */
 
-    int width;
-    int height;
+    int   width;
+    int   height;
+    float scale;
 
     float w_per;
     float h_per;
@@ -184,7 +185,7 @@ void       ku_view_set_texture_bmp(ku_view_t* view, ku_bitmap_t* tex);
 void       ku_view_set_texture_alpha(ku_view_t* view, float alpha, char recur);
 void       ku_view_invalidate_texture(ku_view_t* view);
 void       ku_view_upload_texture(ku_view_t* view);
-void       ku_view_layout(ku_view_t* view);
+void       ku_view_layout(ku_view_t* view, float scale);
 
 void ku_view_describe(void* pointer, int level);
 void ku_view_desc(void* pointer, int level);
@@ -235,6 +236,7 @@ ku_view_t* ku_view_new(char* id, ku_rect_t frame)
 
     // reset margins
 
+    view->style.scale         = 1.0;
     view->style.margin_top    = INT_MAX;
     view->style.margin_left   = INT_MAX;
     view->style.margin_right  = INT_MAX;
@@ -504,7 +506,7 @@ void ku_view_gen_texture(ku_view_t* view)
     if (view->tex_gen) (*view->tex_gen)(view);
 }
 
-void ku_view_layout(ku_view_t* view)
+void ku_view_layout(ku_view_t* view, float scale)
 {
     float act_x = 0;
     float act_y = 0;
@@ -512,6 +514,8 @@ void ku_view_layout(ku_view_t* view)
     float rel_h = view->frame.local.h; // remaining height for relative views
     int   rem_w = view->views->length; // remaining relative views for width
     int   rem_h = view->views->length; // remaining relative views for height
+
+    view->style.scale = scale;
 
     if (view->style.display == LD_FLEX)
     {
@@ -523,7 +527,7 @@ void ku_view_layout(ku_view_t* view)
 		ku_view_t* v = view->views->data[i];
 		if (v->style.width > 0)
 		{
-		    rel_w -= v->style.width;
+		    rel_w -= v->style.width * scale;
 		    rem_w -= 1;
 		}
 		v->frame.local.x = 0;
@@ -538,7 +542,7 @@ void ku_view_layout(ku_view_t* view)
 		ku_view_t* v = view->views->data[i];
 		if (v->style.height > 0)
 		{
-		    rel_h -= v->style.height;
+		    rel_h -= v->style.height * scale;
 		    rem_h -= 1;
 		}
 		v->frame.local.x = 0;
@@ -570,7 +574,7 @@ void ku_view_layout(ku_view_t* view)
 
 	if (v->style.width > 0)
 	{
-	    frame.w = v->style.width;
+	    frame.w = v->style.width * scale;
 	    if (view->style.display == LD_FLEX && view->style.flexdir == FD_ROW)
 	    {
 		frame.x = act_x;
@@ -579,7 +583,7 @@ void ku_view_layout(ku_view_t* view)
 	}
 	if (v->style.height > 0)
 	{
-	    frame.h = v->style.height;
+	    frame.h = v->style.height * scale;
 	    if (view->style.display == LD_FLEX && view->style.flexdir == FD_COL)
 	    {
 		frame.y = act_y;
@@ -623,37 +627,38 @@ void ku_view_layout(ku_view_t* view)
 	}
 	if (v->style.margin_top < INT_MAX)
 	{
-	    frame.y += v->style.margin_top;
-	    frame.h -= v->style.margin_top;
+	    frame.y += v->style.margin_top * scale;
+	    frame.h -= v->style.margin_top * scale;
+	    printf("MARGIN TOP %f\n", scale);
 	}
 	if (v->style.margin_left < INT_MAX)
 	{
-	    frame.x += v->style.margin_left;
-	    frame.w -= v->style.margin_left;
+	    frame.x += v->style.margin_left * scale;
+	    frame.w -= v->style.margin_left * scale;
 	}
 	if (v->style.margin_right < INT_MAX)
 	{
-	    frame.w -= v->style.margin_right;
+	    frame.w -= v->style.margin_right * scale;
 	}
 	if (v->style.margin_bottom < INT_MAX)
 	{
-	    frame.h -= v->style.margin_bottom;
+	    frame.h -= v->style.margin_bottom * scale;
 	}
 	if (v->style.top < INT_MAX)
 	{
-	    frame.y = v->style.top;
+	    frame.y = v->style.top * scale;
 	}
 	if (v->style.left < INT_MAX)
 	{
-	    frame.x = v->style.left;
+	    frame.x = v->style.left * scale;
 	}
 	if (v->style.right < INT_MAX)
 	{
-	    frame.x = view->frame.local.w - frame.w - v->style.right;
+	    frame.x = view->frame.local.w - frame.w - v->style.right * scale;
 	}
 	if (v->style.bottom < INT_MAX)
 	{
-	    frame.y = view->frame.local.h - frame.h - v->style.bottom;
+	    frame.y = view->frame.local.h - frame.h - v->style.bottom * scale;
 	}
 	ku_view_set_frame(v, frame);
     }
@@ -661,7 +666,7 @@ void ku_view_layout(ku_view_t* view)
     for (int i = 0; i < view->views->length; i++)
     {
 	ku_view_t* v = view->views->data[i];
-	ku_view_layout(v);
+	ku_view_layout(v, scale);
     }
 }
 
