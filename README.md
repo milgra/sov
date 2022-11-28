@@ -112,8 +112,8 @@ Additional options can be set as command line arguments :
 
 ```
 -c, --columns=[columns]               Number of thumbnail columns
--a, --anchor=[lrtb]                   Anchor window to window edge in directions, use rt for right top
--m, --margin=[size]                   Margin
+-a, --anchor=[lrtb]                   Anchor window to screen edge in directions, use rt for right top
+-m, --margin=[size]                   Margin from screen edge
 -r, --ratio=[ratio]                   Thumbnail to screen ratio, positive integer
 -t, --timeout=[millisecs]             Milliseconds to wait for showing up overlays, positive integer
 
