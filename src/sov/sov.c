@@ -229,7 +229,7 @@ int main(int argc, char** argv)
 	"  -c, --columns=[columns]               Number of thumbnail columns\n"
 	"  -a, --anchor=[lrtp]                   Anchor window to window edge in directions, use rt for right top\n"
 	"  -m, --margin=[size]                   Margin\n"
-	"  -r, --ratio=[ratio]                   Overlay to screen ratio, positive integer\n"
+	"  -r, --ratio=[ratio]                   Thumbnail to screen ratio, positive integer\n"
 	"  -t, --timeout=[millisecs]             Milliseconds to wait for showing up overlays, positive integer\n"
 	"\n";
 

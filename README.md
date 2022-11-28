@@ -17,21 +17,10 @@ Sway Overview was made for SwayOS (https://swayos.github.io)
 
 ### Compiling from source
 
-Install dependencies:
-
-- wayland
-- freetype2 \*
-- wayland-protocols \*
-- meson \*
-
-\* _compile-time dependecy_
-
-Run these commands:
-
 ```
 git clone git@github.com:milgra/sov.git
 cd sov
-meson build --buildtype=release
+meson setup build --buildtype=release
 ninja -C build
 sudo ninja -C build install
 ```
@@ -103,41 +92,26 @@ Enable systemd sov socket:
 systemctl enable --now --user sov.socket
 ```
 
-## Configuration ##
+## Configuration and Styling ##
 
-If you want to customize sov, copy /usr/share/sov/config to ~/.config/sov/config and edit it.
+If you want to style sov, copy /usr/share/sov/config to ~/.config/sov/config and edit the html and css files inside it.
 ```
 mkdir -p ~/.config/sov
-cp /usr/share/sov/config ~/.config/sov
+cp -r /usr/share/sov/config ~/.config/sov
 ```
-Possible keys :
+
+Additional options can be set as command line arguments :
 
 ```
-"anchor" : where to display sov, top, bottom, left, right, center  
-"margin" : distance from edges if anchor is set  
-"timeout" : show timeout in millisecs  
-"gap" : distance between workspaces  
-"columns" : thumbnail columns  
-"ratio" : thumbnail to workspace ratio  
-"font_face" : font face, use any string that is output by fc-list  
-"text_margin_size" : margin size around text  
-"text_margin_top_size" : margin top size over text  
-"text_title_size" : title text size  
-"text_title_color" : title text color  
-"text_description_size" : description text size  
-"text_description_color" : description text color  
-"text_workspace_size" : workspace number text size  
-"text_workspace_color" : workspace number text color  
-"text_workspace_xshift" : workspace number x shift  
-"text_workspace_yshift" : workspace number y shift  
-"border_color" : border color  
-"background_color" : background color  
-"background_color_focused" : focused background color  
-"window_color" : window color  
-"empty_color" :  empty thumb color  
-"empty_frame_color" : empty thumb border  
-"background_corner_radius": corner radius for the background window
-"tree_corner_radius": corner radius for workspaces and for windows within workspaces
+-c, --columns=[columns]               Number of thumbnail columns
+-a, --anchor=[lrtp]                   Anchor window to window edge in directions, use rt for right top
+-m, --margin=[size]                   Margin
+-r, --ratio=[ratio]                   Thumbnail to screen ratio, positive integer
+-t, --timeout=[millisecs]             Milliseconds to wait for showing up overlays, positive integer
+
+-h, --help                            Show help message and quit.
+-v                                    Increase verbosity of messages, defaults to errors and warnings only.
+-s,                                   Location of html folder for styling.
 ```
 
 ## Contribution/Development ##
@@ -147,8 +121,8 @@ Feel free to push fixes/improvements.
 Please follow these guidelines :
 
 - use clang format before commiting/after file save
-- use zen_core functions and containers and memory handling
-- make sure that the app is leak free. if you run the dev build it automagically checks for leaks on exit on two levels (zc_memory and clang address sanitizer ) and prints leaks
+- use mt_core functions and containers and memory handling
+- make sure that the app is leak free. if you run the dev build it automagically checks for leaks on exit on two levels (mt_memory and clang address sanitizer ) and prints leaks
 - always run all tests before push
 - test detach/attach new output
 

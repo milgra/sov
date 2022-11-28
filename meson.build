@@ -15,10 +15,9 @@ z = cc.find_library('z',static:false)
 bz2 = cc.find_library('bz2',static:false)
 rt = cc.find_library('rt',static:false)
 gl = cc.find_library('GL',static:false)
+egl = cc.find_library('EGL',static:false)
 glew = cc.find_library('GLEW',static:false)
 wegl = cc.find_library('wayland-egl',static:false)
-pthread = cc.find_library('pthread',static:false)
-egl = cc.find_library('EGL',static:false)
 
 xkbcommon = dependency('xkbcommon')
 
@@ -68,7 +67,6 @@ sov_dependencies = [
 		  math,
 		  gl,
 		  glew,
-		  pthread,
 		  z,
 		  bz2,
 		  xkbcommon,
