@@ -180,7 +180,7 @@ executable(
   draw_sources,
   include_directories: [sov_inc],
   dependencies: sov_dependencies,
-  install: true,
+  install: false,
 )
 
 pkg_datadir = join_paths(get_option('prefix'), get_option('datadir')) / 'sov'
