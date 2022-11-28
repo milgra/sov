@@ -83,29 +83,52 @@ int main(int argc, char** argv)
 
     tree_reader_extract(ws_json, tree_json, workspaces);
 
-    printf("WORKSPACES LENGTH %i\n", workspaces->length);
+    REL(tree_json);
+    REL(ws_part);
+    REL(ws_json);
+
+    /* extract outputs */
 
     gen_init(html_path, css_path, img_path);
 
     int cols = 5;
     int rows = (int) ceilf((float) workspaces->length / cols);
 
-    ku_bitmap_t* bitmap = ku_bitmap_new(1000, 500);
+    sway_workspace_t* ws = workspaces->data[0];
+
+    int width  = 0;
+    int height = 0;
+
+    gen_calc_size(
+	ws->width / 7,
+	ws->height / 7,
+	cols,
+	rows,
+	&width,
+	&height);
+
+    printf("WIDTH %i HEIGHT %i\n", width, height);
+
+    ku_bitmap_t* bitmap = ku_bitmap_new(width, height);
 
     gen_render(
-	100,
-	50,
+	ws->width / 7,
+	ws->height / 7,
 	cols,
 	rows,
 	workspaces,
 	bitmap);
 
-    char* tgt_path = mt_path_new_append(res_par, "render0.bmp");
+    bm_write(bitmap, res_par);
 
-    bm_write(bitmap, tgt_path);
+    REL(workspaces);
+    REL(bitmap);
 
     /* cleanup */
 
+    REL(ws_par);
+    REL(res_par);
+    REL(tree_par);
     if (cfg_par) REL(cfg_par);
     REL(cfg_path);
     REL(css_path);

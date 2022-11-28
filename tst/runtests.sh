@@ -1,19 +1,22 @@
-build/test_tree -c tst/config_a -w tst/workspace_a.json -t tst/tree_a.json -o tst/image_cfga_treea_test
-build/test_tree -c tst/config_b -w tst/workspace_a.json -t tst/tree_a.json -o tst/image_cfgb_treea_test
-build/test_tree -c tst/config_a -w tst/workspace_b.json -t tst/tree_b.json -o tst/image_cfga_treeb_test
-build/test_tree -c tst/config_b -w tst/workspace_b.json -t tst/tree_b.json -o tst/image_cfgb_treeb_test
-build/test_tree -c tst/config_a -w tst/workspace_empty.json -t tst/tree_empty.json -o tst/image_empty_test
-build/test_tree -c tst/config_a -w tst/workspace_empty_6.json -t tst/tree_empty_6.json -o tst/image_empty_6_test
-build/test_tree -c tst/config_a -w tst/workspace_floating.json -t tst/tree_floating.json -o tst/image_floating_test
-build/test_tree -c tst/config_a -w tst/workspace_feh.json -t tst/tree_feh.json -o tst/image_feh_test
-build/test_tree -c tst/config_a -w tst/workspace_rotated_multi.json -t tst/tree_rotated_multi.json -o tst/image_rotated_multi_test
-diff tst/image_cfga_treea_o0.bmp tst/image_cfga_treea_test_o0.bmp
-diff tst/image_cfgb_treea_o0.bmp tst/image_cfgb_treea_test_o0.bmp
-diff tst/image_cfga_treeb_o0.bmp tst/image_cfga_treeb_test_o0.bmp
-diff tst/image_cfgb_treeb_o0.bmp tst/image_cfgb_treeb_test_o0.bmp
-diff tst/image_empty_o0.bmp tst/image_empty_test_o0.bmp
-diff tst/image_empty_6_o0.bmp tst/image_empty_6_test_o0.bmp
-diff tst/image_feh_o0.bmp tst/image_feh_test_o0.bmp
-diff tst/image_floating_o0.bmp tst/image_floating_test_o0.bmp
-diff tst/image_rotated_multi_o0.bmp tst/image_rotated_multi_test_o0.bmp
-diff tst/image_rotated_multi_o1.bmp tst/image_rotated_multi_test_o1.bmp
+build/draw -s tst/stylea -t tst/a_tree.json -w tst/a_workspace.json -r tst/result/a_result_a.bmp
+build/draw -s tst/styleb -t tst/a_tree.json -w tst/a_workspace.json -r tst/result/a_result_b.bmp
+
+build/draw -s tst/stylea -t tst/b_tree.json -w tst/b_workspace.json -r tst/result/b_result_a.bmp
+build/draw -s tst/styleb -t tst/b_tree.json -w tst/b_workspace.json -r tst/result/b_result_b.bmp
+
+build/draw -s tst/stylea -t tst/empty_tree.json -w tst/empty_workspace.json -r tst/result/empty_result_a.bmp
+build/draw -s tst/styleb -t tst/empty_tree.json -w tst/empty_workspace.json -r tst/result/empty_result_b.bmp
+
+build/draw -s tst/stylea -t tst/empty_6_tree.json -w tst/empty_6_workspace.json -r tst/result/empty_6_result_a.bmp
+build/draw -s tst/styleb -t tst/empty_6_tree.json -w tst/empty_6_workspace.json -r tst/result/empty_6_result_b.bmp
+
+build/draw -s tst/stylea -t tst/feh_tree.json -w tst/feh_workspace.json -r tst/result/feh_result_a.bmp
+build/draw -s tst/styleb -t tst/feh_tree.json -w tst/feh_workspace.json -r tst/result/feh_result_b.bmp
+
+build/draw -s tst/stylea -t tst/floating_tree.json -w tst/floating_workspace.json -r tst/result/floating_result_a.bmp
+build/draw -s tst/styleb -t tst/floating_tree.json -w tst/floating_workspace.json -r tst/result/floating_result_b.bmp
+
+build/draw -s tst/stylea -t tst/rotated_tree.json -w tst/rotated_workspace.json -r tst/result/rotated_result_a.bmp
+build/draw -s tst/styleb -t tst/rotated_tree.json -w tst/rotated_workspace.json -r tst/result/rotated_result_b.bmp
+
+diff tst/master tst/result

@@ -1,10 +1,10 @@
 #main {
-    border-radius: 10px;
-    background-color: #00000044;
+    border-radius: 5px;
+    background-color: #55006688;
 }
 
 #base {
-    margin: 15px;
+    margin: 10px;
 }
 
 .fullscale {
@@ -23,8 +23,7 @@
 }
 
 .workspace {
-    margin: 10px;
-    border-radius: 8px;
+    margin: 5px;
     background-color: #000000FF;
     border-width: 1px;
     border-color: #555555FF;
@@ -33,8 +32,7 @@
 .window {
     width: 100px;
     height: 80px;
-    background-color: #222222FF;
-    border-radius: 8px;
+    background-color: #222255BB;
     border-width: 1px;
     border-color: #BCBCBCFF;
 }
@@ -43,19 +41,18 @@
     width: 100px;
     height: 80px;
     background-color: #444444FF;
-    border-radius: 8px;
     border-width: 1px;
     border-color: #BCBCBCFF;
 }
 
 .title {
     width: 100%;
-    height: 21px;
+    height: 25px;
     margin-top: 4px;
     margin-left: 4px;
     color: #FFFFFFFF;
     font-size: 14px;
-    font-family: "Terminus (TTF):style=Bold";
+    font-family: "Cantarell-VF";
 }
 
 .content {
