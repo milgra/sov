@@ -2,8 +2,8 @@
 
 cd ..
 
-build/draw -s tst/stylea -t tst/a_tree.json -w tst/a_workspace.json -r tst/result/a_result_a.bmp
-build/draw -s tst/styleb -t tst/a_tree.json -w tst/a_workspace.json -r tst/result/a_result_b.bmp
+draw -s tst/stylea -t tst/a_tree.json -w tst/a_workspace.json -r tst/result/a_result_a.bmp
+draw -s tst/styleb -t tst/a_tree.json -w tst/a_workspace.json -r tst/result/a_result_b.bmp
 
 build/draw -s tst/stylea -t tst/b_tree.json -w tst/b_workspace.json -r tst/result/b_result_a.bmp
 build/draw -s tst/styleb -t tst/b_tree.json -w tst/b_workspace.json -r tst/result/b_result_b.bmp
