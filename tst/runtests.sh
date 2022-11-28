@@ -2,7 +2,7 @@
 
 exe="$1/draw"
 
-echo "EXE" $exe
+mkdir -p tst/result
 
 $exe -s tst/stylea -t tst/a_tree.json -w tst/a_workspace.json -r tst/result/a_result_a.bmp
 $exe -s tst/styleb -t tst/a_tree.json -w tst/a_workspace.json -r tst/result/a_result_b.bmp
