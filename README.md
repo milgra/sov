@@ -39,7 +39,7 @@ sov
 
 ### Usage with sway wm
 
-Launch sov in the config connected to a named pipe, but remove the named pipe first to avoid mkfifo errors. Add parameters it you want to tune some behaviour.
+Launch sov in the config connected to a named pipe, but remove the named pipe first to avoid mkfifo errors. Add parameters if you want to tune some behaviour.
 
 ```
 exec rm -f /tmp/sovpipe && mkfifo /tmp/sovpipe && tail -f /tmp/sovpipe | sov -t 500
