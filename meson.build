@@ -195,4 +195,4 @@ jsontest = executable('maintest', 'src/tests/test_json.c')
 scripttests = find_program('tst/runtests.sh')
 
 test('JSON TEST', jsontest)
-test('SCRIPTED TESTS', scripttests, timeout: 0, workdir : meson.source_root())
+test('SCRIPTED TESTS', scripttests, timeout: 0, workdir : meson.current_source_dir(), args : [meson.current_build_dir(),meson.current_source_dir()])
