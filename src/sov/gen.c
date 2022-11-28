@@ -274,10 +274,8 @@ void gen_render(
     }
 
     ku_view_layout(view_base, scale);
-
-    ku_view_describe(view_base, 0);
+    /* ku_view_describe(view_base, 0); */
     ku_window_update(kuwindow, 0);
-
     ku_renderer_software_render(kuwindow->views, bitmap, view_base->frame.local);
 }
 

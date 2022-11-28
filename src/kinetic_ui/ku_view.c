@@ -629,7 +629,6 @@ void ku_view_layout(ku_view_t* view, float scale)
 	{
 	    frame.y += v->style.margin_top * scale;
 	    frame.h -= v->style.margin_top * scale;
-	    printf("MARGIN TOP %f\n", scale);
 	}
 	if (v->style.margin_left < INT_MAX)
 	{
