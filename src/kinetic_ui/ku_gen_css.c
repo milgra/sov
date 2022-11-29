@@ -13,6 +13,7 @@ void ku_gen_css_apply(mt_vector_t* views, char* csspath, char* imgpath);
 #include "ku_css.c"
 #include "mt_log.c"
 #include <limits.h>
+#include <linux/limits.h>
 
 void ku_gen_css_apply_style(ku_view_t* view, mt_map_t* style, char* imgpath)
 {
@@ -34,8 +35,12 @@ void ku_gen_css_apply_style(ku_view_t* view, mt_map_t* style, char* imgpath)
 	    if (strstr(val, "url") != NULL)
 	    {
 		char* url = CAL(sizeof(char) * strlen(val), NULL, mt_string_describe); // REL 0
-		memcpy(view->style.background_image, val + 5, strlen(val) - 7);
+		memcpy(url, val + 5, strlen(val) - 7);
+		char* imagepath = mt_string_new_format(PATH_MAX, "%s/%s", imgpath, url);
+
+		memcpy(view->style.background_image, imagepath, strlen(imagepath));
 		REL(url); // REL 0
+		REL(imagepath);
 	    }
 	}
 	else if (strcmp(key, "font-family") == 0)

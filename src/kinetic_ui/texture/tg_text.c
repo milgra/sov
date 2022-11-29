@@ -41,7 +41,9 @@ void tg_text_gen(ku_view_t* view)
     {
 	if (gen->scale != view->style.scale)
 	{
-	    float ratio = view->style.scale / gen->scale;
+	    float ratio;
+	    if (gen->scale == 0.0) ratio = view->style.scale;
+	    else ratio = view->style.scale / gen->scale;
 	    gen->style.size *= ratio;
 	    gen->scale = view->style.scale;
 	}
@@ -87,7 +89,8 @@ void tg_text_add(ku_view_t* view)
     tg_text_t* gen = CAL(sizeof(tg_text_t), tg_text_del, tg_text_desc);
 
     gen->text  = NULL; // REL 1
-    gen->scale = 1.0;
+    gen->scale = 0.0;
+    gen->style = ku_gen_textstyle_parse(view);
 
     view->tex_gen_data = gen;
     view->tex_gen      = tg_text_gen;
@@ -96,8 +99,6 @@ void tg_text_add(ku_view_t* view)
 void tg_text_set1(ku_view_t* view, char* text)
 {
     tg_text_t* gen = view->tex_gen_data;
-
-    gen->style = ku_gen_textstyle_parse(view);
 
     if (gen->text) REL(gen->text);
     if (text) gen->text = mt_string_new_cstring(text);

@@ -115,6 +115,7 @@ void create_layers()
 	mt_log_debug("Creating layer for %s : workspaces %i cols %i rows %i ratio %i width %i height %i", monitor->name, workspaces->length, cols, rows, sov.ratio, width, height);
 
 	wl_window_t* wlwindow = ku_wayland_create_generic_layer(monitor, width, height, sov.margin, sov.anchor, 1);
+	ku_wayland_request_frame(wlwindow);
 	VADDR(sov.wlwindows, wlwindow);
 
 	REL(workspaces);
@@ -125,7 +126,7 @@ void create_layers()
 
 void update(ku_event_t ev)
 {
-    if (ev.type == KU_EVENT_FRAME)
+    if (ev.type == KU_EVENT_FRAME || ev.type == KU_EVENT_RESIZE)
     {
 	wl_window_t* info = ev.window;
 
