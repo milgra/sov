@@ -37,7 +37,10 @@ void mt_memory_stats();
 
 #if __INCLUDE_LEVEL__ == 0
 
+// Musl-libc doesn't support execinfo, libexecinfo _might_ work.
+#if defined(__GLIBC__)
 #include <execinfo.h>
+#endif
 #include <string.h>
 
 struct mt_memory_head
