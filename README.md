@@ -122,6 +122,13 @@ Additional options can be set as command line arguments :
 -s,                                   Location of html folder for styling.
 ```
 
+## Long descripton ##
+
+Sway overview is an overview applciation for the sway tiling window manager. Tiling window managers are about simplicity so by default they don't have any kind of overview application. It is okay under five workspaces because you can just remember where specific windows were opened but over 5 workspaces it can get really complicated.
+Sway overview draws a schematic layout of all your workspaces on each output. Windows in these schemas contain the title of the window and also the content of the window, for example, in case of a terminal the last terminal command, in case of the browser the url of the page it displays, so you can see all informationo at a glance.
+Thumbnail based overview solutions can become confusing quickly when the thumbnails become too small to recognize, sway overview won't.
+The common usage of Sway overview is to bound its appereance to the desktop switcher button with a little latency so in case of quick workspace switching it doesn't appear but on a long press - when we are lost - it appears.
+
 ## Contribution/Development ##
 
 Feel free to push fixes/improvements.
@@ -153,4 +160,7 @@ MIT, see [LICENSE](/LICENSE).
 
 ## TODO/BUGS ##
 
+video on github page
+clear makepkg errors
 fix test and release workflows  
+auto tests with 2x scaling
