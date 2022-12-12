@@ -6,12 +6,22 @@ Sway Overview was made for SwayOS (https://swayos.github.io)
 
 ![alt text](screenshot.png)
 
+Watch the introduction/user guide [video on youtube](https://youtube.com/)
+
 ## Features ##
 
 - no downscaled and confusing thumbnails, just crystal clear app names and titles
 - layout schema makes workspace identification easier
 - super lightweight   
 - multi-display support
+
+## Long descripton ##
+
+Sway overview is an overview applciation for the sway tiling window manager. Tiling window managers are about simplicity so by default they don't have any kind of overview feature. It is okay under five workspaces because you can just remember where specific windows were opened but over 5 workspaces it can get really complicated.
+Sway overview draws a schematic layout of all your workspaces on each output. They contain the windows present in each workspace, the title and the content of the windows, for example, in case of a terminal the last terminal command, in case of the browser the url of the page it displays, so you can see all informationo at a glance.
+Thumbnail based overview solutions can become confusing quickly when the thumbnails become too small to recognize, sway overview won't.
+The common usage of Sway overview is to bound its appereance to the desktop switcher button with a little latency so in case of quick workspace switching it doesn't appear but on a long press - when we are lost - it appears.
+Sway overview can be structured via html, styled via css.
 
 ## Installation
 
@@ -122,12 +132,15 @@ Additional options can be set as command line arguments :
 -s,                                   Location of html folder for styling.
 ```
 
-## Long descripton ##
+## Technical Info ##
 
-Sway overview is an overview applciation for the sway tiling window manager. Tiling window managers are about simplicity so by default they don't have any kind of overview application. It is okay under five workspaces because you can just remember where specific windows were opened but over 5 workspaces it can get really complicated.
-Sway overview draws a schematic layout of all your workspaces on each output. Windows in these schemas contain the title of the window and also the content of the window, for example, in case of a terminal the last terminal command, in case of the browser the url of the page it displays, so you can see all informationo at a glance.
-Thumbnail based overview solutions can become confusing quickly when the thumbnails become too small to recognize, sway overview won't.
-The common usage of Sway overview is to bound its appereance to the desktop switcher button with a little latency so in case of quick workspace switching it doesn't appear but on a long press - when we are lost - it appears.
+SOV was written in Headerless C. It is about using the __INCLUDE_LEVEL__ preprocessor macro available in GCC/CLANG to guard the implementation part of a source file so you can place it together with the header definition in a single file and you include this file freely in other source files. Read more about this in (https://github.com/milgra/headerlessc);
+
+SOV uses Kinetic UI as UI/Widget rendering engine. It is a modern, minimal ui renderer with html/css based stylimg written in headerless C. It offers MacOS like smooth kinetic animations and font-level animatioms, gpu or cpu based alpha blending, wayland connector with window and layer support and deterministic session record and replay for fully automated application testing.
+
+SOV uses the mt_core library for retain counted memory management, retain counted and recursively observable vector and map containers and helper functions.
+
+SOV uses meson and ninja for lightning fast compilation.
 
 ## Contribution/Development ##
 
