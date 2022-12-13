@@ -13,7 +13,7 @@
 
 #define GET_WORKSPACES_CMD "swaymsg -t get_workspaces"
 #define GET_TREE_CMD "swaymsg -t get_tree"
-#define CFG_PATH_LOC "~/.config/sov/config"
+#define CFG_PATH_LOC "~/.config/sov"
 
 struct sov
 {
@@ -297,7 +297,7 @@ int main(int argc, char** argv)
     if (getcwd(cwd, sizeof(cwd)) == NULL) printf("Cannot get working directory\n");
 
     char* cfg_path_loc = cfg_par ? mt_path_new_normalize(cfg_par, cwd) : mt_path_new_normalize(CFG_PATH_LOC, getenv("HOME")); // REL 1
-    char* cfg_path_glo = mt_path_new_append(PKG_DATADIR, "config");                                                           // REL 2
+    char* cfg_path_glo = STRNC(PKG_DATADIR);                                                                                  // REL 2
 
     if (cfg_par) REL(cfg_par);
 
