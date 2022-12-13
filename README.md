@@ -4,7 +4,6 @@ An overlay that shows schemas for all workspaces to make navigation in sway easi
 
 Sway Overview was made for SwayOS (https://swayos.github.io)
 
-![alt text](screenshot.png)
 [![alt text](screenshot.png)](https://www.youtube.com/watch?v=0MP9pAxpu8E)
 
 Watch the introduction/user guide [video on youtube](https://www.youtube.com/watch?v=0MP9pAxpu8E)
