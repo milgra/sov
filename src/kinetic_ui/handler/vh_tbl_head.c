@@ -54,7 +54,7 @@ void vh_tbl_head_evt(ku_view_t* view, ku_event_t ev)
 
     if (vh->head)
     {
-	if (ev.type == KU_EVENT_MDOWN)
+	if (ev.type == KU_EVENT_MOUSE_DOWN)
 	{
 	    // look for
 	    for (int index = 0; index < vh->head->views->length; index++)
@@ -87,7 +87,7 @@ void vh_tbl_head_evt(ku_view_t* view, ku_event_t ev)
 		}
 	    }
 	}
-	else if (ev.type == KU_EVENT_MUP || ev.type == KU_EVENT_MUP_OUT)
+	else if (ev.type == KU_EVENT_MOUSE_UP || ev.type == KU_EVENT_MOUSE_UP_OUT)
 	{
 	    if (vh->active > -1)
 	    {
@@ -141,7 +141,7 @@ void vh_tbl_head_evt(ku_view_t* view, ku_event_t ev)
 	    vh->active = -1;
 	    vh->resize = 0;
 	}
-	else if (ev.type == KU_EVENT_MMOVE)
+	else if (ev.type == KU_EVENT_MOUSE_MOVE)
 	{
 	    if (vh->active > -1)
 	    {

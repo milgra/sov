@@ -13,11 +13,14 @@
 
 char*        mt_string_new_format(int size, char* format, ...);
 char*        mt_string_new_cstring(char* string);
+char*        mt_string_reset(char* str);
 char*        mt_string_append(char* str, char* add);
+char*        mt_string_append_cp(char* str, uint32_t cp);
 char*        mt_string_append_sub(char* str, char* add, int from, int len);
-char*        mt_string_new_delete_utf_codepoints(char* str, int from, int len);
+char*        mt_string_delete_utf_codepoints(char* str, int from, int len);
 mt_vector_t* mt_string_tokenize(char* str, char* del);
 void         mt_string_describe(void* p, int level);
+void         mt_string_describe_utf(char* str);
 
 #endif
 
@@ -56,12 +59,34 @@ char* mt_string_new_cstring(char* string)
     return result;
 }
 
+char* mt_string_reset(char* str)
+{
+    str[0] = '\0';
+    return str;
+}
+
 char* mt_string_append(char* str, char* add)
 {
-    size_t needed = strlen(str) + strlen(add) + 1;
+    size_t needed = utf8len(str) + utf8len(add) + 1;
+
+    if (utf8len(str) < needed) str = mt_memory_realloc(str, needed);
+
+    utf8cat(str, add);
+
+    return str;
+}
+char* mt_string_append_cp(char* str, uint32_t cp)
+{
+    size_t size   = utf8size(str);
+    size_t cpsize = utf8codepointsize(cp);
+    size_t needed = strlen(str) + size + 1;
 
     if (strlen(str) < needed) str = mt_memory_realloc(str, needed);
-    strcat(str, add);
+
+    char* end = str + size - 1;
+
+    end    = utf8catcodepoint(end, cp, cpsize);
+    end[0] = '\0';
 
     return str;
 }
@@ -78,22 +103,24 @@ char* mt_string_append_sub(char* str, char* add, int from, int len)
     return str;
 }
 
-char* mt_string_new_delete_utf_codepoints(char* str, int from, int len)
+char* mt_string_delete_utf_codepoints(char* str, int from, int len)
 {
-    size_t       count = utf8len(str);
-    const void*  part  = str;
-    utf8_int32_t cp;
-    char*        new_text = CAL(count, NULL, NULL);
-    char*        new_part = new_text;
+    char* res = STRNC("");
 
-    // remove last codepoint
-    for (int index = 0; index < count - 1; index++)
+    char*        curr = str;
+    utf8_int32_t cp;
+
+    for (int index = 0; index < utf8len(str); index++)
     {
-	part = utf8codepoint(part, &cp);
-	if (index < from || index > from + len) new_part = utf8catcodepoint(new_part, cp, 4);
+	curr = utf8codepoint(curr, &cp);
+
+	if (index < from || index > from + len) res = mt_string_append_cp(res, cp);
     }
 
-    return new_text;
+    strcpy(str, res);
+    REL(res);
+
+    return str;
 }
 
 mt_vector_t* mt_string_tokenize(char* str, char* del)
@@ -121,7 +148,33 @@ mt_vector_t* mt_string_tokenize(char* str, char* del)
 
 void mt_string_describe(void* p, int level)
 {
-    printf("%s", (char*) p);
+    printf("STR: %s", (char*) p);
+}
+
+void mt_string_describe_utf(char* str)
+{
+    char*        part = str;
+    utf8_int32_t cp;
+    for (int i = 0; i < utf8len(str); i++)
+    {
+	part = utf8codepoint(part, &cp);
+	printf("%.4i \t| ", cp);
+    }
+    printf("\n");
+    part = str;
+    for (int i = 0; i < utf8len(str); i++)
+    {
+	part = utf8codepoint(part, &cp);
+	printf("%c \t| ", cp);
+    }
+    part = str;
+    printf("\n");
+    for (int i = 0; i < utf8len(str); i++)
+    {
+	part = utf8codepoint(part, &cp);
+	printf("%zu \t| ", utf8codepointsize(cp));
+    }
+    printf("\n");
 }
 
 #endif

@@ -4,6 +4,7 @@
 /* TODO separate unit tests */
 
 #include "mt_memory.c"
+#include "mt_time.c"
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -274,6 +275,9 @@ struct _mtvn_t
     mtvn_t* r; // right
 };
 
+mtvn_t*  cache;
+uint32_t cachei;
+
 // TODO use node pool
 
 void mt_vector_sort_ins(mtvn_t* node, void* data, int (*comp)(void* left, void* right))
@@ -288,12 +292,12 @@ void mt_vector_sort_ins(mtvn_t* node, void* data, int (*comp)(void* left, void* 
 
 	if (smaller)
 	{
-	    if (node->l == NULL) node->l = CAL(sizeof(mtvn_t), NULL, mt_vector_describe_mtvn);
+	    if (node->l == NULL) node->l = &cache[cachei++];
 	    mt_vector_sort_ins(node->l, data, comp);
 	}
 	else
 	{
-	    if (node->r == NULL) node->r = CAL(sizeof(mtvn_t), NULL, mt_vector_describe_mtvn);
+	    if (node->r == NULL) node->r = &cache[cachei++];
 	    mt_vector_sort_ins(node->r, data, comp);
 	}
     }
@@ -307,7 +311,6 @@ void mt_vector_sort_ord(mtvn_t* node, mt_vector_t* vector, int* index)
 
     // cleanup node
     mtvn_t* right = node->r;
-    REL(node);
 
     if (right) mt_vector_sort_ord(right, vector, index);
 }
@@ -317,13 +320,18 @@ void mt_vector_sort_ord(mtvn_t* node, mt_vector_t* vector, int* index)
 
 void mt_vector_sort(mt_vector_t* vector, int (*comp)(void* left, void* right))
 {
-    mtvn_t* node = CAL(sizeof(mtvn_t), NULL, mt_vector_describe_mtvn);
-    for (int index = 0; index < vector->length; index++)
-    {
-	mt_vector_sort_ins(node, vector->data[index], comp);
-    }
+    /* create cache */
+    /* TODO make it local to make it thread safe */
+
+    cache  = CAL(sizeof(mtvn_t) * vector->length, NULL, NULL);
+    cachei = 1;
+
+    for (int index = 0; index < vector->length; index++) mt_vector_sort_ins(cache, vector->data[index], comp);
     int index = 0;
-    mt_vector_sort_ord(node, vector, &index);
+
+    mt_vector_sort_ord(cache, vector, &index);
+
+    REL(cache);
 }
 
 void mt_vector_describe(void* pointer, int level)

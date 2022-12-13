@@ -95,7 +95,6 @@ mt_map_t* mt_map_new()
 /* deletes map */
 
 void mt_map_dealloc(void* pointer)
-
 {
     mt_map_t* map = pointer;
 

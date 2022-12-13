@@ -33,7 +33,7 @@ void vh_roll_add(ku_view_t* view, void (*on_event)(vh_roll_event_t));
 
 void vh_roll_evt(ku_view_t* view, ku_event_t ev)
 {
-    if (ev.type == KU_EVENT_MMOVE)
+    if (ev.type == KU_EVENT_MOUSE_MOVE)
     {
 	vh_roll_t* vh    = view->handler_data;
 	ku_rect_t  frame = view->frame.global;
@@ -52,7 +52,7 @@ void vh_roll_evt(ku_view_t* view, ku_event_t ev)
 	    }
 	}
     }
-    else if (ev.type == KU_EVENT_MMOVE_OUT)
+    else if (ev.type == KU_EVENT_MOUSE_MOVE_OUT)
     {
 	vh_roll_t* vh    = view->handler_data;
 	ku_rect_t  frame = view->frame.global;

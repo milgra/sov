@@ -74,6 +74,10 @@ void vh_table_set_data(
     ku_view_t*   view,
     mt_vector_t* data);
 
+void vh_table_show_scrollbar(
+    ku_view_t* view,
+    int        flag);
+
 mt_vector_t* vh_table_get_fields(
     ku_view_t* view);
 
@@ -99,6 +103,7 @@ mt_vector_t* vh_table_get_fields(
 
 void vh_table_head_update_cells(vh_table_t* vh, int fixed_index, int fixed_pos)
 {
+    float scale = vh->body_v->style.scale;
     for (int ri = 0; ri < vh->body_v->views->length; ri++)
     {
 	ku_view_t* rowview = vh->body_v->views->data[ri];
@@ -110,9 +115,9 @@ void vh_table_head_update_cells(vh_table_t* vh, int fixed_index, int fixed_pos)
 	    ku_rect_t    frame    = cellview->frame.local;
 	    mt_number_t* sizep    = vh->fields->data[ci * 2 + 1];
 	    frame.x               = ci == fixed_index ? (float) fixed_pos : wth;
-	    frame.w               = (float) sizep->intv;
+	    frame.w               = (float) sizep->intv * scale;
 	    ku_view_set_frame(cellview, frame);
-	    wth += frame.w + 2;
+	    wth += (frame.w + 2) * scale;
 	}
 
 	ku_rect_t frame = rowview->frame.local;
@@ -136,10 +141,12 @@ void vh_table_head_resize(ku_view_t* hview, int index, int size, void* userdata)
 {
     vh_table_t* vh = (vh_table_t*) userdata;
 
+    float scale = vh->body_v->style.scale;
+
     if (index > -1)
     {
 	mt_number_t* sizep = vh->fields->data[index * 2 + 1];
-	sizep->intv        = size;
+	sizep->intv        = size / scale;
 
 	vh_table_head_update_cells(vh, -1, 0);
     }
@@ -207,8 +214,12 @@ ku_view_t* vh_table_head_create(
 {
     vh_table_t* vh = (vh_table_t*) userdata;
 
+    float scale = head_v->style.scale;
+
     char*      headid   = mt_string_new_format(100, "%s_header", vh->id); // REL 0
-    ku_view_t* headview = ku_view_new(headid, (ku_rect_t){0, 0, 100, vh->headstyle.line_height});
+    ku_view_t* headview = ku_view_new(
+	headid,
+	(ku_rect_t){0, 0, 100 * scale, vh->headstyle.line_height * scale});
 
     REL(headid);
 
@@ -220,10 +231,14 @@ ku_view_t* vh_table_head_create(
     {
 	char*        field    = vh->fields->data[i];
 	mt_number_t* size     = vh->fields->data[i + 1];
-	char*        cellid   = mt_string_new_format(100, "%s_cell_%s", headview->id, field);                    // REL 2
-	ku_view_t*   cellview = ku_view_new(cellid, (ku_rect_t){wth, 0, size->intv, vh->headstyle.line_height}); // REL 3
+	char*        cellid   = mt_string_new_format(100, "%s_cell_%s", headview->id, field); // REL 2
+	ku_view_t*   cellview = ku_view_new(
+            cellid,
+            (ku_rect_t){wth * scale, 0, size->intv * scale, vh->headstyle.line_height * scale}); // REL 3
 
 	wth += size->intv + 2;
+
+	cellview->style.scale = scale;
 
 	tg_text_add(cellview);
 	tg_text_set(cellview, field, vh->headstyle);
@@ -248,6 +263,8 @@ ku_view_t* vh_table_item_create(
 {
     vh_table_t* vh = (vh_table_t*) userdata;
 
+    float scale = table_v->style.scale;
+
     ku_view_t* rowview = NULL;
 
     if (vh->items)
@@ -265,8 +282,10 @@ ku_view_t* vh_table_item_create(
 	    else
 	    {
 		/* create new item */
-		char* rowid = mt_string_new_format(100, "%s_rowitem_%i", vh->id, vh->cnt++);
-		rowview     = ku_view_new(rowid, (ku_rect_t){0, 0, table_v->frame.local.w, vh->rowastyle.line_height});
+		char* rowid          = mt_string_new_format(100, "%s_rowitem_%i", vh->id, vh->cnt++);
+		rowview              = ku_view_new(rowid, (ku_rect_t){0, 0, table_v->frame.local.w, vh->rowastyle.line_height * scale});
+		rowview->style.scale = scale;
+
 		REL(rowid);
 
 		/* create cells */
@@ -276,10 +295,12 @@ ku_view_t* vh_table_item_create(
 		{
 		    char*        field    = vh->fields->data[i];
 		    mt_number_t* size     = vh->fields->data[i + 1];
-		    char*        cellid   = mt_string_new_format(100, "%s_cell_%s", rowview->id, field);                     // REL 2
-		    ku_view_t*   cellview = ku_view_new(cellid, (ku_rect_t){wth, 0, size->intv, vh->rowastyle.line_height}); // REL 3
+		    char*        cellid   = mt_string_new_format(100, "%s_cell_%s", rowview->id, field);                                     // REL 2
+		    ku_view_t*   cellview = ku_view_new(cellid, (ku_rect_t){wth, 0, size->intv * scale, vh->rowastyle.line_height * scale}); // REL 3
 
-		    wth += size->intv + 2;
+		    cellview->style.scale = scale;
+
+		    wth += (size->intv + 2) * scale;
 
 		    tg_text_add(cellview);
 
@@ -311,18 +332,20 @@ ku_view_t* vh_table_item_create(
 		ku_rect_t    frame    = cellview->frame.local;
 
 		frame.x = wth;
-		frame.w = size->intv;
+		frame.w = size->intv * scale;
 		ku_view_set_frame(cellview, frame);
 
-		wth += size->intv + 2;
+		wth += (size->intv + 2) * scale;
 
 		if (value)
+		{
 		    tg_text_set(cellview, value, style);
+		}
 		else
 		    tg_text_set(cellview, "", style); // reset old value
 	    }
 
-	    ku_view_set_frame(rowview, (ku_rect_t){0, 0, wth, style.line_height});
+	    ku_view_set_frame(rowview, (ku_rect_t){0, 0, wth, style.line_height * scale});
 	}
     }
 
@@ -353,6 +376,8 @@ void vh_table_evnt_event(vh_tbl_evnt_event_t event)
 	mt_map_t* data = vh->items->data[event.index];
 
 	uint32_t pos = mt_vector_index_of_data(vh->selected_items, data);
+
+	// TODO this is duplicated in CONTEXT event, simplify
 
 	if (pos == UINT32_MAX)
 	{
@@ -411,37 +436,58 @@ void vh_table_evnt_event(vh_tbl_evnt_event_t event)
     }
     else if (event.id == VH_TBL_EVENT_CONTEXT)
     {
-	vh->selected_index = event.index;
-
-	mt_map_t* data = vh->items->data[event.index];
-
-	uint32_t pos = mt_vector_index_of_data(vh->selected_items, data);
-
-	if (pos == UINT32_MAX)
+	if (event.index > -1)
 	{
-	    /* reset selected if control is not down */
-	    if (!event.ev.ctrl_down)
-	    {
-		mt_vector_reset(vh->selected_items);
-		vh_tbl_body_t* bvh = vh->body_v->handler_data;
+	    vh->selected_index = event.index;
 
-		for (int index = 0; index < bvh->items->length; index++)
+	    mt_map_t* data = vh->items->data[event.index];
+
+	    uint32_t pos = mt_vector_index_of_data(vh->selected_items, data);
+
+	    // TODO this is duplicated in CONTEXT event, simplify
+
+	    if (pos == UINT32_MAX)
+	    {
+		/* reset selected if control is not down */
+
+		if (!event.ev.ctrl_down)
 		{
-		    ku_view_t* item = bvh->items->data[index];
-		    if (item->style.background_color == 0x006600FF)
+		    mt_vector_reset(vh->selected_items);
+		    vh_tbl_body_t* bvh = vh->body_v->handler_data;
+
+		    for (int index = 0; index < bvh->items->length; index++)
 		    {
-			item->style.background_color = 0x000000FF;
-			ku_view_invalidate_texture(item);
+			ku_view_t* item = bvh->items->data[index];
+
+			textstyle_t style = index % 2 == 0 ? vh->rowastyle : vh->rowbstyle;
+
+			for (int i = 0; i < item->views->length; i++)
+			{
+			    ku_view_t* cellview = item->views->data[i];
+			    tg_text_set_style(cellview, style);
+			}
 		    }
 		}
+
+		VADD(vh->selected_items, data);
+
+		for (int i = 0; i < event.rowview->views->length; i++)
+		{
+		    ku_view_t* cellview = event.rowview->views->data[i];
+		    tg_text_set_style(cellview, vh->rowsstyle);
+		}
 	    }
-
-	    VADD(vh->selected_items, data);
-
-	    if (event.rowview)
+	    else
 	    {
-		event.rowview->style.background_color = 0x006600FF;
-		ku_view_invalidate_texture(event.rowview);
+		VREM(vh->selected_items, data);
+
+		textstyle_t style = event.index % 2 == 0 ? vh->rowastyle : vh->rowbstyle;
+
+		for (int i = 0; i < event.rowview->views->length; i++)
+		{
+		    ku_view_t* cellview = event.rowview->views->data[i];
+		    tg_text_set_style(cellview, style);
+		}
 	    }
 	}
 
@@ -541,7 +587,28 @@ void vh_table_evnt_event(vh_tbl_evnt_event_t event)
 	    .view           = vh->view,
 	    .rowview        = event.rowview,
 	    .ev             = event.ev};
+
 	(*vh->on_event)(tevent);
+
+	if (event.ev.keycode == XKB_KEY_Down || event.ev.keycode == XKB_KEY_Up)
+	{
+	    if (event.ev.repeat == 1)
+	    {
+		/* TODO hack for repeating scroll over media files, make it graceful */
+		event.ev.repeat = 0;
+
+		tevent = (vh_table_event_t){
+		    .table          = vh,
+		    .id             = VH_TABLE_EVENT_SELECT,
+		    .ev             = event.ev,
+		    .selected_items = vh->selected_items,
+		    .selected_index = vh->selected_index,
+		    .view           = vh->view,
+		    .rowview        = vh_tbl_body_item_for_index(vh->body_v, vh->selected_index)};
+
+		(*vh->on_event)(tevent);
+	    }
+	}
     }
 }
 
@@ -609,6 +676,8 @@ void vh_table_attach(
     /*   </div> */
     /* </div> */
 
+    float scale = view->style.scale;
+
     if (view->views->length >= 5)
     {
 	/* grab styled views prepared for us */
@@ -666,8 +735,15 @@ void vh_table_attach(
 	}
 
 	/* set mask */
-	body_v->style.masked = 1;
+	layr_v->style.masked = 1;
 	if (head_v) head_v->style.masked = 1;
+
+	/* set scale */
+	layr_v->style.scale = scale;
+	body_v->style.scale = scale;
+	scrl_v->style.scale = scale;
+	evnt_v->style.scale = scale;
+	if (head_v) head_v->style.scale = scale;
 
 	/* attach header view as first view */
 	if (head_v) ku_view_add_subview(view, head_v);
@@ -683,6 +759,7 @@ void vh_table_attach(
 	RET(hscroll);
 	ku_view_remove_from_parent(vscroll);
 	ku_view_remove_from_parent(hscroll);
+
 	ku_view_add_subview(scrl_v, vscroll);
 	ku_view_add_subview(scrl_v, hscroll);
 	REL(vscroll);
@@ -791,6 +868,8 @@ void vh_table_select(
     vh_table_t*    vh  = view->handler_data;
     vh_tbl_body_t* bvh = vh->body_v->handler_data;
 
+    float scale = view->style.scale;
+
     vh->selected_index = index;
     if (vh->selected_index < 0) vh->selected_index = 0;
     if (vh->selected_index > vh->items->length - 1) vh->selected_index = vh->items->length - 1;
@@ -835,7 +914,8 @@ void vh_table_select(
 
 	for (int i = 0; i < item->views->length; i++)
 	{
-	    ku_view_t* cellview = item->views->data[i];
+	    ku_view_t* cellview   = item->views->data[i];
+	    cellview->style.scale = scale;
 	    tg_text_set_style(cellview, style);
 	}
     }
@@ -847,6 +927,14 @@ mt_vector_t* vh_table_get_fields(ku_view_t* view)
 {
     vh_table_t* vh = view->handler_data;
     return vh->fields;
+}
+
+void vh_table_show_scrollbar(
+    ku_view_t* view,
+    int        flag)
+{
+    vh_table_t* vh = view->handler_data;
+    if (vh->scrl_v) vh_tbl_scrl_enable(vh->scrl_v, flag);
 }
 
 #endif

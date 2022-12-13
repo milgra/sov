@@ -73,7 +73,7 @@ void vh_button_evt(ku_view_t* view, ku_event_t ev)
 
     if (vh->enabled)
     {
-	if (ev.type == KU_EVENT_MDOWN)
+	if (ev.type == KU_EVENT_MOUSE_DOWN)
 	{
 	    if (vh->type == VH_BUTTON_NORMAL)
 	    {
@@ -83,7 +83,7 @@ void vh_button_evt(ku_view_t* view, ku_event_t ev)
 		if (vh->onview) vh_anim_alpha(vh->onview, 0.0, 1.0, 10, AT_LINEAR);
 	    }
 	}
-	else if (ev.type == KU_EVENT_MUP)
+	else if (ev.type == KU_EVENT_MOUSE_UP)
 	{
 	    if (vh->type == VH_BUTTON_TOGGLE)
 	    {

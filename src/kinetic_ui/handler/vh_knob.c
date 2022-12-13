@@ -23,7 +23,7 @@ typedef struct _vh_knob_t
 
 void vh_knob_evt(ku_view_t* view, ku_event_t ev)
 {
-    if (ev.type == KU_EVENT_MDOWN || (ev.type == KU_EVENT_MMOVE && ev.drag))
+    if (ev.type == KU_EVENT_MOUSE_DOWN || (ev.type == KU_EVENT_MOUSE_MOVE && ev.drag))
     {
 	vh_knob_t* vh = view->handler_data;
 

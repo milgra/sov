@@ -6,11 +6,13 @@
 #include "mt_vector.c"
 
 void ku_renderer_software_render(mt_vector_t* views, ku_bitmap_t* bitmap, ku_rect_t dirty);
+void ku_renderer_soft_screenshot(ku_bitmap_t* bitmap, char* path);
 
 #endif
 
 #if __INCLUDE_LEVEL__ == 0
 
+#include "ku_png.c"
 #include "ku_view.c"
 #include "mt_time.c"
 
@@ -110,6 +112,11 @@ void ku_renderer_software_render(mt_vector_t* views, ku_bitmap_t* bitmap, ku_rec
 	    dirty = masks[maski];
 	}
     }
+}
+
+void ku_renderer_soft_screenshot(ku_bitmap_t* bitmap, char* path)
+{
+    ku_png_write(path, bitmap);
 }
 
 #endif

@@ -16,6 +16,7 @@ void mt_log_set_level(mt_log_importance importance);
 int  mt_log_get_level();
 void mt_log_inc_verbosity(void);
 void mt_log_use_colors(bool use_colors);
+void mt_log_set_file_column(int column);
 
 #define mt_log_debug(...) mt_log(MT_LOG_DEBUG, __FILE__, __LINE__, __VA_ARGS__)
 #define mt_log_info(...) mt_log(MT_LOG_INFO, __FILE__, __LINE__, __VA_ARGS__)
@@ -65,6 +66,7 @@ void mt_log_use_colors(bool use_colors);
 static mt_log_importance min_importance_to_log = MT_LOG_WARN;
 
 static bool use_colors = false;
+static int  file_col   = 100;
 
 static const char* verbosity_names[] = {
     "DEBUG",
@@ -90,7 +92,7 @@ void mt_log(const mt_log_importance importance, const char* file, const int line
     struct timespec ts;
     if (clock_gettime(CLOCK_REALTIME, &ts) != 0)
     {
-	fprintf(stderr, "clock_gettime() failed: %s\n", strerror(errno));
+	fprintf(stdout, "clock_gettime() failed: %s\n", strerror(errno));
 	ts.tv_sec  = 0;
 	ts.tv_nsec = 0;
     }
@@ -100,30 +102,51 @@ void mt_log(const mt_log_importance importance, const char* file, const int line
     if (use_colors)
     {
 	fprintf(
-	    stderr,
-	    "%.2i:%.2i:%.2i:%.6li %s%-5s%s %s%s:%d:%s ",
+	    stdout,
+	    "%s%-5s%s  ",
+	    verbosity_colors[importance],
+	    verbosity_names[importance],
+	    COLOR_RESET);
+    }
+    else
+    {
+	fprintf(stdout, "%-5s  ", verbosity_names[importance]);
+    }
+
+    va_list args;
+    va_start(args, fmt);
+    vfprintf(stdout, fmt, args);
+    va_end(args);
+
+    if (use_colors)
+    {
+	fprintf(
+	    stdout,
+	    "\033[%iG  %.2i:%.2i:%.2i:%.6li %15s : %d%s ",
+	    file_col,
 	    my_tm->tm_hour,
 	    my_tm->tm_min,
 	    my_tm->tm_sec,
 	    ts.tv_nsec / 1000,
-	    verbosity_colors[importance],
-	    verbosity_names[importance],
-	    COLOR_RESET,
-	    COLOR_LIGHT_GRAY,
 	    file,
 	    line,
 	    COLOR_RESET);
     }
     else
     {
-	fprintf(stderr, "%jd.%06ld %s %s:%d: ", (intmax_t) ts.tv_sec, ts.tv_nsec / 1000, verbosity_names[importance], file, line);
+	fprintf(
+	    stdout,
+	    "\033[%iG  %.2i:%.2i:%.2i:%.6li ( %s:%d: )",
+	    file_col,
+	    my_tm->tm_hour,
+	    my_tm->tm_min,
+	    my_tm->tm_sec,
+	    ts.tv_nsec / 1000,
+	    file,
+	    line);
     }
 
-    va_list args;
-    va_start(args, fmt);
-    vfprintf(stderr, fmt, args);
-    va_end(args);
-    fprintf(stderr, "\n");
+    fprintf(stdout, "\n");
 }
 
 void mt_log_set_level(const mt_log_importance importance)
@@ -134,6 +157,11 @@ void mt_log_set_level(const mt_log_importance importance)
 void mt_log_use_colors(const bool colors)
 {
     use_colors = colors;
+}
+
+void mt_log_set_file_column(int column)
+{
+    file_col = column;
 }
 
 void mt_log_inc_verbosity(void)

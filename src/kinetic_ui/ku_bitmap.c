@@ -84,6 +84,7 @@ void ku_bitmap_blend_rect(ku_bitmap_t* dst, int x, int y, int w, int h, uint32_t
 
 #if __INCLUDE_LEVEL__ == 0
 
+#include "mt_log.c"
 #include "mt_memory.c"
 #include <assert.h>
 #include <string.h>
@@ -138,7 +139,9 @@ ku_bitmap_t* ku_bitmap_new_aligned(int the_w, int the_h, int align)
     bm->dsize = bm->dw * bm->dh + 16 + 16 - 1; // alignment + stride for sws scale
     /* bm->data = CAL(bm->size * sizeof(unsigned char), NULL, ku_bitmap_describe_data); // REL 1 */
 
-    posix_memalign((void**) &bm->data, 16, bm->dsize * sizeof(unsigned char));
+    int res = posix_memalign((void**) &bm->data, 16, bm->dsize * sizeof(unsigned char));
+    if (res != 0) mt_log_error("posix_memalign error");
+
     memset(bm->data, 0, bm->dsize);
     bm->type = KU_BITMAP_ARGB;
 

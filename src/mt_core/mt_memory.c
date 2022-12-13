@@ -10,10 +10,6 @@
 /* TODO separate unit tests */
 
 #undef MT_MEMORY_DEBUG
-#ifdef MT_MEMORY_DEBUG
-    #define MT_MEMORY_DEBUG_SIZE 1000000 /* maximum areas to store */
-    #define MT_MEMORY_DEBUG_INDEX 0      /* head index to stop at error */
-#endif
 
 #define CAL(X, Y, Z) mt_memory_calloc(X, Y, Z);
 #define RET(X) mt_memory_retain(X)
@@ -37,10 +33,7 @@ void mt_memory_stats();
 
 #if __INCLUDE_LEVEL__ == 0
 
-// Musl-libc doesn't support execinfo, libexecinfo _might_ work.
-#if defined(__GLIBC__)
 #include <execinfo.h>
-#endif
 #include <string.h>
 
 struct mt_memory_head
@@ -54,6 +47,9 @@ struct mt_memory_head
 };
 
 #ifdef MT_MEMORY_DEBUG
+
+    #define MT_MEMORY_DEBUG_SIZE 2000000 /* maximum areas to store */
+    #define MT_MEMORY_DEBUG_INDEX 0      /* head index to stop at error */
 
 struct mt_memory_head* mt_memory_heads[MT_MEMORY_DEBUG_SIZE] = {0};
 static uint32_t        mt_memory_index                       = 1; /* live object counter for debugging */
@@ -170,7 +166,7 @@ void* mt_memory_retain(void* pointer)
     {
 	head->retaincount += 1;
 #ifdef MT_MEMORY_DEBUG
-	if (head->index == MT_MEMORY_DEBUG_INDEX) mt_memory_trace("CALLOC", head);
+	if (head->index == MT_MEMORY_DEBUG_INDEX) mt_memory_trace("RETAIN", head);
 #endif
 	return pointer;
     }
@@ -189,6 +185,7 @@ char mt_memory_release(void* pointer)
 
 #ifdef MT_MEMORY_DEBUG
     if (head->index == MT_MEMORY_DEBUG_INDEX) mt_memory_trace("RELEASE", head);
+    if (head->retaincount == -1) mt_memory_trace("RELEASE RETAINCOUNT -1!!!", head);
 #endif
 
     assert(head->retaincount > -1);

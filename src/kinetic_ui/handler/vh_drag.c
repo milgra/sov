@@ -35,7 +35,7 @@ void vh_drag_drag(ku_view_t* view, ku_view_t* item);
 
 void vh_drag_evt(ku_view_t* view, ku_event_t ev)
 {
-    if (ev.type == KU_EVENT_MMOVE && ev.drag)
+    if (ev.type == KU_EVENT_MOUSE_MOVE && ev.drag)
     {
 	vh_drag_t* vh = view->handler_data;
 
@@ -50,7 +50,7 @@ void vh_drag_evt(ku_view_t* view, ku_event_t ev)
 	    if (vh->on_event) (*vh->on_event)(event);
 	}
     }
-    if (ev.type == KU_EVENT_MUP && ev.drag)
+    if (ev.type == KU_EVENT_MOUSE_UP && ev.drag)
     {
 	vh_drag_t* vh = view->handler_data;
 

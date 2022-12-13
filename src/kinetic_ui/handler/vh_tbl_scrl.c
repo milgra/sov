@@ -15,6 +15,7 @@ typedef struct _vh_tbl_scrl_t
     int        steps;
     uint32_t   item_cnt;
     void*      userdata;
+    int        enabled;
 } vh_tbl_scrl_t;
 
 void vh_tbl_scrl_attach(
@@ -29,6 +30,7 @@ void vh_tbl_scrl_hide(ku_view_t* view);
 void vh_tbl_scrl_set_item_count(ku_view_t* view, uint32_t count);
 void vh_tbl_scrl_scroll_v(ku_view_t* view, int y);
 void vh_tbl_scrl_scroll_h(ku_view_t* view, int x);
+void vh_tbl_scrl_enable(ku_view_t* view, int flag);
 
 #endif
 
@@ -56,6 +58,7 @@ void vh_tbl_scrl_attach(
     vh->userdata      = userdata;
     vh->tbody_view    = tbody_view;
     vh->thead_view    = thead_view;
+    vh->enabled       = 1;
 
     assert(view->views->length > 1);
 
@@ -174,20 +177,31 @@ void vh_tbl_scrl_show(ku_view_t* view)
     vh_tbl_scrl_t* vh  = view->handler_data;
     vh_tbl_body_t* bvh = vh->tbody_view->handler_data;
 
-    if (bvh->items->length > 0 && vh->item_cnt > 0)
+    if (vh->enabled)
     {
-	vh->state = 1;
-	vh->steps = 0;
-	ku_view_set_texture_alpha(vh->hori_v, 1.0, 0);
-	ku_view_set_texture_alpha(vh->vert_v, 1.0, 0);
+
+	if (bvh->items->length > 0 && vh->item_cnt > 0)
+	{
+	    vh->state = 1;
+	    vh->steps = 0;
+	    ku_view_set_texture_alpha(vh->hori_v, 1.0, 0);
+	    ku_view_set_texture_alpha(vh->vert_v, 1.0, 0);
+	}
     }
 }
 
 void vh_tbl_scrl_hide(ku_view_t* view)
 {
     vh_tbl_scrl_t* vh = view->handler_data;
-    vh->state         = 2;
-    vh->steps         = 0;
+
+    if (vh->enabled)
+    {
+	vh->state = 2;
+	vh->steps = 0;
+	/* make rects dirty for possible frame requests */
+	vh->hori_v->frame.dim_changed = 1;
+	vh->vert_v->frame.dim_changed = 1;
+    }
 }
 
 void vh_tbl_scrl_scroll_v(ku_view_t* view, int y)
@@ -246,7 +260,8 @@ void vh_tbl_scrl_scroll_h(ku_view_t* view, int x)
 	    float dx = pratio * (hori_max - hori_vis);
 
 	    vh_tbl_body_hjump(vh->tbody_view, -dx);
-	    vh_tbl_head_jump(vh->thead_view, -dx);
+
+	    if (vh->thead_view) vh_tbl_head_jump(vh->thead_view, -dx);
 
 	    ku_rect_t frame = vh->hori_v->frame.local;
 	    frame.w         = view->frame.local.w * sratio;
@@ -255,6 +270,12 @@ void vh_tbl_scrl_scroll_h(ku_view_t* view, int x)
 	    ku_view_set_frame(vh->hori_v, frame);
 	}
     }
+}
+
+void vh_tbl_scrl_enable(ku_view_t* view, int flag)
+{
+    vh_tbl_scrl_t* vh = view->handler_data;
+    vh->enabled       = flag;
 }
 
 #endif

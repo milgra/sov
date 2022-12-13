@@ -11,17 +11,17 @@ enum evtype
     KU_EVENT_FRAME,
     KU_EVENT_TIME,
     KU_EVENT_RESIZE,
-    KU_EVENT_MMOVE,
-    KU_EVENT_MDOWN,
-    KU_EVENT_MUP,
-    KU_EVENT_MMOVE_OUT,
-    KU_EVENT_MDOWN_OUT,
-    KU_EVENT_MUP_OUT,
+    KU_EVENT_MOUSE_MOVE,
+    KU_EVENT_MOUSE_DOWN,
+    KU_EVENT_MOUSE_UP,
+    KU_EVENT_MOUSE_MOVE_OUT,
+    KU_EVENT_MOUSE_DOWN_OUT,
+    KU_EVENT_MOUSE_UP_OUT,
     KU_EVENT_SCROLL,
-    KU_EVENT_KDOWN,
-    KU_EVENT_KUP,
+    KU_EVENT_KEY_DOWN,
+    KU_EVENT_KEY_UP,
     KU_EVENT_TEXT,
-    KU_EVENT_WINDOW_SHOW,
+    KU_EVENT_WINDOW_SHOWN,
     KU_EVENT_PINCH,
     KU_EVENT_STDIN,
     KU_EVENT_FOCUS,
@@ -87,6 +87,8 @@ ku_event_t ku_event_read(FILE* file);
 
 #if __INCLUDE_LEVEL__ == 0
 
+#include "mt_log.c"
+
 /*                  frame type  x  y  w  h dx dy ratio drag dclick button time time_frame keycode repeat ctrl_down shift_down text */
 char* ku_event_format = "%i %i %i %i %i %i %f %f %f %i %i %i %u %f %u %i %i %i %s\n";
 
@@ -118,29 +120,31 @@ void ku_event_write(FILE* file, ku_event_t ev)
 
 ku_event_t ku_event_read(FILE* file)
 {
-    ku_event_t ev = {0};
-    fscanf(
-	file,
-	ku_event_format,
-	&ev.frame,
-	&ev.type,
-	&ev.x,
-	&ev.y,
-	&ev.w,
-	&ev.h,
-	&ev.dx,
-	&ev.dy,
-	&ev.ratio,
-	&ev.drag,
-	&ev.dclick,
-	&ev.button,
-	&ev.time,
-	&ev.time_frame,
-	&ev.keycode,
-	&ev.repeat,
-	&ev.ctrl_down,
-	&ev.shift_down,
-	&ev.text);
+    ku_event_t ev  = {0};
+    int        res = fscanf(
+        file,
+        ku_event_format,
+        &ev.frame,
+        &ev.type,
+        &ev.x,
+        &ev.y,
+        &ev.w,
+        &ev.h,
+        &ev.dx,
+        &ev.dy,
+        &ev.ratio,
+        &ev.drag,
+        &ev.dclick,
+        &ev.button,
+        &ev.time,
+        &ev.time_frame,
+        &ev.keycode,
+        &ev.repeat,
+        &ev.ctrl_down,
+        &ev.shift_down,
+        &ev.text);
+
+    if (res < 0) mt_log_error("Couldn't scanf file");
 
     return ev;
 }

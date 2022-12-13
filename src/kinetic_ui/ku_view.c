@@ -110,7 +110,6 @@ typedef struct _texture_t
 
     char ready;         /* texture is generated */
     char changed;       /* texture is changed */
-    char uploaded;      /* texture is uploaded, used by renderers */
     char alpha_changed; /* alpha channel is changed */
 
     ku_bitmap_t* bitmap; /* texture bitmap */

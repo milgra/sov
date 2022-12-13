@@ -37,7 +37,7 @@ void vh_slider_evt(ku_view_t* view, ku_event_t ev)
 
     if (vh->enabled)
     {
-	if (ev.type == KU_EVENT_MDOWN || (ev.type == KU_EVENT_MMOVE && ev.drag))
+	if (ev.type == KU_EVENT_MOUSE_DOWN || (ev.type == KU_EVENT_MOUSE_MOVE && ev.drag))
 	{
 	    float dx  = ev.x - view->frame.global.x;
 	    vh->ratio = dx / view->frame.global.w;

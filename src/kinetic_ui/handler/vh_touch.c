@@ -32,7 +32,7 @@ void vh_touch_add(ku_view_t* view, void (*on_event)(vh_touch_event_t));
 
 void vh_touch_evt(ku_view_t* view, ku_event_t ev)
 {
-    if (ev.type == KU_EVENT_MDOWN)
+    if (ev.type == KU_EVENT_MOUSE_DOWN)
     {
 	vh_touch_t*      vh    = view->handler_data;
 	vh_touch_event_t event = {.id = VH_TOUCH_EVENT, .vh = vh, .view = view};

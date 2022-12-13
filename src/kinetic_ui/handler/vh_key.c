@@ -25,7 +25,7 @@ void vh_key_add(ku_view_t* view, void (*on_event)(vh_key_event_t));
 
 void vh_key_evt(ku_view_t* view, ku_event_t ev)
 {
-    if (ev.type == KU_EVENT_KDOWN)
+    if (ev.type == KU_EVENT_KEY_DOWN)
     {
 	vh_key_t*      vh    = view->handler_data;
 	vh_key_event_t event = {.ev = ev, .vh = vh, .view = view};

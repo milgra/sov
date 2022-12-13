@@ -23,9 +23,10 @@ struct _ku_window_t
 
 ku_window_t* ku_window_create(int width, int height, float scale);
 void         ku_window_resize(ku_window_t* window, int width, int height, float scale);
+void         ku_window_layout(ku_window_t* window);
 void         ku_window_add(ku_window_t* window, ku_view_t* view);
 void         ku_window_remove(ku_window_t* window, ku_view_t* view);
-void         ku_window_activate(ku_window_t* window, ku_view_t* view);
+void         ku_window_activate(ku_window_t* win, ku_view_t* view, int flag);
 void         ku_window_deactivate(ku_window_t* window, ku_view_t* view);
 void         ku_window_set_focusable(ku_window_t* window, mt_vector_t* views);
 void         ku_window_event(ku_window_t* window, ku_event_t event);
@@ -77,6 +78,12 @@ void ku_window_resize(ku_window_t* window, int width, int height, float scale)
     ku_view_set_frame(window->root, (ku_rect_t){0.0, 0.0, width, height});
 }
 
+void ku_window_layout(ku_window_t* window)
+{
+    ku_view_layout(window->root, window->scale);
+    /* ku_view_describe(window->root, 0); */
+}
+
 void ku_window_add(ku_window_t* win, ku_view_t* view)
 {
     ku_view_add_subview(win->root, view);
@@ -90,14 +97,12 @@ void ku_window_remove(ku_window_t* win, ku_view_t* view)
     ku_view_remove_from_parent(view);
 }
 
-void ku_window_activate(ku_window_t* win, ku_view_t* view)
+void ku_window_activate(ku_window_t* win, ku_view_t* view, int flag)
 {
-    mt_vector_add_unique_data(win->ptrqueue, view);
-}
-
-void ku_window_deactivate(ku_window_t* win, ku_view_t* view)
-{
-    mt_vector_rem(win->ptrqueue, view);
+    if (flag)
+	mt_vector_add_unique_data(win->ptrqueue, view);
+    else
+	mt_vector_rem(win->ptrqueue, view);
 }
 
 void ku_window_set_focusable(ku_window_t* window, mt_vector_t* views)
@@ -120,6 +125,7 @@ void ku_window_event(ku_window_t* win, ku_event_t ev)
 	{
 	    ku_view_set_frame(win->root, (ku_rect_t){0.0, 0.0, (float) ev.w, (float) ev.h});
 	    ku_view_layout(win->root, win->scale);
+	    /* ku_view_describe(win->root, 0); */
 	    ku_view_evt(win->root, ev);
 
 	    win->width  = ev.w;
@@ -127,10 +133,10 @@ void ku_window_event(ku_window_t* win, ku_event_t ev)
 	}
 	ku_view_evt(win->root, ev);
     }
-    else if (ev.type == KU_EVENT_MMOVE)
+    else if (ev.type == KU_EVENT_MOUSE_MOVE)
     {
 	ku_event_t outev = ev;
-	outev.type       = KU_EVENT_MMOVE_OUT;
+	outev.type       = KU_EVENT_MOUSE_MOVE_OUT;
 	for (int i = win->movqueue->length - 1; i > -1; i--)
 	{
 	    ku_view_t* v = win->movqueue->data[i];
@@ -163,13 +169,13 @@ void ku_window_event(ku_window_t* win, ku_event_t ev)
 	    }
 	}
     }
-    else if (ev.type == KU_EVENT_MDOWN || ev.type == KU_EVENT_MUP)
+    else if (ev.type == KU_EVENT_MOUSE_DOWN || ev.type == KU_EVENT_MOUSE_UP)
     {
 	ku_event_t outev = ev;
-	if (ev.type == KU_EVENT_MDOWN) outev.type = KU_EVENT_MDOWN_OUT;
-	if (ev.type == KU_EVENT_MUP) outev.type = KU_EVENT_MUP_OUT;
+	if (ev.type == KU_EVENT_MOUSE_DOWN) outev.type = KU_EVENT_MOUSE_DOWN_OUT;
+	if (ev.type == KU_EVENT_MOUSE_UP) outev.type = KU_EVENT_MOUSE_UP_OUT;
 
-	if (ev.type == KU_EVENT_MDOWN)
+	if (ev.type == KU_EVENT_MOUSE_DOWN)
 	{
 	    for (int i = win->ptrqueue->length - 1; i > -1; i--)
 	    {
@@ -225,9 +231,9 @@ void ku_window_event(ku_window_t* win, ku_event_t ev)
 	    }
 	}
     }
-    else if (ev.type == KU_EVENT_KDOWN || ev.type == KU_EVENT_KUP)
+    else if (ev.type == KU_EVENT_KEY_DOWN || ev.type == KU_EVENT_KEY_UP)
     {
-	if (ev.type == KU_EVENT_KDOWN && ev.keycode == XKB_KEY_Tab && win->focusable->length > 0)
+	if (ev.type == KU_EVENT_KEY_DOWN && ev.keycode == XKB_KEY_Tab && win->focusable->length > 0)
 	{
 	    if (win->focused == NULL)
 	    {
@@ -324,9 +330,8 @@ ku_rect_t ku_window_update(ku_window_t* win, uint32_t time)
 
 	if (view->texture.changed)
 	{
-	    result                 = ku_rect_add(result, view->frame.global);
-	    view->texture.changed  = 0;
-	    view->texture.uploaded = 0;
+	    result                = ku_rect_add(result, view->frame.global);
+	    view->texture.changed = 0;
 	}
 	else if (view->frame.dim_changed)
 	{

@@ -1,7 +1,7 @@
 #include "gen.c"
+#include "ku_bitmap_ext.c"
 #include "ku_renderer_soft.c"
 #include "ku_text.c"
-#include "mt_bitmap_ext.c"
 #include "mt_log.c"
 #include "mt_path.c"
 #include "mt_string.c"

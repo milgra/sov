@@ -19,7 +19,7 @@ void mt_time(char* id)
     {
 	struct timeval ts;
 	gettimeofday(&ts, NULL);
-	mt_log_info("%s time is %lu us", id, (ts.tv_sec - mt_time_stamp.tv_sec) * 1000000 + ts.tv_usec - mt_time_stamp.tv_usec);
+	mt_log_debug("%s time is %lu us", id, (ts.tv_sec - mt_time_stamp.tv_sec) * 1000000 + ts.tv_usec - mt_time_stamp.tv_usec);
 	mt_time_stamp = ts;
     }
     else

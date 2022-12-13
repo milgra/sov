@@ -8,12 +8,14 @@
 void ku_renderer_egl_init(int max_device_width, int max_device_height);
 void ku_renderer_egl_destroy();
 void ku_renderer_egl_render(mt_vector_t* views, ku_bitmap_t* bitmap, ku_rect_t dirty);
+void ku_renderer_egl_screenshot(ku_bitmap_t* bitmap, char* path);
 
 #endif
 
 #if __INCLUDE_LEVEL__ == 0
 
 #include "ku_gl.c"
+#include "ku_png.c"
 #include "ku_view.c"
 #include "mt_time.c"
 
@@ -147,6 +149,24 @@ void ku_renderer_egl_render(mt_vector_t* views, ku_bitmap_t* bitmap, ku_rect_t d
     /* 	    dirty = masks[maski]; */
     /* 	} */
     /* } */
+}
+
+void ku_renderer_egl_screenshot(ku_bitmap_t* bm, char* path)
+{
+    ku_bitmap_t* bitmap = ku_bitmap_new(bm->w, bm->h);
+    ku_gl_save_framebuffer(bitmap);
+
+    ku_bitmap_t* flipped = ku_bitmap_new(bm->w, bm->h);
+    for (int y = 0; y < bitmap->h; y++)
+    {
+	int src_y = bitmap->h - y - 1;
+	memcpy(flipped->data + y * bitmap->w * 4, bitmap->data + src_y * bitmap->w * 4, bitmap->w * 4);
+    }
+
+    ku_png_write(path, flipped);
+
+    REL(flipped);
+    REL(bitmap);
 }
 
 #endif

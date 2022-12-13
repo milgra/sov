@@ -140,7 +140,7 @@ void vh_cv_evnt_evt(ku_view_t* view, ku_event_t ev)
     else if (ev.type == KU_EVENT_RESIZE)
     {
     }
-    else if (ev.type == KU_EVENT_MMOVE)
+    else if (ev.type == KU_EVENT_MOUSE_MOVE)
     {
 	// show scroll
 	if (!vh->scroll_visible)
@@ -163,7 +163,7 @@ void vh_cv_evnt_evt(ku_view_t* view, ku_event_t ev)
 	vh->mx = ev.x;
 	vh->my = ev.y;
     }
-    else if (ev.type == KU_EVENT_MMOVE_OUT)
+    else if (ev.type == KU_EVENT_MOUSE_MOVE_OUT)
     {
 	// hide scroll
 	if (vh->scroll_visible)
@@ -172,7 +172,7 @@ void vh_cv_evnt_evt(ku_view_t* view, ku_event_t ev)
 	    vh_cv_scrl_hide(vh->tscrl_view);
 	}
     }
-    else if (ev.type == KU_EVENT_MDOWN)
+    else if (ev.type == KU_EVENT_MOUSE_DOWN)
     {
 	if (ev.x > view->frame.global.x + view->frame.global.w - SCROLLBAR)
 	{
@@ -187,7 +187,7 @@ void vh_cv_evnt_evt(ku_view_t* view, ku_event_t ev)
 	vh_cv_evnt_event_t event = {.id = VH_CV_EVENT_CLICK};
 	if (vh->on_event) (*vh->on_event)(event);
     }
-    else if (ev.type == KU_EVENT_MUP)
+    else if (ev.type == KU_EVENT_MOUSE_UP)
     {
 	vh->scroll_drag = 0;
     }
