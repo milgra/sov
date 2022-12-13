@@ -840,6 +840,9 @@ void ku_wayland_delete_window(wl_window_t* info)
 	wl_surface_destroy(info->surface);
 	wl_display_roundtrip(wlc.display);
     }
+
+    // TODO replace window array with vector
+    wlc.window_count = 0;
 }
 
 void ku_wayland_show_window(wl_window_t* info)
