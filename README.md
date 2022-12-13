@@ -104,18 +104,18 @@ systemctl enable --now --user sov.socket
 
 ## Configuration and Styling ##
 
-If you want to style sov, copy /usr/share/sov/config to ~/.config/sov/config and edit the html and css files inside it.
+If you want to style sov, copy /usr/share/sov/html to ~/.config/sov/html and edit the html and css files inside it.
 
 on most linux distros :
 ```
 mkdir -p ~/.config/sov
-cp -r /usr/share/sov/config ~/.config/sov
+cp -r /usr/share/sov/html ~/.config/sov/
 ```
 
 on FreeBSD
 ```
 mkdir -p ~/.config/sov
-cp -r /usr/local/share/sov/config ~/.config/sov
+cp -r /usr/local/share/sov/html ~/.config/sov/
 ```
 
 Additional options can be set as command line arguments :
