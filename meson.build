@@ -185,8 +185,8 @@ executable(
 
 pkg_datadir = join_paths(get_option('prefix'), get_option('datadir')) / 'sov'
 
-install_data('res/html/main.html', install_dir : pkg_datadir / 'config/html' )
-install_data('res/html/main.css', install_dir : pkg_datadir / 'config/html' )
+install_data('res/html/main.html', install_dir : pkg_datadir / 'html' )
+install_data('res/html/main.css', install_dir : pkg_datadir / 'html' )
 
 install_data('contrib/systemd/sov.service', install_dir : get_option('libdir') / 'systemd' / 'user' )
 install_data('contrib/systemd/sov.socket', install_dir : get_option('libdir') / 'systemd' / 'user' )
