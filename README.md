@@ -5,8 +5,9 @@ An overlay that shows schemas for all workspaces to make navigation in sway easi
 Sway Overview was made for SwayOS (https://swayos.github.io)
 
 ![alt text](screenshot.png)
+[![alt text](screenshot.png)](https://www.youtube.com/watch?v=0MP9pAxpu8E)
 
-Watch the introduction/user guide [video on youtube](https://youtube.com/)
+Watch the introduction/user guide [video on youtube](https://www.youtube.com/watch?v=0MP9pAxpu8E)
 
 ## Features ##
 
@@ -18,9 +19,9 @@ Watch the introduction/user guide [video on youtube](https://youtube.com/)
 ## Long descripton ##
 
 Sway overview is an overview applciation for the sway tiling window manager. Tiling window managers are about simplicity so by default they don't have any kind of overview feature. It is okay under five workspaces because you can just remember where specific windows were opened but over 5 workspaces it can get really complicated.
-Sway overview draws a schematic layout of all your workspaces on each output. They contain the windows present in each workspace, the title and the content of the windows, for example, in case of a terminal the last terminal command, in case of the browser the url of the page it displays, so you can see all informationo at a glance.
+Sway overview draws a schematic layout of all your workspaces on each output. It contains all windows, window titles and window contents.
 Thumbnail based overview solutions can become confusing quickly when the thumbnails become too small to recognize, sway overview won't.
-The common usage of Sway overview is to bound its appereance to the desktop switcher button with a little latency so in case of quick workspace switching it doesn't appear but on a long press - when we are lost - it appears.
+The common usage of Sway overview is to bound its appereance to the desktop switcher button with a little latency.
 Sway overview can be structured via html, styled via css.
 
 ## Installation
