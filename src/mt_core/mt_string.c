@@ -67,11 +67,11 @@ char* mt_string_reset(char* str)
 
 char* mt_string_append(char* str, char* add)
 {
-    size_t needed = utf8len(str) + utf8len(add) + 1;
+    size_t needed = strlen(str) + strlen(add) + 1;
 
-    if (utf8len(str) < needed) str = mt_memory_realloc(str, needed);
+    if (strlen(str) < needed) str = mt_memory_realloc(str, needed);
 
-    utf8cat(str, add);
+    str = utf8cat(str, add);
 
     return str;
 }
