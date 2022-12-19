@@ -27,6 +27,26 @@ Sway overview can be structured via html, styled via css.
 
 ### Compiling from source
 
+Install the needed dependencies and libraries:
+
+```
+libpng,libfreetype,
+libgl,libglew,libegl,libwegl,wayland-client,wayland-protocols,
+fonts-terminus
+````
+
+On debian based systems ( over version 12 ):
+```
+sudo apg-get install meson ninja-build pkg-config cmake libpng-dev libfreetype-dev libgl-dev libgles2-mesa-dev libmesa1-dev libglew-dev libegl-dev libwayland-dev wayland-protocols fonts-terminus
+
+```
+
+On arch based systems :
+```
+sudo pacman -Qs meson ninja-build pkg-config cmake libpng freetype2
+```
+
+
 ```
 git clone git@github.com:milgra/sov.git
 cd sov
