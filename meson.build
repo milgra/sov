@@ -1,7 +1,7 @@
 project(
   'sov',
   'c',
-  version: '0.84b',
+  version: '0.85b',
   license: 'MIT',
   default_options: ['c_std=gnu99']
 )
