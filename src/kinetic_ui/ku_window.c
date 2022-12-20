@@ -330,8 +330,8 @@ ku_rect_t ku_window_update(ku_window_t* win, uint32_t time)
 
 	if (view->texture.changed)
 	{
-	    result                = ku_rect_add(result, view->frame.global);
-	    view->texture.changed = 0;
+	    result = ku_rect_add(result, view->frame.global);
+	    /* view->texture.changed = 0; */
 	}
 	else if (view->frame.dim_changed)
 	{

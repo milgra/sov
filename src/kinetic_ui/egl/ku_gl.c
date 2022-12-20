@@ -261,7 +261,8 @@ void ku_gl_add_textures(mt_vector_t* views, int force)
 		/* did it's size change */
 		if (view->texture.bitmap->w != coords.w || view->texture.bitmap->h != coords.h || force)
 		{
-		    int success = ku_gl_atlas_put(kugl.atlas, view->id, view->texture.bitmap->w, view->texture.bitmap->h);
+		    view->texture.changed = 1;
+		    int success           = ku_gl_atlas_put(kugl.atlas, view->id, view->texture.bitmap->w, view->texture.bitmap->h);
 
 		    if (success < 0)
 		    {
@@ -290,17 +291,21 @@ void ku_gl_add_textures(mt_vector_t* views, int force)
 		    coords = ku_gl_atlas_get(kugl.atlas, view->id);
 		}
 
-		/* upload texture */
-		glTexSubImage2D(
-		    GL_TEXTURE_2D,
-		    0,
-		    coords.x,
-		    coords.y,
-		    coords.w,
-		    coords.h,
-		    GL_RGBA,
-		    GL_UNSIGNED_BYTE,
-		    view->texture.bitmap->data);
+		if (view->texture.changed == 1)
+		{
+		    view->texture.changed = 0;
+		    /* upload texture */
+		    glTexSubImage2D(
+			GL_TEXTURE_2D,
+			0,
+			coords.x,
+			coords.y,
+			coords.w,
+			coords.h,
+			GL_RGBA,
+			GL_UNSIGNED_BYTE,
+			view->texture.bitmap->data);
+		}
 	    }
 	    else
 	    {

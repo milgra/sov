@@ -128,6 +128,10 @@ struct _wl_window_t
     struct xdg_surface*  xdg_surface;  /* window surface */
     struct xdg_toplevel* xdg_toplevel; /* window info */
 
+    struct pointer_info                  pointer; /* pointer state */
+    struct zwp_pointer_gesture_pinch_v1* pinch;
+    struct wl_pointer*                   wl_pointer;
+
     /* backing buffer for native window */
 
     struct wl_buffer* buffer; /* wl buffer for surface */
@@ -171,7 +175,7 @@ void ku_wayland_delete_window(wl_window_t* info);
 void ku_wayland_request_frame(wl_window_t* info);
 
 void ku_wayland_exit();
-void ku_wayland_toggle_fullscreen();
+void ku_wayland_toggle_fullscreen(wl_window_t* window);
 void ku_wayland_set_time_event_delay(int ms);
 
 #endif
@@ -214,12 +218,7 @@ struct wlc_t
     struct monitor_info** monitors;
     wl_window_t**         windows;
 
-    /* TODO remove current monitor */
-
-    struct monitor_info* monitor; /* current monitor */
-
     struct keyboard_info keyboard; /* keyboard state */
-    struct pointer_info  pointer;  /* pointer state */
 
     /* time event control */
 
@@ -461,7 +460,6 @@ static void ku_wayland_layer_surface_configure(void* data, struct zwlr_layer_sur
     {
 	if (info->width != width || info->height != height)
 	{
-	    printf("RESZE\n");
 	    info->width         = width;
 	    info->height        = height;
 	    info->buffer_width  = info->width * info->scale;
@@ -601,7 +599,7 @@ static void wl_surface_enter(void* userData, struct wl_surface* surface, struct 
 
 	if (monitor->wl_output == output)
 	{
-	    mt_log_debug("output name %s %i %i", monitor->name, monitor->scale, info->scale);
+	    mt_log_debug("output name %s monitor scale %i info scale %i", monitor->name, monitor->scale, info->scale);
 
 	    info->monitor       = monitor;
 	    info->scale         = monitor->scale;
@@ -1008,25 +1006,42 @@ static void gesture_pinch_begin(void* data, struct zwp_pointer_gesture_pinch_v1*
     /* emit_gesture_pinch_event(seat, GDK_TOUCHPAD_GESTURE_PHASE_BEGIN, time, fingers, 0, 0, 1, 0); */
     /* seat->gesture_n_fingers = fingers; */
 
-    wlc.pointer.scale = 1.0;
+    for (int index = 0; index < wlc.window_count; index++)
+    {
+	wl_window_t* window = wlc.windows[index];
+
+	if (window->surface == surface && window->monitor)
+	{
+	    window->pinch         = pinch;
+	    window->pointer.scale = 1.0;
+	}
+    }
 }
 
 static void gesture_pinch_update(void* data, struct zwp_pointer_gesture_pinch_v1* pinch, uint32_t time, wl_fixed_t dx, wl_fixed_t dy, wl_fixed_t scale, wl_fixed_t rotation)
 {
     /* mt_log_debug("pinch dx %f dy %f scale %f rotation %f", wl_fixed_to_double(dx), wl_fixed_to_double(dy), wl_fixed_to_double(scale), wl_fixed_to_double(rotation)); */
 
-    float delta       = wl_fixed_to_double(scale) - wlc.pointer.scale;
-    wlc.pointer.scale = wl_fixed_to_double(scale);
+    for (int index = 0; index < wlc.window_count; index++)
+    {
+	wl_window_t* window = wlc.windows[index];
 
-    ku_event_t event = init_event();
-    event.type       = KU_EVENT_PINCH;
-    event.x          = wlc.pointer.px;
-    event.y          = wlc.pointer.py;
-    event.ratio      = delta;
-    event.ctrl_down  = wlc.keyboard.control;
-    event.shift_down = wlc.keyboard.shift;
+	if (window->pinch == pinch)
+	{
+	    float delta           = wl_fixed_to_double(scale) - window->pointer.scale;
+	    window->pointer.scale = wl_fixed_to_double(scale);
 
-    (*wlc.update)(event);
+	    ku_event_t event = init_event();
+	    event.type       = KU_EVENT_PINCH;
+	    event.x          = window->pointer.px;
+	    event.y          = window->pointer.py;
+	    event.ratio      = delta;
+	    event.ctrl_down  = wlc.keyboard.control;
+	    event.shift_down = wlc.keyboard.shift;
+
+	    (*wlc.update)(event);
+	}
+    }
 }
 
 static void gesture_pinch_end(void* data, struct zwp_pointer_gesture_pinch_v1* pinch, uint32_t serial, uint32_t time, int32_t cancelled)
@@ -1043,8 +1058,7 @@ static const struct zwp_pointer_gesture_pinch_v1_listener gesture_pinch_listener
 
 void ku_wayland_pointer_handle_enter(void* data, struct wl_pointer* wl_pointer, uint serial, struct wl_surface* surface, wl_fixed_t surface_x, wl_fixed_t surface_y)
 {
-    /* mt_log_debug("pointer handle enter"); */
-    /* TODO assign pointer to surface and dispatch to corresponding window/layer */
+    /* mt_log_debug("pointer handle enter %zu", (size_t) wl_pointer); */
 
     struct wl_buffer*       buffer;
     struct wl_cursor*       cursor = wlc.default_cursor;
@@ -1065,19 +1079,21 @@ void ku_wayland_pointer_handle_enter(void* data, struct wl_pointer* wl_pointer, 
     {
 	wl_window_t* window = wlc.windows[index];
 
-	if (window->surface == surface)
+	if (window->surface == surface && window->monitor)
 	{
+	    window->wl_pointer = wl_pointer;
+
 	    ku_event_t event = init_event();
 	    event.type       = KU_EVENT_MOUSE_MOVE;
-	    event.drag       = wlc.pointer.drag;
-	    event.x          = (int) wl_fixed_to_double(surface_x) * wlc.monitor->scale;
-	    event.y          = (int) wl_fixed_to_double(surface_y) * wlc.monitor->scale;
+	    event.drag       = window->pointer.drag;
+	    event.x          = (int) wl_fixed_to_double(surface_x) * window->monitor->scale;
+	    event.y          = (int) wl_fixed_to_double(surface_y) * window->monitor->scale;
 	    event.ctrl_down  = wlc.keyboard.control;
 	    event.shift_down = wlc.keyboard.shift;
 	    event.window     = (void*) window;
 
-	    wlc.pointer.px = event.x;
-	    wlc.pointer.py = event.y;
+	    window->pointer.px = event.x;
+	    window->pointer.py = event.y;
 
 	    (*wlc.update)(event);
 	}
@@ -1086,7 +1102,7 @@ void ku_wayland_pointer_handle_enter(void* data, struct wl_pointer* wl_pointer, 
 
 void ku_wayland_pointer_handle_leave(void* data, struct wl_pointer* wl_pointer, uint serial, struct wl_surface* surface)
 {
-    /* mt_log_debug("pointer handle leave"); */
+    /* mt_log_debug("pointer handle leave %zu", (size_t) wl_pointer); */
 
     for (int index = 0; index < wlc.window_count; index++)
     {
@@ -1096,15 +1112,15 @@ void ku_wayland_pointer_handle_leave(void* data, struct wl_pointer* wl_pointer, 
 	{
 	    ku_event_t event = init_event();
 	    event.type       = KU_EVENT_MOUSE_MOVE;
-	    event.drag       = wlc.pointer.drag;
+	    event.drag       = window->pointer.drag;
 	    event.x          = -100;
 	    event.y          = -100;
 	    event.ctrl_down  = wlc.keyboard.control;
 	    event.shift_down = wlc.keyboard.shift;
 	    event.window     = (void*) window;
 
-	    wlc.pointer.px = event.x;
-	    wlc.pointer.py = event.y;
+	    window->pointer.px = event.x;
+	    window->pointer.py = event.y;
 
 	    (*wlc.update)(event);
 	}
@@ -1113,69 +1129,95 @@ void ku_wayland_pointer_handle_leave(void* data, struct wl_pointer* wl_pointer, 
 
 void ku_wayland_pointer_handle_motion(void* data, struct wl_pointer* wl_pointer, uint time, wl_fixed_t surface_x, wl_fixed_t surface_y)
 {
-    /* mt_log_debug("pointer handle motion %f %f", wl_fixed_to_double(surface_x), wl_fixed_to_double(surface_y)); */
+    /* mt_log_debug("pointer handle motion %zu %f %f", (size_t) wl_pointer, wl_fixed_to_double(surface_x), wl_fixed_to_double(surface_y)); */
 
-    wlc.pointer.drag = wlc.pointer.down;
+    for (int index = 0; index < wlc.window_count; index++)
+    {
+	wl_window_t* window = wlc.windows[index];
 
-    ku_event_t event = init_event();
-    event.type       = KU_EVENT_MOUSE_MOVE;
-    event.drag       = wlc.pointer.drag;
-    event.x          = (int) wl_fixed_to_double(surface_x) * wlc.monitor->scale;
-    event.y          = (int) wl_fixed_to_double(surface_y) * wlc.monitor->scale;
-    event.ctrl_down  = wlc.keyboard.control;
-    event.shift_down = wlc.keyboard.shift;
+	if (window->wl_pointer == wl_pointer && window->monitor)
+	{
+	    window->pointer.drag = window->pointer.down;
 
-    wlc.pointer.px = event.x;
-    wlc.pointer.py = event.y;
+	    ku_event_t event = init_event();
+	    event.type       = KU_EVENT_MOUSE_MOVE;
+	    event.drag       = window->pointer.drag;
+	    event.x          = (int) wl_fixed_to_double(surface_x) * window->monitor->scale;
+	    event.y          = (int) wl_fixed_to_double(surface_y) * window->monitor->scale;
+	    event.ctrl_down  = wlc.keyboard.control;
+	    event.shift_down = wlc.keyboard.shift;
 
-    (*wlc.update)(event);
+	    window->pointer.px = event.x;
+	    window->pointer.py = event.y;
+
+	    (*wlc.update)(event);
+	}
+    }
 }
 
 void ku_wayland_pointer_handle_button(void* data, struct wl_pointer* wl_pointer, uint serial, uint time, uint button, uint state)
 {
     /* mt_log_debug("pointer handle button %u state %u time %u", button, state, time); */
 
-    ku_event_t event = init_event();
-    event.x          = wlc.pointer.px;
-    event.y          = wlc.pointer.py;
-    event.button     = button == 272 ? 1 : 3;
-    event.ctrl_down  = wlc.keyboard.control;
-    event.shift_down = wlc.keyboard.shift;
-
-    if (state)
+    for (int index = 0; index < wlc.window_count; index++)
     {
-	uint delay           = time - wlc.pointer.lastdown;
-	wlc.pointer.lastdown = time;
+	wl_window_t* window = wlc.windows[index];
 
-	event.dclick     = delay < 300;
-	event.type       = KU_EVENT_MOUSE_DOWN;
-	wlc.pointer.down = 1;
-    }
-    else
-    {
-	event.type       = KU_EVENT_MOUSE_UP;
-	event.drag       = wlc.pointer.drag;
-	wlc.pointer.drag = 0;
-	wlc.pointer.down = 0;
-    }
+	if (window->wl_pointer == wl_pointer)
+	{
+	    window->pointer.drag = window->pointer.down;
 
-    (*wlc.update)(event);
+	    ku_event_t event = init_event();
+	    event.x          = window->pointer.px;
+	    event.y          = window->pointer.py;
+	    event.button     = button == 272 ? 1 : 3;
+	    event.ctrl_down  = wlc.keyboard.control;
+	    event.shift_down = wlc.keyboard.shift;
+
+	    if (state)
+	    {
+		uint delay               = time - window->pointer.lastdown;
+		window->pointer.lastdown = time;
+
+		event.dclick         = delay < 300;
+		event.type           = KU_EVENT_MOUSE_DOWN;
+		window->pointer.down = 1;
+	    }
+	    else
+	    {
+		event.type           = KU_EVENT_MOUSE_UP;
+		event.drag           = window->pointer.drag;
+		window->pointer.drag = 0;
+		window->pointer.down = 0;
+	    }
+
+	    (*wlc.update)(event);
+	}
+    }
 }
 
 void ku_wayland_pointer_handle_axis(void* data, struct wl_pointer* wl_pointer, uint time, uint axis, wl_fixed_t value)
 {
     /* mt_log_debug("pointer handle axis %u %i", axis, value); */
 
-    ku_event_t event = init_event();
-    event.type       = KU_EVENT_SCROLL;
-    event.x          = wlc.pointer.px;
-    event.y          = wlc.pointer.py;
-    event.dx         = axis == 1 ? (float) value / 200.0 : 0;
-    event.dy         = axis == 0 ? (float) -value / 200.0 : 0;
-    event.ctrl_down  = wlc.keyboard.control;
-    event.shift_down = wlc.keyboard.shift;
+    for (int index = 0; index < wlc.window_count; index++)
+    {
+	wl_window_t* window = wlc.windows[index];
 
-    (*wlc.update)(event);
+	if (window->wl_pointer == wl_pointer)
+	{
+	    ku_event_t event = init_event();
+	    event.type       = KU_EVENT_SCROLL;
+	    event.x          = window->pointer.px;
+	    event.y          = window->pointer.py;
+	    event.dx         = axis == 1 ? (float) value / 200.0 : 0;
+	    event.dy         = axis == 0 ? (float) -value / 200.0 : 0;
+	    event.ctrl_down  = wlc.keyboard.control;
+	    event.shift_down = wlc.keyboard.shift;
+
+	    (*wlc.update)(event);
+	}
+    }
 }
 
 void ku_wayland_pointer_handle_frame(void* data, struct wl_pointer* wl_pointer)
@@ -1669,9 +1711,6 @@ void ku_wayland_init(
 
 	    (*wlc.init)(event);
 
-	    /* TODO remove this after binding pointer events to surfaces */
-	    wlc.monitor = wlc.monitors[0];
-
 	    /* file descriptors */
 	    struct pollfd fds[] = {
 		{.fd = wl_display_get_fd(wlc.display), .events = POLLIN},
@@ -1775,19 +1814,18 @@ void ku_wayland_exit()
 }
 
 /* request fullscreen */
-/* TODO connect this with the corresponding window */
 
-void ku_wayland_toggle_fullscreen()
+void ku_wayland_toggle_fullscreen(wl_window_t* window)
 {
     if (wlc.windows[0]->fullscreen == 0)
     {
-	xdg_toplevel_set_fullscreen(wlc.windows[0]->xdg_toplevel, wlc.monitor->wl_output);
-	wlc.windows[0]->fullscreen = 1;
+	xdg_toplevel_set_fullscreen(window->xdg_toplevel, window->monitor->wl_output);
+	window->fullscreen = 1;
     }
     else
     {
-	xdg_toplevel_unset_fullscreen(wlc.windows[0]->xdg_toplevel);
-	wlc.windows[0]->fullscreen = 0;
+	xdg_toplevel_unset_fullscreen(window->xdg_toplevel);
+	window->fullscreen = 0;
     }
     wl_display_flush(wlc.display);
 }

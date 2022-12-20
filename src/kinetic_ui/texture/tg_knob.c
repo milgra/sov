@@ -26,6 +26,13 @@ void tg_knob_gen(ku_view_t* view)
 
     if (view->frame.local.w > 0 && view->frame.local.h > 0)
     {
+
+	float dist0 = 5 * view->style.scale;
+	float dist1 = 27 * view->style.scale;
+	float dist8 = 28 * view->style.scale;
+	float dist2 = 31 * view->style.scale;
+	float dist3 = 35 * view->style.scale;
+
 	if (view->texture.bitmap == NULL && view->frame.local.w > 0 && view->frame.local.h > 0)
 	{
 	    ku_bitmap_t* bmp = ku_bitmap_new(view->frame.local.w, view->frame.local.h); // REL 0
@@ -47,12 +54,12 @@ void tg_knob_gen(ku_view_t* view)
 	    /*              0x00000044, */
 	    /*              0); */
 
-	    ku_draw_arc_grad(tg->back, (view->frame.local.w - 1.0) / 2.0, (view->frame.local.h - 1.0) / 2.0, 0, (view->frame.local.w / 2.0) - 5.0, 0, 3.14 * 2, basecol, basecol);
-	    ku_draw_arc_grad(tg->back, (view->frame.local.w - 1.0) / 2.0, (view->frame.local.h - 1.0) / 2.0, 27, 35, 0, 3.14 * 2, outercol, outercol);
-	    ku_draw_arc_grad(tg->back, (view->frame.local.w - 1.0) / 2.0, (view->frame.local.h - 1.0) / 2.0, (view->frame.local.w / 2.0) - 5.0, (view->frame.local.w / 2.0) - 2.0, 0, 3.14 * 2, shadowcol, 0x00000000);
+	    ku_draw_arc_grad(tg->back, (view->frame.local.w - 1.0) / 2.0, (view->frame.local.h - 1.0) / 2.0, 0, (view->frame.local.w / 2.0) - dist0, 0, 3.14 * 2, basecol, basecol);
+	    ku_draw_arc_grad(tg->back, (view->frame.local.w - 1.0) / 2.0, (view->frame.local.h - 1.0) / 2.0, dist1, dist3, 0, 3.14 * 2, outercol, outercol);
+	    ku_draw_arc_grad(tg->back, (view->frame.local.w - 1.0) / 2.0, (view->frame.local.h - 1.0) / 2.0, (view->frame.local.w / 2.0) - dist0, (view->frame.local.w / 2.0) - 2.0, 0, 3.14 * 2, shadowcol, 0x00000000);
 
-	    ku_draw_arc_grad(tg->fore, (view->frame.local.w - 1.0) / 2.0, (view->frame.local.h - 1.0) / 2.0, 27.0, 31.0, 0, 3.14 * 2, shadowcol, 0);
-	    ku_draw_arc_grad(tg->fore, (view->frame.local.w - 1.0) / 2.0, (view->frame.local.h - 1.0) / 2.0, 0, 28.0, 0, 3.14 * 2, centercol, centercol);
+	    ku_draw_arc_grad(tg->fore, (view->frame.local.w - 1.0) / 2.0, (view->frame.local.h - 1.0) / 2.0, dist1, dist2, 0, 3.14 * 2, shadowcol, 0);
+	    ku_draw_arc_grad(tg->fore, (view->frame.local.w - 1.0) / 2.0, (view->frame.local.h - 1.0) / 2.0, 0, dist8, 0, 3.14 * 2, centercol, centercol);
 	    ku_view_set_texture_bmp(view, bmp);
 
 	    REL(bmp); // REL 0
@@ -64,12 +71,12 @@ void tg_knob_gen(ku_view_t* view)
 
 	if (tg->angle > 3.14 * 3 / 2)
 	{
-	    ku_draw_arc_grad(view->texture.bitmap, (view->frame.local.w - 1.0) / 2.0, (view->frame.local.h - 1.0) / 2.0, 27.0, 35.0, 3.14 * 3 / 2, tg->angle, 0x999999FF, 0x999999FF);
+	    ku_draw_arc_grad(view->texture.bitmap, (view->frame.local.w - 1.0) / 2.0, (view->frame.local.h - 1.0) / 2.0, dist1, dist3, 3.14 * 3 / 2, tg->angle, 0x999999FF, 0x999999FF);
 	}
 	else
 	{
-	    ku_draw_arc_grad(view->texture.bitmap, (view->frame.local.w - 1.0) / 2.0, (view->frame.local.h - 1.0) / 2.0, 27.0, 35.0, 3.14 * 3 / 2, 6.28, 0x999999FF, 0x999999FF);
-	    ku_draw_arc_grad(view->texture.bitmap, (view->frame.local.w - 1.0) / 2.0, (view->frame.local.h - 1.0) / 2.0, 27.0, 35.0, 0, tg->angle, 0x999999FF, 0x999999FF);
+	    ku_draw_arc_grad(view->texture.bitmap, (view->frame.local.w - 1.0) / 2.0, (view->frame.local.h - 1.0) / 2.0, dist1, dist3, 3.14 * 3 / 2, 6.28, 0x999999FF, 0x999999FF);
+	    ku_draw_arc_grad(view->texture.bitmap, (view->frame.local.w - 1.0) / 2.0, (view->frame.local.h - 1.0) / 2.0, dist1, dist3, 0, tg->angle, 0x999999FF, 0x999999FF);
 	}
 
 	ku_draw_blend_argb(view->texture.bitmap, 0, 0, tg->fore);

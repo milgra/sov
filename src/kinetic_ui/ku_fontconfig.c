@@ -46,6 +46,7 @@ char* ku_fontconfig_path(char* face_desc)
 void ku_fontconfig_delete()
 {
     if (ku_fontconfig_cache) REL(ku_fontconfig_cache);
+    ku_fontconfig_cache = NULL;
 }
 
 #endif

@@ -8,6 +8,7 @@
 
 /* TODO write tests */
 
+#include "mt_log.c"
 #include "mt_map.c"
 #include "mt_string.c"
 #include "mt_vector.c"
@@ -119,38 +120,43 @@ prop_t* ku_css_new_parse(char* css)
 
 mt_map_t* ku_css_new(char* filepath)
 {
-    char*     css         = mt_string_new_file(filepath); // REL 0
-    prop_t*   view_styles = ku_css_new_parse(css);        // REL 1
-    mt_map_t* styles      = MNEW();                       // REL 2
-    prop_t*   props       = view_styles;
+    mt_map_t* styles = MNEW();                       // REL 2
+    char*     css    = mt_string_new_file(filepath); // REL 0
 
-    while ((*props).class.len > 0)
+    if (css)
     {
-	prop_t t   = *props;
-	char*  cls = CAL(sizeof(char) * t.class.len + 1, NULL, mt_string_describe); // REL 3
-	char*  key = CAL(sizeof(char) * t.key.len + 1, NULL, mt_string_describe);   // REL 4
-	char*  val = CAL(sizeof(char) * t.value.len + 1, NULL, mt_string_describe); // REL 5
+	prop_t* view_styles = ku_css_new_parse(css); // REL 1
+	prop_t* props       = view_styles;
 
-	memcpy(cls, css + t.class.pos, t.class.len);
-	memcpy(key, css + t.key.pos, t.key.len);
-	memcpy(val, css + t.value.pos, t.value.len);
-
-	mt_map_t* style = MGET(styles, cls);
-	if (style == NULL)
+	while ((*props).class.len > 0)
 	{
-	    style = MNEW(); // REL 6
-	    MPUT(styles, cls, style);
-	    REL(style); // REL 6
-	}
-	MPUT(style, key, val);
-	props += 1;
-	REL(cls); // REL 3
-	REL(key); // REL 4
-	REL(val); // REL 5
-    }
+	    prop_t t   = *props;
+	    char*  cls = CAL(sizeof(char) * t.class.len + 1, NULL, mt_string_describe); // REL 3
+	    char*  key = CAL(sizeof(char) * t.key.len + 1, NULL, mt_string_describe);   // REL 4
+	    char*  val = CAL(sizeof(char) * t.value.len + 1, NULL, mt_string_describe); // REL 5
 
-    REL(view_styles);
-    REL(css);
+	    memcpy(cls, css + t.class.pos, t.class.len);
+	    memcpy(key, css + t.key.pos, t.key.len);
+	    memcpy(val, css + t.value.pos, t.value.len);
+
+	    mt_map_t* style = MGET(styles, cls);
+	    if (style == NULL)
+	    {
+		style = MNEW(); // REL 6
+		MPUT(styles, cls, style);
+		REL(style); // REL 6
+	    }
+	    MPUT(style, key, val);
+	    props += 1;
+	    REL(cls); // REL 3
+	    REL(key); // REL 4
+	    REL(val); // REL 5
+	}
+
+	REL(view_styles);
+	REL(css);
+    }
+    else mt_log_error("Empty CSS descriptor");
 
     return styles;
 }
