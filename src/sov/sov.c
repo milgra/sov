@@ -36,6 +36,8 @@ struct sov
     int   ratio;
     char* anchor;
     int   margin;
+
+    int shown;
 } sov = {0};
 
 /* asks for sway workspaces and tree */
@@ -73,6 +75,7 @@ void init(wl_event_t event)
 
 void create_layers()
 {
+    sov.shown = 1;
     ku_wayland_set_time_event_delay(0);
 
     if (sov.workspaces == NULL) sov.workspaces = VNEW(); // REL 0
@@ -175,6 +178,7 @@ void update(ku_event_t ev)
 	{
 	    ku_wayland_set_time_event_delay(0);
 	    sov.request = 0;
+	    sov.shown   = 0;
 
 	    if (sov.wlwindows->length > 0)
 	    {
@@ -195,6 +199,29 @@ void update(ku_event_t ev)
 		ku_wayland_set_time_event_delay(sov.timeout);
 	}
 	else if (ev.text[0] == '2')
+	{
+	    if (sov.shown == 0)
+	    {
+		create_layers();
+	    }
+	    else
+	    {
+		sov.shown = 0;
+		ku_wayland_set_time_event_delay(0);
+		sov.request = 0;
+
+		if (sov.wlwindows->length > 0)
+		{
+		    for (int w = 0; w < sov.wlwindows->length; w++)
+		    {
+			wl_window_t* window = sov.wlwindows->data[w];
+			ku_wayland_delete_window(window);
+		    }
+		    mt_vector_reset(sov.wlwindows);
+		}
+	    }
+	}
+	else if (ev.text[0] == '3')
 	{
 	    ku_wayland_exit();
 	}

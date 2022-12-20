@@ -64,7 +64,7 @@ sudo ninja -C build install
 
 ## Usage
 
-Launch sov in a terminal, enter 0 to hide, 1 to show, 2 to quit sov, press return.
+Launch sov in a terminal, enter 0 to hide, 1 to show, 2 to toggle, 3 to quit sov, press return.
 
 ```
 sov
