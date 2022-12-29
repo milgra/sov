@@ -8,13 +8,13 @@ project(
 
 cc = meson.get_compiler('c')
 
-png = cc.find_library('png')
-freetype = cc.find_library('freetype')
-math = cc.find_library('m')
 gl = cc.find_library('GL')
 egl = cc.find_library('EGL')
+png = cc.find_library('png')
 glew = cc.find_library('GLEW')
+math = cc.find_library('m')
 wegl = cc.find_library('wayland-egl')
+freetype = cc.find_library('freetype')
 
 xkbcommon = dependency('xkbcommon')
 
