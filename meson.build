@@ -91,6 +91,13 @@ sov_inc = include_directories(
 	'src/sov',
 	'src/mt_core_ext')
 
+if build_machine.system() == 'freebsd'
+   sov_inc = sov_inc +
+   	   /usr/local/include +
+	   /usr/local/include/GLES2 +
+	   /usr/local/include/EGL +
+	   /usr/local/include/freetype2
+endif
 
 com_sources = ['src/sov/jsmn.c',
 	       'src/sov/json.c',
