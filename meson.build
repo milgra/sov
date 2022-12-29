@@ -66,6 +66,11 @@ sov_dependencies = [wayland_client,
 		    egl,
 		    wegl]
 
+if build_machine.system() == 'freebsd'
+   epoll = cc.find_library('epoll-shim')
+   sov_dependencies += epoll
+endif
+
 sov_version = '"@0@"'.format(meson.project_version())
 pkg_datadir = join_paths(get_option('prefix'), get_option('datadir')) / 'sov'
 add_project_arguments('-DPKG_DATADIR="' + pkg_datadir + '"',
