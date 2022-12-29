@@ -4,6 +4,7 @@
 /* TODO refactor, remove unused functions */
 
 #include <stdint.h>
+#include <limits.h>
 #ifdef __linux__ 
 #include <linux/limits.h>
 #endif

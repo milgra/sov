@@ -2,6 +2,7 @@
 #define ku_view_h
 
 #include <math.h>
+#include <limits.h>
 #ifdef __linux__ 
 #include <linux/limits.h>
 #endif
