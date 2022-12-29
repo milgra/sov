@@ -92,11 +92,21 @@ sov_inc = include_directories(
 	'src/mt_core_ext')
 
 if build_machine.system() == 'freebsd'
-   sov_inc = sov_inc +
-   	   /usr/local/include +
-	   /usr/local/include/GLES2 +
-	   /usr/local/include/EGL +
-	   /usr/local/include/freetype2
+   sov_inc = [
+   	   sov_inc,
+	   include_directories( 
+   	   '/usr/local/include',
+	   '/usr/local/include/GLES2',
+	   '/usr/local/include/EGL',
+	   '/usr/local/include/freetype2')]
+else
+   sov_inc = [
+   	   sov_inc,
+	   include_directories( 
+   	   '/usr/include',
+	   '/usr/include/GLES2',
+	   '/usr/include/EGL',
+	   '/usr/include/freetype2')]
 endif
 
 com_sources = ['src/sov/jsmn.c',
