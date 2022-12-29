@@ -78,10 +78,6 @@ if get_option('buildtype') == 'debug'
 endif
 
 sov_inc = include_directories(
-	'/usr/include',
-	'/usr/include/GLES2',
-	'/usr/include/EGL',
-	'/usr/include/freetype2',
 	'src/mt_math',
 	'src/mt_core',
 	'src/kinetic_ui',
