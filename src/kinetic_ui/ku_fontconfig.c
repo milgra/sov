@@ -8,12 +8,15 @@ void  ku_fontconfig_delete();
 
 #if __INCLUDE_LEVEL__ == 0
 
+#include <limits.h>
+#ifdef __linux__ 
+#include <linux/limits.h>
+#endif
+
 #define _POSIX_C_SOURCE 200112L
 #include "mt_map.c"
 #include "mt_memory.c"
 #include "mt_string.c"
-#include <limits.h>
-#include <linux/limits.h>
 #include <stdio.h>
 #include <string.h>
 

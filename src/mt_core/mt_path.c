@@ -16,10 +16,13 @@ char* mt_path_new_normalize1(char* path);
 
 #if __INCLUDE_LEVEL__ == 0
 
-#include "mt_memory.c"
 #include <limits.h>
-#include <linux/limits.h>
 #include <string.h>
+#ifdef __linux__ 
+#include <linux/limits.h>
+#endif
+
+#include "mt_memory.c"
 
 char* mt_path_new_append(char* root, char* component)
 {

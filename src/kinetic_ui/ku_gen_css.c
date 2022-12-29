@@ -10,10 +10,13 @@ void ku_gen_css_apply(mt_vector_t* views, char* csspath, char* imgpath);
 
 #if __INCLUDE_LEVEL__ == 0
 
+#include <limits.h>
+#ifdef __linux__ 
+#include <linux/limits.h>
+#endif
+
 #include "ku_css.c"
 #include "mt_log.c"
-#include <limits.h>
-#include <linux/limits.h>
 
 void ku_gen_css_apply_style(ku_view_t* view, mt_map_t* style, char* imgpath)
 {

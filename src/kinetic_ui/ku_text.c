@@ -3,9 +3,12 @@
 
 /* TODO refactor, remove unused functions */
 
-#include "ku_bitmap.c"
-#include <linux/limits.h>
 #include <stdint.h>
+#ifdef __linux__ 
+#include <linux/limits.h>
+#endif
+
+#include "ku_bitmap.c"
 
 typedef enum _textalign_t
 {

@@ -1,12 +1,15 @@
 #ifndef ku_view_h
 #define ku_view_h
 
+#include <math.h>
+#ifdef __linux__ 
+#include <linux/limits.h>
+#endif
+
 #include "ku_bitmap.c"
 #include "ku_event.c"
 #include "ku_rect.c"
 #include "mt_vector.c"
-#include <linux/limits.h>
-#include <math.h>
 
 #define GETV(V, ID) ku_view_get_subview(V, ID)
 
