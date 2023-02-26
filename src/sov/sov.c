@@ -38,6 +38,7 @@ struct sov
     int   margin;
 
     int shown;
+    int use_name;
 } sov = {0};
 
 /* asks for sway workspaces and tree */
@@ -142,8 +143,9 @@ void update(ku_event_t ev)
 	    if (strcmp(ws->output, info->monitor->name) == 0) VADD(workspaces, ws);
 	}
 
-	int cols = sov.columns;
-	int rows = (int) ceilf((float) workspaces->length / cols);
+	int cols     = sov.columns;
+	int rows     = (int) ceilf((float) workspaces->length / cols);
+	int use_name = sov.use_name;
 
 	mt_log_debug(
 	    "Drawing layer %s : workspaces %i cols %i rows %i ratio %i",
@@ -159,6 +161,7 @@ void update(ku_event_t ev)
 	    (float) info->monitor->scale,
 	    cols,
 	    rows,
+	    use_name,
 	    workspaces,
 	    &info->bitmap);
 
@@ -257,6 +260,7 @@ int main(int argc, char** argv)
 	"  -h, --help                            Show help message and quit.\n"
 	"  -v                                    Increase verbosity of messages, defaults to errors and warnings only.\n"
 	"  -s,                                   Location of html folder for styling.\n"
+	"  -n,                                   Use workspace name instead of workspace number.\n"
 	"  -c, --columns=[columns]               Number of thumbnail columns\n"
 	"  -a, --anchor=[lrtb]                   Anchor window to window edge in directions, use rt for right top\n"
 	"  -m, --margin=[size]                   Margin\n"
@@ -285,7 +289,7 @@ int main(int argc, char** argv)
 	{"ratio", optional_argument, NULL, 's'},
 	{"timeout", optional_argument, NULL, 'r'}};
 
-    while ((c = getopt_long(argc, argv, "vho:r:s:a:m:t:c:", long_options, &option_index)) != -1)
+    while ((c = getopt_long(argc, argv, "vhno:r:s:a:m:t:c:", long_options, &option_index)) != -1)
     {
 	switch (c)
 	{
@@ -304,6 +308,7 @@ int main(int argc, char** argv)
 	    case 'm': mrg_par = mt_string_new_cstring(optarg); break;
 	    case 'c': sov.columns = atoi(optarg); break;
 	    case 'r': sov.ratio = atoi(optarg); break;
+	    case 'n': sov.use_name = 1; break;
 	    default: fprintf(stderr, "%s", usage); return EXIT_FAILURE;
 	}
     }
@@ -350,6 +355,7 @@ int main(int argc, char** argv)
     printf("margin        : %i\n", sov.margin);
     printf("timeout       : %i\n", sov.timeout);
     printf("columns       : %i\n", sov.columns);
+    printf("use_name      : %s\n", sov.use_name ? "true" : "false");
 
     sov.wlwindows = VNEW();
 

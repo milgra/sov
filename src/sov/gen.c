@@ -6,7 +6,7 @@
 #include "mt_vector.c"
 
 void gen_init(char* html_path, char* css_path, char* img_path);
-void gen_render(int twidth, int theight, float scale, int cols, int rows, mt_vector_t* workspaces, ku_bitmap_t* bitmap);
+void gen_render(int twidth, int theight, float scale, int cols, int rows, int use_name, mt_vector_t* workspaces, ku_bitmap_t* bitmap);
 void gen_destroy();
 void gen_calc_size(int twidth, int theight, float scale, int cols, int rows, int* width, int* height);
 
@@ -106,6 +106,7 @@ void gen_render(
     float        scale,
     int          cols,
     int          rows,
+    int          use_name,
     mt_vector_t* workspaces,
     ku_bitmap_t* bitmap)
 {
@@ -162,8 +163,13 @@ void gen_render(
 
 		char numname[100] = {0};
 		char numnumb[10]  = {0};
+
 		snprintf(numname, 100, "number%i%i", wsi, 0);
-		snprintf(numnumb, 10, "%i", ws->number);
+		if (use_name)
+		    snprintf(numnumb, 10, "%s", ws->name);
+		else
+		    snprintf(numnumb, 10, "%i", ws->number);
+
 		ku_view_t* numview = ku_view_new(numname, (ku_rect_t){0, 0, number->frame.local.w, number->frame.local.h});
 		numview->style     = number->style;
 		tg_text_add(numview);
