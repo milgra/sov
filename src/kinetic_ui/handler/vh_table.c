@@ -37,8 +37,9 @@ typedef struct _vh_table_event_t
 struct _vh_table_t
 {
     char*      id;  // unique id for item generation
-    uint32_t   cnt; // item count for item generation
+    size_t     cnt; // item count for item generation
     ku_view_t* view;
+    int        show_selected; // use selected style for selected views
 
     mt_vector_t* items;  // data items
     mt_vector_t* cache;  // item cache
@@ -78,6 +79,10 @@ void vh_table_show_scrollbar(
     ku_view_t* view,
     int        flag);
 
+void vh_table_show_selected(
+    ku_view_t* view,
+    int        flag);
+
 mt_vector_t* vh_table_get_fields(
     ku_view_t* view);
 
@@ -104,17 +109,17 @@ mt_vector_t* vh_table_get_fields(
 void vh_table_head_update_cells(vh_table_t* vh, int fixed_index, int fixed_pos)
 {
     float scale = vh->body_v->style.scale;
-    for (int ri = 0; ri < vh->body_v->views->length; ri++)
+    for (size_t ri = 0; ri < vh->body_v->views->length; ri++)
     {
 	ku_view_t* rowview = vh->body_v->views->data[ri];
 	float      wth     = 0;
 
-	for (int ci = 0; ci < rowview->views->length; ci++)
+	for (size_t ci = 0; ci < rowview->views->length; ci++)
 	{
 	    ku_view_t*   cellview = rowview->views->data[ci];
 	    ku_rect_t    frame    = cellview->frame.local;
 	    mt_number_t* sizep    = vh->fields->data[ci * 2 + 1];
-	    frame.x               = ci == fixed_index ? (float) fixed_pos : wth;
+	    frame.x               = (int32_t) ci == fixed_index ? (float) fixed_pos : wth;
 	    frame.w               = (float) sizep->intv * scale;
 	    ku_view_set_frame(cellview, frame);
 	    wth += (frame.w + 2) * scale;
@@ -183,7 +188,7 @@ void vh_table_head_reorder(ku_view_t* hview, int ind1, int ind2, void* userdata)
 	vh->fields->data[ind2 * 2]     = field1;
 	vh->fields->data[ind2 * 2 + 1] = size1;
 
-	for (int ri = 0; ri < vh->body_v->views->length; ri++)
+	for (size_t ri = 0; ri < vh->body_v->views->length; ri++)
 	{
 	    ku_view_t* rowview = vh->body_v->views->data[ri];
 
@@ -227,7 +232,7 @@ ku_view_t* vh_table_head_create(
 
     /* create header fields/cells */
 
-    for (int i = 0; i < vh->fields->length; i += 2)
+    for (size_t i = 0; i < vh->fields->length; i += 2)
     {
 	char*        field    = vh->fields->data[i];
 	mt_number_t* size     = vh->fields->data[i + 1];
@@ -269,7 +274,7 @@ ku_view_t* vh_table_item_create(
 
     if (vh->items)
     {
-	if (index > -1 && index < vh->items->length)
+	if (index > -1 && index < (int32_t) vh->items->length)
 	{
 	    mt_map_t* data = vh->items->data[index];
 
@@ -277,7 +282,7 @@ ku_view_t* vh_table_item_create(
 	    {
 		/* get cached item */
 		rowview = RET(vh->cache->data[0]);
-		mt_vector_rem_at_index(vh->cache, 0);
+		mt_vector_rem_index(vh->cache, 0);
 	    }
 	    else
 	    {
@@ -291,7 +296,7 @@ ku_view_t* vh_table_item_create(
 		/* create cells */
 		int wth = 0;
 
-		for (int i = 0; i < vh->fields->length; i += 2)
+		for (size_t i = 0; i < vh->fields->length; i += 2)
 		{
 		    char*        field    = vh->fields->data[i];
 		    mt_number_t* size     = vh->fields->data[i + 1];
@@ -314,16 +319,17 @@ ku_view_t* vh_table_item_create(
 	    /* select style */
 	    textstyle_t style = index % 2 == 0 ? vh->rowastyle : vh->rowbstyle;
 
-	    if (vh->selected_items->length > 0)
+	    if (vh->selected_items->length > 0 && vh->show_selected)
 	    {
-		uint32_t pos = mt_vector_index_of_data(vh->selected_items, data);
-		if (pos < UINT32_MAX) style = vh->rowsstyle;
+		size_t pos = mt_vector_index_of_data(vh->selected_items, data);
+		if (pos < SIZE_MAX)
+		    style = vh->rowsstyle;
 	    }
 
 	    /* update cells */
 	    int wth = 0;
 
-	    for (int i = 0; i < vh->fields->length; i += 2)
+	    for (size_t i = 0; i < vh->fields->length; i += 2)
 	    {
 		char*        field    = vh->fields->data[i];
 		mt_number_t* size     = vh->fields->data[i + 1];
@@ -375,26 +381,26 @@ void vh_table_evnt_event(vh_tbl_evnt_event_t event)
 
 	mt_map_t* data = vh->items->data[event.index];
 
-	uint32_t pos = mt_vector_index_of_data(vh->selected_items, data);
+	size_t pos = mt_vector_index_of_data(vh->selected_items, data);
 
 	// TODO this is duplicated in CONTEXT event, simplify
 
-	if (pos == UINT32_MAX)
+	if (pos == SIZE_MAX)
 	{
 	    /* reset selected if control is not down */
 
 	    if (!event.ev.ctrl_down)
 	    {
 		mt_vector_reset(vh->selected_items);
-		vh_tbl_body_t* bvh = vh->body_v->handler_data;
+		vh_tbl_body_t* bvh = vh->body_v->evt_han_data;
 
-		for (int index = 0; index < bvh->items->length; index++)
+		for (size_t index = 0; index < bvh->items->length; index++)
 		{
 		    ku_view_t* item = bvh->items->data[index];
 
 		    textstyle_t style = index % 2 == 0 ? vh->rowastyle : vh->rowbstyle;
 
-		    for (int i = 0; i < item->views->length; i++)
+		    for (size_t i = 0; i < item->views->length; i++)
 		    {
 			ku_view_t* cellview = item->views->data[i];
 			tg_text_set_style(cellview, style);
@@ -404,10 +410,13 @@ void vh_table_evnt_event(vh_tbl_evnt_event_t event)
 
 	    VADD(vh->selected_items, data);
 
-	    for (int i = 0; i < event.rowview->views->length; i++)
+	    if (vh->show_selected)
 	    {
-		ku_view_t* cellview = event.rowview->views->data[i];
-		tg_text_set_style(cellview, vh->rowsstyle);
+		for (size_t i = 0; i < event.rowview->views->length; i++)
+		{
+		    ku_view_t* cellview = event.rowview->views->data[i];
+		    tg_text_set_style(cellview, vh->rowsstyle);
+		}
 	    }
 	}
 	else
@@ -416,7 +425,7 @@ void vh_table_evnt_event(vh_tbl_evnt_event_t event)
 
 	    textstyle_t style = event.index % 2 == 0 ? vh->rowastyle : vh->rowbstyle;
 
-	    for (int i = 0; i < event.rowview->views->length; i++)
+	    for (size_t i = 0; i < event.rowview->views->length; i++)
 	    {
 		ku_view_t* cellview = event.rowview->views->data[i];
 		tg_text_set_style(cellview, style);
@@ -436,32 +445,32 @@ void vh_table_evnt_event(vh_tbl_evnt_event_t event)
     }
     else if (event.id == VH_TBL_EVENT_CONTEXT)
     {
-	if (event.index > -1)
+	if (event.index > -1 && vh->selected_index != event.index)
 	{
 	    vh->selected_index = event.index;
 
 	    mt_map_t* data = vh->items->data[event.index];
 
-	    uint32_t pos = mt_vector_index_of_data(vh->selected_items, data);
+	    size_t pos = mt_vector_index_of_data(vh->selected_items, data);
 
 	    // TODO this is duplicated in CONTEXT event, simplify
 
-	    if (pos == UINT32_MAX)
+	    if (pos == SIZE_MAX)
 	    {
 		/* reset selected if control is not down */
 
 		if (!event.ev.ctrl_down)
 		{
 		    mt_vector_reset(vh->selected_items);
-		    vh_tbl_body_t* bvh = vh->body_v->handler_data;
+		    vh_tbl_body_t* bvh = vh->body_v->evt_han_data;
 
-		    for (int index = 0; index < bvh->items->length; index++)
+		    for (size_t index = 0; index < bvh->items->length; index++)
 		    {
 			ku_view_t* item = bvh->items->data[index];
 
 			textstyle_t style = index % 2 == 0 ? vh->rowastyle : vh->rowbstyle;
 
-			for (int i = 0; i < item->views->length; i++)
+			for (size_t i = 0; i < item->views->length; i++)
 			{
 			    ku_view_t* cellview = item->views->data[i];
 			    tg_text_set_style(cellview, style);
@@ -471,10 +480,13 @@ void vh_table_evnt_event(vh_tbl_evnt_event_t event)
 
 		VADD(vh->selected_items, data);
 
-		for (int i = 0; i < event.rowview->views->length; i++)
+		if (vh->show_selected)
 		{
-		    ku_view_t* cellview = event.rowview->views->data[i];
-		    tg_text_set_style(cellview, vh->rowsstyle);
+		    for (size_t i = 0; i < event.rowview->views->length; i++)
+		    {
+			ku_view_t* cellview = event.rowview->views->data[i];
+			tg_text_set_style(cellview, vh->rowsstyle);
+		    }
 		}
 	    }
 	    else
@@ -483,7 +495,7 @@ void vh_table_evnt_event(vh_tbl_evnt_event_t event)
 
 		textstyle_t style = event.index % 2 == 0 ? vh->rowastyle : vh->rowbstyle;
 
-		for (int i = 0; i < event.rowview->views->length; i++)
+		for (size_t i = 0; i < event.rowview->views->length; i++)
 		{
 		    ku_view_t* cellview = event.rowview->views->data[i];
 		    tg_text_set_style(cellview, style);
@@ -548,8 +560,10 @@ void vh_table_evnt_event(vh_tbl_evnt_event_t event)
 
 	if (event.ev.keycode == XKB_KEY_Down || event.ev.keycode == XKB_KEY_Up)
 	{
-	    if (event.ev.keycode == XKB_KEY_Down) vh_table_select(vh->view, vh->selected_index + 1, event.ev.shift_down);
-	    if (event.ev.keycode == XKB_KEY_Up) vh_table_select(vh->view, vh->selected_index - 1, event.ev.shift_down);
+	    if (event.ev.keycode == XKB_KEY_Down)
+		vh_table_select(vh->view, vh->selected_index + 1, event.ev.shift_down);
+	    if (event.ev.keycode == XKB_KEY_Up)
+		vh_table_select(vh->view, vh->selected_index - 1, event.ev.shift_down);
 
 	    tevent = (vh_table_event_t){
 		.table          = vh,
@@ -687,7 +701,8 @@ void vh_table_attach(
 	ku_view_t* rowb    = view->views->data[3];
 	ku_view_t* rows    = view->views->data[4];
 	ku_view_t* headrow = NULL;
-	if (view->views->length == 6) headrow = view->views->data[5];
+	if (view->views->length == 6)
+	    headrow = view->views->data[5];
 
 	/* extract needed styles */
 	textstyle_t rowastyle = ku_gen_textstyle_parse(rowa);
@@ -711,7 +726,8 @@ void vh_table_attach(
 	ku_view_t* scrl_v = ku_view_new(scrlid, rect);
 	ku_view_t* evnt_v = ku_view_new(evntid, rect);
 	ku_view_t* head_v = NULL;
-	if (view->views->length == 6) head_v = ku_view_new(headid, headrow->frame.local);
+	if (view->views->length == 6)
+	    head_v = ku_view_new(headid, headrow->frame.local);
 
 	REL(headid);
 	REL(layrid);
@@ -736,17 +752,20 @@ void vh_table_attach(
 
 	/* set mask */
 	layr_v->style.masked = 1;
-	if (head_v) head_v->style.masked = 1;
+	if (head_v)
+	    head_v->style.masked = 1;
 
 	/* set scale */
 	layr_v->style.scale = scale;
 	body_v->style.scale = scale;
 	scrl_v->style.scale = scale;
 	evnt_v->style.scale = scale;
-	if (head_v) head_v->style.scale = scale;
+	if (head_v)
+	    head_v->style.scale = scale;
 
 	/* attach header view as first view */
-	if (head_v) ku_view_add_subview(view, head_v);
+	if (head_v)
+	    ku_view_add_subview(view, head_v);
 
 	/* attach layers view as first or second view */
 	ku_view_add_subview(view, layr_v);
@@ -769,7 +788,8 @@ void vh_table_attach(
 	ku_view_remove_from_parent(rowa);
 	ku_view_remove_from_parent(rowb);
 	ku_view_remove_from_parent(rows);
-	if (headrow) ku_view_remove_from_parent(headrow);
+	if (headrow)
+	    ku_view_remove_from_parent(headrow);
 
 	vh_table_t* vh     = CAL(sizeof(vh_table_t), vh_table_del, vh_table_desc);
 	vh->id             = mt_string_new_cstring(view->id);
@@ -778,8 +798,9 @@ void vh_table_attach(
 	vh->selected_items = VNEW();
 	vh->on_event       = on_event;
 	vh->view           = view;
+	vh->show_selected  = 1;
 
-	view->handler_data = vh;
+	view->evt_han_data = vh;
 
 	vh->layr_v = layr_v;
 	vh->body_v = body_v;
@@ -787,10 +808,14 @@ void vh_table_attach(
 	vh->scrl_v = scrl_v;
 	vh->head_v = head_v;
 
-	if (rowastyle.line_height == 0) rowastyle.line_height = 20;
-	if (rowbstyle.line_height == 0) rowbstyle.line_height = 20;
-	if (rowsstyle.line_height == 0) rowsstyle.line_height = 20;
-	if (headstyle.line_height == 0) headstyle.line_height = 20;
+	if (rowastyle.line_height == 0)
+	    rowastyle.line_height = 20;
+	if (rowbstyle.line_height == 0)
+	    rowbstyle.line_height = 20;
+	if (rowsstyle.line_height == 0)
+	    rowsstyle.line_height = 20;
+	if (headstyle.line_height == 0)
+	    headstyle.line_height = 20;
 
 	vh->rowastyle = rowastyle;
 	vh->rowbstyle = rowbstyle;
@@ -838,15 +863,16 @@ void vh_table_set_data(
     ku_view_t*   view,
     mt_vector_t* data)
 {
-    vh_table_t* vh = view->handler_data;
+    vh_table_t* vh = view->evt_han_data;
 
-    if (vh->items) REL(vh->items);
+    if (vh->items)
+	REL(vh->items);
     vh->items = RET(data);
 
     vh->selected_index = 0;
 
     mt_vector_reset(vh->selected_items);
-    if (vh->selected_index < vh->items->length)
+    if (vh->selected_index < (int32_t) vh->items->length)
     {
 	mt_map_t* sel = vh->items->data[vh->selected_index];
 	VADD(vh->selected_items, sel);
@@ -855,7 +881,8 @@ void vh_table_set_data(
     vh_tbl_body_reset(vh->body_v);
     vh_tbl_body_move(vh->body_v, 0, 0);
 
-    if (vh->scrl_v) vh_tbl_scrl_set_item_count(vh->scrl_v, data->length);
+    if (vh->scrl_v)
+	vh_tbl_scrl_set_item_count(vh->scrl_v, data->length);
 }
 
 /* select index */
@@ -865,14 +892,16 @@ void vh_table_select(
     int32_t    index,
     int        add)
 {
-    vh_table_t*    vh  = view->handler_data;
-    vh_tbl_body_t* bvh = vh->body_v->handler_data;
+    vh_table_t*    vh  = view->evt_han_data;
+    vh_tbl_body_t* bvh = vh->body_v->evt_han_data;
 
     float scale = view->style.scale;
 
     vh->selected_index = index;
-    if (vh->selected_index < 0) vh->selected_index = 0;
-    if (vh->selected_index > vh->items->length - 1) vh->selected_index = vh->items->length - 1;
+    if (vh->selected_index < 0)
+	vh->selected_index = 0;
+    if (vh->selected_index > (int32_t) vh->items->length - 1)
+	vh->selected_index = (int32_t) vh->items->length - 1;
 
     if (bvh->bot_index < vh->selected_index)
     {
@@ -897,22 +926,24 @@ void vh_table_select(
 	vh_tbl_body_vjump(vh->body_v, vh->selected_index - 1, 1);
     }
 
-    if (add == 0) mt_vector_reset(vh->selected_items);
+    if (add == 0)
+	mt_vector_reset(vh->selected_items);
     mt_map_t* sel = vh->items->data[vh->selected_index];
     VADD(vh->selected_items, sel);
 
     /* color item */
 
-    for (int i = 0; i < bvh->items->length; i++)
+    for (size_t i = 0; i < bvh->items->length; i++)
     {
 	int        realindex = bvh->head_index + i;
 	mt_map_t*  data      = vh->items->data[realindex];
 	ku_view_t* item      = bvh->items->data[i];
 
 	textstyle_t style = realindex % 2 == 0 ? vh->rowastyle : vh->rowbstyle;
-	if (mt_vector_index_of_data(vh->selected_items, data) < UINT32_MAX) style = vh->rowsstyle;
+	if (mt_vector_index_of_data(vh->selected_items, data) < SIZE_MAX)
+	    style = vh->rowsstyle;
 
-	for (int i = 0; i < item->views->length; i++)
+	for (size_t i = 0; i < item->views->length; i++)
 	{
 	    ku_view_t* cellview   = item->views->data[i];
 	    cellview->style.scale = scale;
@@ -920,12 +951,13 @@ void vh_table_select(
 	}
     }
 
-    if (vh->scrl_v) vh_tbl_scrl_update(vh->scrl_v);
+    if (vh->scrl_v)
+	vh_tbl_scrl_update(vh->scrl_v);
 }
 
 mt_vector_t* vh_table_get_fields(ku_view_t* view)
 {
-    vh_table_t* vh = view->handler_data;
+    vh_table_t* vh = view->evt_han_data;
     return vh->fields;
 }
 
@@ -933,8 +965,17 @@ void vh_table_show_scrollbar(
     ku_view_t* view,
     int        flag)
 {
-    vh_table_t* vh = view->handler_data;
-    if (vh->scrl_v) vh_tbl_scrl_enable(vh->scrl_v, flag);
+    vh_table_t* vh = view->evt_han_data;
+    if (vh->scrl_v)
+	vh_tbl_scrl_enable(vh->scrl_v, flag);
+}
+
+void vh_table_show_selected(
+    ku_view_t* view,
+    int        flag)
+{
+    vh_table_t* vh    = view->evt_han_data;
+    vh->show_selected = flag;
 }
 
 #endif

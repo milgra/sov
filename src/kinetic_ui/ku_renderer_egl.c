@@ -48,7 +48,7 @@ void ku_renderer_egl_render(mt_vector_t* views, ku_bitmap_t* bitmap, ku_rect_t d
     masks[0] = (ku_rect_t){0, 0, bitmap->w, bitmap->h};
     dirty    = masks[0];
 
-    for (int i = 0; i < views->length; i++)
+    for (size_t i = 0; i < views->length; i++)
     {
 	ku_view_t* view = views->data[i];
 
@@ -85,7 +85,8 @@ void ku_renderer_egl_render(mt_vector_t* views, ku_bitmap_t* bitmap, ku_rect_t d
 
 		mask = srcmsk;
 
-		if (srcmsk.x != srcmsk.z) ku_gl_render_quad(bitmap, i, mask);
+		if (srcmsk.x != srcmsk.z)
+		    ku_gl_render_quad(bitmap, i, mask);
 	    }
 	    else
 	    {
@@ -106,7 +107,7 @@ void ku_renderer_egl_render(mt_vector_t* views, ku_bitmap_t* bitmap, ku_rect_t d
 
     /* draw views */
 
-    /* for (int i = 0; i < views->length; i++) */
+    /* for (size_t i = 0; i < views->length; i++) */
     /* { */
     /* 	ku_view_t* view = views->data[i]; */
 

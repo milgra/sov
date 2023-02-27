@@ -9,11 +9,11 @@ void  ku_fontconfig_delete();
 #if __INCLUDE_LEVEL__ == 0
 
 #include <limits.h>
-#ifdef __linux__ 
-#include <linux/limits.h>
+#ifdef __linux__
+    #include <linux/limits.h>
 #endif
 
-#define _POSIX_C_SOURCE 200112L
+// #define _POSIX_C_SOURCE 200112L
 #include "mt_map.c"
 #include "mt_memory.c"
 #include "mt_string.c"
@@ -27,7 +27,8 @@ char* ku_fontconfig_path(char* face_desc)
     char* filename = NULL;
     if (face_desc)
     {
-	if (ku_fontconfig_cache == NULL) ku_fontconfig_cache = MNEW();
+	if (ku_fontconfig_cache == NULL)
+	    ku_fontconfig_cache = MNEW();
 	filename = MGET(ku_fontconfig_cache, face_desc);
 
 	if (filename == NULL)

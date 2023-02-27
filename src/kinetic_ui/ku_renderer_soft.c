@@ -36,7 +36,7 @@ void ku_renderer_software_render(mt_vector_t* views, ku_bitmap_t* bitmap, ku_rec
 
     /* draw views into bitmap */
 
-    for (int i = 0; i < views->length; i++)
+    for (size_t i = 0; i < views->length; i++)
     {
 	ku_view_t* view = views->data[i];
 

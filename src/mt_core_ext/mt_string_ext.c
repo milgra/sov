@@ -185,17 +185,18 @@ char* consonants = "bcdefghijklmnpqrstvwxyz";
 char* mt_string_new_readablec(uint32_t length)
 {
     char* result = CAL(sizeof(char) * (length + 1), NULL, mt_string_describe);
-    for (int index = 0; index < length; index += 2)
+    for (size_t index = 0; index < length; index += 2)
     {
 	result[index] = consonants[rand() % strlen(consonants)];
-	if (index + 1 < length) result[index + 1] = vowels[rand() % strlen(vowels)];
+	if (index + 1 < length)
+	    result[index + 1] = vowels[rand() % strlen(vowels)];
     }
     return result;
 }
 
 void mt_string_tolower(char* str)
 {
-    for (int index = 0; index < strlen(str); index++)
+    for (size_t index = 0; index < strlen(str); index++)
     {
 	str[index] = tolower(str[index]);
     }
@@ -211,7 +212,7 @@ char* mt_string_alphanumeric =
 char* mt_string_new_alphanumeric(uint32_t length)
 {
     char* result = CAL(sizeof(char) * (length + 1), NULL, mt_string_describe);
-    for (int index = 0; index < length; index++)
+    for (size_t index = 0; index < length; index++)
     {
 	result[index] = mt_string_alphanumeric[rand() % strlen(mt_string_alphanumeric)];
     }
@@ -246,7 +247,7 @@ char* mt_string_unescape(char* str)
     size_t length = strlen(str);
     char*  result = CAL((length + 1) * sizeof(char), NULL, mt_string_describe);
     int    ni     = 0;
-    for (int index = 0; index < length; index++)
+    for (size_t index = 0; index < length; index++)
     {
 	if (str[index] == '\\')
 	{

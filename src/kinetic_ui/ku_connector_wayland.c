@@ -111,15 +111,15 @@ enum wl_window_type
 typedef struct _wl_window_t wl_window_t;
 struct _wl_window_t
 {
-    int  scale;
-    int  width;
-    int  height;
-    int  buffer_width;
-    int  buffer_height;
-    int  fullscreen;
-    int  hidden;
-    int  margin;
-    char anchor[4];
+    int      scale;
+    uint32_t width;
+    uint32_t height;
+    int      buffer_width;
+    int      buffer_height;
+    int      fullscreen;
+    int      hidden;
+    int      margin;
+    char     anchor[4];
 
     int shown;  /* surface_enter is called, scaling is set */
     int inited; /* egl is swapped or buffer is attached for the first time to trigger surface_enter event */
@@ -136,6 +136,8 @@ struct _wl_window_t
     struct zwp_pointer_gesture_pinch_v1* pinch;
     struct wl_pointer*                   wl_pointer;
 
+    int hold; /* hold gesture is active */
+
     /* backing buffer for native window */
 
     struct wl_buffer* buffer; /* wl buffer for surface */
@@ -150,9 +152,9 @@ struct _wl_window_t
 
     /* needed for resize events */
 
-    int new_scale;
-    int new_width;
-    int new_height;
+    int      new_scale;
+    uint32_t new_width;
+    uint32_t new_height;
 
     /* egl window related */
 
@@ -440,7 +442,7 @@ static const struct wl_callback_listener wl_surface_frame_listener = {
 
 static void ku_wayland_layer_surface_configure(void* data, struct zwlr_layer_surface_v1* surface, uint32_t serial, uint32_t width, uint32_t height)
 {
-    mt_log_debug("layer surface configure serial %u width %i height %i", serial, width, height);
+    /* mt_log_debug("layer surface configure serial %u width %i height %i", serial, width, height); */
 
     zwlr_layer_surface_v1_ack_configure(surface, serial);
 
@@ -484,7 +486,7 @@ static void ku_wayland_layer_surface_configure(void* data, struct zwlr_layer_sur
 
 static void ku_wayland_layer_surface_closed(void* _data, struct zwlr_layer_surface_v1* surface)
 {
-    mt_log_debug("layer surface configure");
+    /* mt_log_debug("layer surface configure"); */
 }
 
 struct zwlr_layer_surface_v1_listener layer_surface_listener = {
@@ -496,7 +498,7 @@ struct zwlr_layer_surface_v1_listener layer_surface_listener = {
 
 void xdg_toplevel_configure(void* data, struct xdg_toplevel* xdg_toplevel, int32_t width, int32_t height, struct wl_array* states)
 {
-    mt_log_debug("xdg toplevel configure w %i h %i", width, height);
+    /* mt_log_debug("xdg toplevel configure w %i h %i", width, height); */
 
     wl_window_t* info = data;
 
@@ -515,7 +517,7 @@ void xdg_toplevel_close(void* data, struct xdg_toplevel* xdg_toplevel)
 
 void xdg_toplevel_configure_bounds(void* data, struct xdg_toplevel* xdg_toplevel, int32_t width, int32_t height)
 {
-    mt_log_debug("xdg toplevel configure bounds w %i h %i", width, height);
+    /* mt_log_debug("xdg toplevel configure bounds w %i h %i", width, height); */
 }
 
 void xdg_toplevel_wm_capabilities(void* data, struct xdg_toplevel* xdg_toplevel, struct wl_array* capabilities)
@@ -538,13 +540,14 @@ static void xdg_surface_configure(void* data, struct xdg_surface* xdg_surface, u
 
     wl_window_t* info = data;
 
-    mt_log_debug("xdg surface configure %i %i %i", info->type, info->width, info->height);
+    /* mt_log_debug("xdg surface configure %i %i %i", info->type, info->width, info->height); */
 
     if (info->inited == 0)
     {
 	info->inited = 1;
 
-	if (info->type == WL_WINDOW_EGL) eglSwapBuffers(wlc.windows[0]->egldisplay, wlc.windows[0]->eglsurface);
+	if (info->type == WL_WINDOW_EGL)
+	    eglSwapBuffers(wlc.windows[0]->egldisplay, wlc.windows[0]->eglsurface);
 	if (info->type == WL_WINDOW_NATIVE)
 	{
 	    ku_wayland_create_buffer(info, info->width, info->height);
@@ -567,7 +570,8 @@ static void xdg_surface_configure(void* data, struct xdg_surface* xdg_surface, u
 	    info->bitmap.h = info->buffer_height;
 	    wl_egl_window_resize(info->eglwindow, info->buffer_width, info->buffer_height, 0, 0);
 	}
-	if (info->type == WL_WINDOW_NATIVE) ku_wayland_create_buffer(info, info->buffer_width, info->buffer_height);
+	if (info->type == WL_WINDOW_NATIVE)
+	    ku_wayland_create_buffer(info, info->buffer_width, info->buffer_height);
 
 	/* we shouldn't send events before surface enter ( and ku_event_window_shown ) event */
 	if (info->shown)
@@ -927,7 +931,7 @@ wl_window_t* ku_wayland_create_generic_layer(struct monitor_info* monitor, int w
     info->margin        = margin;
     info->monitor       = monitor;
     info->hidden        = 1;
-    memcpy(info->anchor, anchor, 4);
+    memcpy(info->anchor, anchor, strlen(anchor) < 5 ? strlen(anchor) : 4);
 
     info->type = WL_WINDOW_LAYER;
 
@@ -991,12 +995,49 @@ void ku_wayland_request_frame(wl_window_t* info)
 
 static void gesture_hold_begin(void* data, struct zwp_pointer_gesture_hold_v1* hold, uint32_t serial, uint32_t time, struct wl_surface* surface, uint32_t fingers)
 {
-    mt_log_debug("hold start");
+    if (fingers == 2)
+    {
+	for (int index = 0; index < wlc.window_count; index++)
+	{
+	    wl_window_t* window = wlc.windows[index];
+
+	    if (window->surface == surface && window->monitor)
+	    {
+		window->hold = 1;
+
+		ku_event_t event = init_event();
+		event.type       = KU_EVENT_HOLD_START;
+		event.x          = window->pointer.px;
+		event.y          = window->pointer.py;
+		event.ctrl_down  = wlc.keyboard.control;
+		event.shift_down = wlc.keyboard.shift;
+
+		(*wlc.update)(event);
+	    }
+	}
+    }
 }
 
 static void gesture_hold_end(void* data, struct zwp_pointer_gesture_hold_v1* hold, uint32_t serial, uint32_t time, int32_t cancelled)
 {
-    mt_log_debug("hold end");
+    for (int index = 0; index < wlc.window_count; index++)
+    {
+	wl_window_t* window = wlc.windows[index];
+
+	if (window->hold)
+	{
+	    window->hold = 0;
+
+	    ku_event_t event = init_event();
+	    event.type       = KU_EVENT_HOLD_END;
+	    event.x          = window->pointer.px;
+	    event.y          = window->pointer.py;
+	    event.ctrl_down  = wlc.keyboard.control;
+	    event.shift_down = wlc.keyboard.shift;
+
+	    (*wlc.update)(event);
+	}
+    }
 }
 
 static const struct zwp_pointer_gesture_hold_v1_listener gesture_hold_listener = {
@@ -1169,8 +1210,6 @@ void ku_wayland_pointer_handle_button(void* data, struct wl_pointer* wl_pointer,
 
 	if (window->wl_pointer == wl_pointer)
 	{
-	    window->pointer.drag = window->pointer.down;
-
 	    ku_event_t event = init_event();
 	    event.x          = window->pointer.px;
 	    event.y          = window->pointer.py;
@@ -1236,7 +1275,24 @@ void ku_wayland_pointer_handle_axis_source(void* data, struct wl_pointer* wl_poi
 
 void ku_wayland_pointer_handle_axis_stop(void* data, struct wl_pointer* wl_pointer, uint time, uint axis)
 {
-    /* mt_log_debug("pointer handle axis stop"); */
+    /* mt_log_debug("pointer handle axis STOP %i", axis); */
+
+    for (int index = 0; index < wlc.window_count; index++)
+    {
+	wl_window_t* window = wlc.windows[index];
+
+	if (window->wl_pointer == wl_pointer)
+	{
+	    ku_event_t event = init_event();
+	    event.type       = axis == 1 ? KU_EVENT_SCROLL_X_END : KU_EVENT_SCROLL_Y_END;
+	    event.x          = window->pointer.px;
+	    event.y          = window->pointer.py;
+	    event.ctrl_down  = wlc.keyboard.control;
+	    event.shift_down = wlc.keyboard.shift;
+
+	    (*wlc.update)(event);
+	}
+    }
 }
 
 void ku_wayland_pointer_handle_axis_discrete(void* data, struct wl_pointer* wl_pointer, uint axis, int discrete)
@@ -1291,7 +1347,10 @@ static void keyboard_enter(void* data, struct wl_keyboard* wl_keyboard, uint32_t
 
 static void keyboard_leave(void* data, struct wl_keyboard* wl_keyboard, uint32_t serial, struct wl_surface* surface)
 {
-    /* mt_log_debug("keyboard leave"); */
+    /* stop repeater */
+
+    struct itimerspec spec = {0};
+    timerfd_settime(wlc.keyboard.rep_timer_fd, 0, &spec, NULL);
 }
 
 static void keyboard_key(void* data, struct wl_keyboard* wl_keyboard, uint32_t serial, uint32_t time, uint32_t key, uint32_t _key_state)
@@ -1327,6 +1386,18 @@ static void keyboard_key(void* data, struct wl_keyboard* wl_keyboard, uint32_t s
 	}
     }
 
+    /* send key down/up event */
+
+    ku_event_t event = init_event();
+    event.keycode    = sym;
+    event.type       = key_state == WL_KEYBOARD_KEY_STATE_PRESSED ? KU_EVENT_KEY_DOWN : KU_EVENT_KEY_UP;
+    event.ctrl_down  = wlc.keyboard.control;
+    event.shift_down = wlc.keyboard.shift;
+    event.repeat     = wlc.keyboard.rep_event.repeat;
+    (*wlc.update)(event);
+
+    wlc.keyboard.rep_event = event;
+
     if (key_state == WL_KEYBOARD_KEY_STATE_PRESSED && wlc.keyboard.rep_period > 0)
     {
 	/* start repeater */
@@ -1342,23 +1413,8 @@ static void keyboard_key(void* data, struct wl_keyboard* wl_keyboard, uint32_t s
 
 	struct itimerspec spec = {0};
 	timerfd_settime(wlc.keyboard.rep_timer_fd, 0, &spec, NULL);
-
-	ku_event_t event = wlc.keyboard.rep_event;
-	event.type       = KU_EVENT_KEY_UP;
-	event.repeat     = 1;
-	(*wlc.update)(event);
+	wlc.keyboard.rep_event.repeat = 0;
     }
-
-    /* send key down/up event */
-
-    ku_event_t event = init_event();
-    event.keycode    = sym;
-    event.type       = key_state == WL_KEYBOARD_KEY_STATE_PRESSED ? KU_EVENT_KEY_DOWN : KU_EVENT_KEY_UP;
-    event.ctrl_down  = wlc.keyboard.control;
-    event.shift_down = wlc.keyboard.shift;
-    (*wlc.update)(event);
-
-    wlc.keyboard.rep_event = event;
 }
 
 static void keyboard_repeat()
@@ -1544,27 +1600,49 @@ static void ku_wayland_seat_handle_capabilities(void* data, struct wl_seat* wl_s
 {
     /* mt_log_debug("seat handle capabilities %i", caps); */
 
-    if (caps & WL_SEAT_CAPABILITY_KEYBOARD)
+    if ((caps & WL_SEAT_CAPABILITY_KEYBOARD))
     {
-	wlc.keyboard.kbd = wl_seat_get_keyboard(wl_seat);
-	wl_keyboard_add_listener(wlc.keyboard.kbd, &keyboard_listener, NULL);
+	if (wlc.keyboard.kbd == NULL)
+	{
+	    wlc.keyboard.kbd = wl_seat_get_keyboard(wl_seat);
+	    wl_keyboard_add_listener(wlc.keyboard.kbd, &keyboard_listener, NULL);
+	}
+    }
+    else if (!(caps & WL_SEAT_CAPABILITY_KEYBOARD))
+    {
+	if (wlc.keyboard.kbd)
+	{
+	    wl_keyboard_destroy(wlc.keyboard.kbd);
+	    wlc.keyboard.kbd = NULL;
+	}
     }
 
     if (caps & WL_SEAT_CAPABILITY_POINTER)
     {
-	wlc.ipointer = wl_seat_get_pointer(wl_seat);
-	wl_pointer_add_listener(wlc.ipointer, &pointer_listener, NULL);
-
-	if (wlc.pointer_manager)
+	if (wlc.ipointer == NULL)
 	{
-	    wlc.pinch_gesture = zwp_pointer_gestures_v1_get_pinch_gesture(wlc.pointer_manager, wlc.ipointer);
-	    zwp_pointer_gesture_pinch_v1_add_listener(wlc.pinch_gesture, &gesture_pinch_listener, wl_seat);
+	    wlc.ipointer = wl_seat_get_pointer(wl_seat);
+	    wl_pointer_add_listener(wlc.ipointer, &pointer_listener, NULL);
 
-	    if (wlc.pointer_manager_version >= ZWP_POINTER_GESTURES_V1_GET_HOLD_GESTURE_SINCE_VERSION)
+	    if (wlc.pointer_manager)
 	    {
-		wlc.hold_gesture = zwp_pointer_gestures_v1_get_hold_gesture(wlc.pointer_manager, wlc.ipointer);
-		zwp_pointer_gesture_hold_v1_add_listener(wlc.hold_gesture, &gesture_hold_listener, wl_seat);
+		wlc.pinch_gesture = zwp_pointer_gestures_v1_get_pinch_gesture(wlc.pointer_manager, wlc.ipointer);
+		zwp_pointer_gesture_pinch_v1_add_listener(wlc.pinch_gesture, &gesture_pinch_listener, wl_seat);
+
+		if (wlc.pointer_manager_version >= ZWP_POINTER_GESTURES_V1_GET_HOLD_GESTURE_SINCE_VERSION)
+		{
+		    wlc.hold_gesture = zwp_pointer_gestures_v1_get_hold_gesture(wlc.pointer_manager, wlc.ipointer);
+		    zwp_pointer_gesture_hold_v1_add_listener(wlc.hold_gesture, &gesture_hold_listener, wl_seat);
+		}
 	    }
+	}
+    }
+    else if (!(caps & WL_SEAT_CAPABILITY_POINTER))
+    {
+	if (wlc.ipointer)
+	{
+	    wl_pointer_destroy(wlc.ipointer);
+	    wlc.ipointer = NULL;
 	}
     }
 }
@@ -1598,7 +1676,7 @@ static void ku_wayland_handle_global(
     }
     else if (strcmp(interface, wl_seat_interface.name) == 0)
     {
-	wlc.seat = wl_registry_bind(registry, name, &wl_seat_interface, 4);
+	wlc.seat = wl_registry_bind(registry, name, &wl_seat_interface, 6);
 	wl_seat_add_listener(wlc.seat, &seat_listener, NULL);
     }
     else if (strcmp(interface, wl_shm_interface.name) == 0)
@@ -1610,7 +1688,8 @@ static void ku_wayland_handle_global(
     }
     else if (strcmp(interface, wl_output_interface.name) == 0)
     {
-	if (wlc.monitor_count >= 16) return;
+	if (wlc.monitor_count >= 16)
+	    return;
 
 	struct monitor_info* monitor = malloc(sizeof(struct monitor_info));
 	memset(monitor->name, 0, MAX_MONITOR_NAME_LEN);
@@ -1646,15 +1725,15 @@ static void ku_wayland_handle_global(
     }
     else if (strcmp(interface, xdg_wm_base_interface.name) == 0)
     {
-	wlc.xdg_wm_base = wl_registry_bind(registry, name, &xdg_wm_base_interface, 1);
+	wlc.xdg_wm_base = wl_registry_bind(registry, name, &xdg_wm_base_interface, 2);
 	xdg_wm_base_add_listener(wlc.xdg_wm_base, &xdg_wm_base_listener, NULL);
     }
     else if (strcmp(interface, zwp_pointer_gestures_v1_interface.name) == 0)
     {
+	wlc.pointer_manager_version = version;
 	if (version >= 3)
 	{
-	    wlc.pointer_manager_version = version;
-	    wlc.pointer_manager         = wl_registry_bind(registry, name, &zwp_pointer_gestures_v1_interface, 3);
+	    wlc.pointer_manager = wl_registry_bind(registry, name, &zwp_pointer_gestures_v1_interface, 3);
 	}
     }
 }

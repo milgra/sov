@@ -1,7 +1,7 @@
+/* wraps a non-mtmemory managed pointer */
+
 #ifndef mt_wrapper_h
 #define mt_wrapper_h
-
-/* TODO separate unit tests */
 
 #include <stdint.h>
 

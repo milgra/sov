@@ -34,7 +34,7 @@ void  tg_text_set_style(ku_view_t* view, textstyle_t style);
 
 int tg_text_index = 0;
 
-void tg_text_gen(ku_view_t* view)
+int tg_text_gen(ku_view_t* view)
 {
     tg_text_t* gen = view->tex_gen_data;
     if (view->frame.local.w > 0 && view->frame.local.h > 0)
@@ -42,8 +42,10 @@ void tg_text_gen(ku_view_t* view)
 	if (gen->scale != view->style.scale)
 	{
 	    float ratio;
-	    if (gen->scale == 0.0) ratio = view->style.scale;
-	    else ratio = view->style.scale / gen->scale;
+	    if (gen->scale == 0.0)
+		ratio = view->style.scale;
+	    else
+		ratio = view->style.scale / gen->scale;
 	    gen->style.size *= ratio;
 	    gen->scale = view->style.scale;
 	}
@@ -69,6 +71,8 @@ void tg_text_gen(ku_view_t* view)
 
 	REL(fontmap); // REL 0
     }
+
+    return 1;
 }
 
 void tg_text_del(void* p)

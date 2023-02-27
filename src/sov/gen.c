@@ -76,7 +76,7 @@ void gen_destroy()
 {
     /* reset window */
 
-    for (int index = base->views->length - 1; index > -1; index--)
+    for (size_t index = base->views->length; index-- > 0;)
     {
 	ku_view_t* view = base->views->data[index];
 	ku_view_remove_from_parent(view);
@@ -115,7 +115,7 @@ void gen_render(
 
     /* reset window */
 
-    for (int index = base->views->length - 1; index > -1; index--)
+    for (size_t index = base->views->length; index-- > 0;)
     {
 	ku_view_t* view = base->views->data[index];
 	ku_view_remove_from_parent(view);
@@ -128,7 +128,7 @@ void gen_render(
 
     /* add rows */
 
-    int wsi = 0;
+    size_t wsi = 0;
 
     for (int rowi = 0; rowi < rows; rowi++)
     {
@@ -147,7 +147,7 @@ void gen_render(
 	for (int coli = 0; coli < cols; coli++)
 	{
 	    char name[100] = {0};
-	    snprintf(name, 100, "workspace%i", wsi);
+	    snprintf(name, 100, "workspace%li", wsi);
 	    ku_view_t* wsview = ku_view_new(name, (ku_rect_t){0, 0, 100, 100});
 	    wsview->style     = workspace->style;
 	    tg_css_add(wsview);
@@ -164,7 +164,7 @@ void gen_render(
 		char numname[100] = {0};
 		char numnumb[10]  = {0};
 
-		snprintf(numname, 100, "number%i%i", wsi, 0);
+		snprintf(numname, 100, "number%li%i", wsi, 0);
 		if (use_name)
 		    snprintf(numnumb, 10, "%s", ws->name);
 		else
@@ -203,7 +203,7 @@ void gen_render(
 	    {
 		sway_workspace_t* ws = workspaces->data[wsi];
 
-		for (int wii = 0; wii < ws->windows->length; wii++)
+		for (size_t wii = 0; wii < ws->windows->length; wii++)
 		{
 		    sway_window_t* wi = ws->windows->data[wii];
 
@@ -235,9 +235,9 @@ void gen_render(
 			char winname[100]     = {0};
 			char titlename[100]   = {0};
 			char contentname[100] = {0};
-			snprintf(winname, 100, "window%i", wii);
-			snprintf(titlename, 100, "title%i", wii);
-			snprintf(contentname, 100, "content%i", wii);
+			snprintf(winname, 100, "window%li", wii);
+			snprintf(titlename, 100, "title%li", wii);
+			snprintf(contentname, 100, "content%li", wii);
 
 			ku_view_t* winview = ku_view_new(winname, (ku_rect_t){wix, wiy, wiw, wih});
 			winview->style     = window->style;

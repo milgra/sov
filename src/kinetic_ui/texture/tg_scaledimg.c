@@ -16,7 +16,7 @@ typedef struct _tg_scaledimg_t
 } tg_scaledimg_t;
 
 void tg_scaledimg_add(ku_view_t* view, int w, int h);
-void tg_scaledimg_gen(ku_view_t* view);
+int  tg_scaledimg_gen(ku_view_t* view);
 void tg_scaledimg_set_content_size(ku_view_t* view, int w, int h);
 
 #endif
@@ -26,7 +26,7 @@ void tg_scaledimg_set_content_size(ku_view_t* view, int w, int h);
 #include "ku_draw.c"
 #include "mt_string.c"
 
-void tg_scaledimg_gen(ku_view_t* view)
+int tg_scaledimg_gen(ku_view_t* view)
 {
     tg_scaledimg_t* gen = view->tex_gen_data;
     ku_bitmap_t*    bm  = view->texture.bitmap;
@@ -47,6 +47,8 @@ void tg_scaledimg_gen(ku_view_t* view)
     }
 
     view->texture.ready = 1;
+
+    return 1;
 }
 
 void tg_scaledimg_set_content_size(ku_view_t* view, int w, int h)

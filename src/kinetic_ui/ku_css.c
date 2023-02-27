@@ -109,7 +109,7 @@ prop_t* ku_css_new_parse(char* css)
 
     ku_css_analyze_classes(css, props);
 
-    for (int i = 0; i < cnt; i++)
+    for (uint32_t i = 0; i < cnt; i++)
     {
 	// prop_t p = props[i];
 	// printf("extracted prop %.*s %.*s %.*s\n", p.class.len, css + p.class.pos, p.key.len, css + p.key.pos, p.value.len, css + p.value.pos);

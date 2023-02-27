@@ -120,7 +120,7 @@ void ku_text_destroy()
     mt_vector_t* paths = VNEW(); // REL 0
     mt_map_keys(txt_ft.fonts, paths);
 
-    for (int i = 0; i < paths->length; i++)
+    for (size_t i = 0; i < paths->length; i++)
     {
 	char* path = paths->data[i];
 
@@ -426,7 +426,8 @@ void ku_text_shift_glyphs(glyph_t* glyphs, int count, textstyle_t style)
 
 void ku_text_render_glyph(glyph_t g, textstyle_t style, ku_bitmap_t* bitmap)
 {
-    if ((style.backcolor & 0xFF) > 0) ku_draw_rect(bitmap, 0, 0, bitmap->w, bitmap->h, style.backcolor, 0);
+    if ((style.backcolor & 0xFF) > 0)
+	ku_draw_rect(bitmap, 0, 0, bitmap->w, bitmap->h, style.backcolor, 0);
 
     mt_wrapper_t* facewrp = MGET(txt_ft.fonts, style.font);
     mt_wrapper_t* libwrp  = MGET(txt_ft.libs, style.font);
@@ -435,7 +436,8 @@ void ku_text_render_glyph(glyph_t g, textstyle_t style, ku_bitmap_t* bitmap)
 	ku_text_font_load(style.font);
 	facewrp = MGET(txt_ft.fonts, style.font);
 	libwrp  = MGET(txt_ft.libs, style.font);
-	if (!facewrp) return;
+	if (!facewrp)
+	    return;
     }
     FT_Face    font    = facewrp->data;
     FT_Library library = libwrp->data;
@@ -443,7 +445,7 @@ void ku_text_render_glyph(glyph_t g, textstyle_t style, ku_bitmap_t* bitmap)
     // don't write bitmap in case of empty glyphs ( space )
     if (g.w > 0 && g.h > 0)
     {
-	int size = g.w * g.h;
+	size_t size = g.w * g.h;
 
 	// increase glyph baking bitMap size if needed
 	if (size > txt_ft.gcount)
@@ -453,10 +455,16 @@ void ku_text_render_glyph(glyph_t g, textstyle_t style, ku_bitmap_t* bitmap)
 	}
 
 	int error = FT_Load_Char(font, g.cp, FT_LOAD_RENDER);
-	if (error) { printf("FT Load Char error\n"); }
+	if (error)
+	{
+	    printf("FT Load Char error\n");
+	}
 
 	error = FT_Render_Glyph(font->glyph, FT_RENDER_MODE_NORMAL);
-	if (error) { printf("FT_Render_Glyph error\n"); }
+	if (error)
+	{
+	    printf("FT_Render_Glyph error\n");
+	}
 
 	FT_Bitmap fontmap = font->glyph->bitmap;
 
@@ -485,7 +493,8 @@ void ku_text_render_glyph(glyph_t g, textstyle_t style, ku_bitmap_t* bitmap)
 
 void ku_text_render_glyphs(glyph_t* glyphs, int count, textstyle_t style, ku_bitmap_t* bitmap)
 {
-    if ((style.backcolor & 0xFF) > 0) ku_draw_rect(bitmap, 0, 0, bitmap->w, bitmap->h, style.backcolor, 0);
+    if ((style.backcolor & 0xFF) > 0)
+	ku_draw_rect(bitmap, 0, 0, bitmap->w, bitmap->h, style.backcolor, 0);
 
     mt_wrapper_t* facewrp = MGET(txt_ft.fonts, style.font);
     mt_wrapper_t* libwrp  = MGET(txt_ft.libs, style.font);
@@ -494,7 +503,8 @@ void ku_text_render_glyphs(glyph_t* glyphs, int count, textstyle_t style, ku_bit
 	ku_text_font_load(style.font);
 	facewrp = MGET(txt_ft.fonts, style.font);
 	libwrp  = MGET(txt_ft.libs, style.font);
-	if (!facewrp) return;
+	if (!facewrp)
+	    return;
     }
     FT_Face    font    = facewrp->data;
     FT_Library library = libwrp->data;
@@ -507,7 +517,7 @@ void ku_text_render_glyphs(glyph_t* glyphs, int count, textstyle_t style, ku_bit
 	// don't write bitmap in case of empty glyphs ( space )
 	if (g.w > 0 && g.h > 0)
 	{
-	    int size = g.w * g.h;
+	    size_t size = g.w * g.h;
 
 	    // increase glyph baking bitmap size if needed
 	    if (size > txt_ft.gcount)
@@ -517,10 +527,16 @@ void ku_text_render_glyphs(glyph_t* glyphs, int count, textstyle_t style, ku_bit
 	    }
 
 	    int error = FT_Load_Char(font, g.cp, FT_LOAD_RENDER);
-	    if (error) { printf("FT Load Char error\n"); }
+	    if (error)
+	    {
+		printf("FT Load Char error\n");
+	    }
 
 	    error = FT_Render_Glyph(font->glyph, FT_RENDER_MODE_NORMAL);
-	    if (error) { printf("FT_Render_Glyph error\n"); }
+	    if (error)
+	    {
+		printf("FT_Render_Glyph error\n");
+	    }
 
 	    FT_Bitmap fontmap = font->glyph->bitmap;
 
@@ -579,7 +595,7 @@ void ku_text_render(char* text, textstyle_t style, ku_bitmap_t* bitmap)
     glyph_t*     glyphs = malloc(sizeof(glyph_t) * count); // REL 0
     utf8_int32_t cp;
 
-    for (int i = 0; i < count; i++)
+    for (size_t i = 0; i < count; i++)
     {
 	part         = utf8codepoint(part, &cp);
 	glyphs[i].cp = cp;
@@ -601,7 +617,7 @@ void ku_text_measure(char* text, textstyle_t style, int w, int h, int* nw, int* 
     glyph_t*     glyphs = malloc(sizeof(glyph_t) * count); // REL 0
     utf8_int32_t cp;
 
-    for (int i = 0; i < count; i++)
+    for (size_t i = 0; i < count; i++)
     {
 	part         = utf8codepoint(part, &cp);
 	glyphs[i].cp = cp;

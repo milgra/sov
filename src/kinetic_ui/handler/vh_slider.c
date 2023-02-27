@@ -31,9 +31,9 @@ void  vh_slider_set_enabled(ku_view_t* view, int flag);
 #include "vh_anim.c"
 #include <stdio.h>
 
-void vh_slider_evt(ku_view_t* view, ku_event_t ev)
+int vh_slider_evt(ku_view_t* view, ku_event_t ev)
 {
-    vh_slider_t* vh = view->handler_data;
+    vh_slider_t* vh = view->evt_han_data;
 
     if (vh->enabled)
     {
@@ -48,14 +48,17 @@ void vh_slider_evt(ku_view_t* view, ku_event_t ev)
 	    ku_view_set_frame(bar, frame);
 
 	    vh_slider_event_t event = {.view = view, .ratio = vh->ratio, .vh = vh};
-	    if (vh->on_event) (*vh->on_event)(event);
+	    if (vh->on_event)
+		(*vh->on_event)(event);
 	}
 	else if (ev.type == KU_EVENT_SCROLL)
 	{
 	    float ratio = vh->ratio - ev.dx / 50.0;
 
-	    if (ratio < 0) ratio = 0;
-	    if (ratio > 1) ratio = 1;
+	    if (ratio < 0)
+		ratio = 0;
+	    if (ratio > 1)
+		ratio = 1;
 
 	    vh->ratio        = ratio;
 	    ku_view_t* bar   = view->views->data[0];
@@ -64,14 +67,17 @@ void vh_slider_evt(ku_view_t* view, ku_event_t ev)
 	    ku_view_set_frame(bar, frame);
 
 	    vh_slider_event_t event = {.view = view, .ratio = vh->ratio, .vh = vh};
-	    if (vh->on_event) (*vh->on_event)(event);
+	    if (vh->on_event)
+		(*vh->on_event)(event);
 	}
     }
+
+    return 0;
 }
 
 void vh_slider_set(ku_view_t* view, float ratio)
 {
-    vh_slider_t* vh  = view->handler_data;
+    vh_slider_t* vh  = view->evt_han_data;
     vh->ratio        = ratio;
     ku_view_t* bar   = view->views->data[0];
     ku_rect_t  frame = bar->frame.local;
@@ -81,7 +87,7 @@ void vh_slider_set(ku_view_t* view, float ratio)
 
 float vh_slider_get_ratio(ku_view_t* view)
 {
-    vh_slider_t* vh = view->handler_data;
+    vh_slider_t* vh = view->evt_han_data;
     return vh->ratio;
 }
 
@@ -96,14 +102,14 @@ void vh_slider_del(void* p)
 
 void vh_slider_add(ku_view_t* view, void (*on_event)(vh_slider_event_t))
 {
-    assert(view->handler == NULL && view->handler_data == NULL);
+    assert(view->evt_han == NULL && view->evt_han_data == NULL);
 
     vh_slider_t* vh = CAL(sizeof(vh_slider_t), vh_slider_del, vh_slider_desc);
     vh->on_event    = on_event;
     vh->enabled     = 1;
 
-    view->handler_data = vh;
-    view->handler      = vh_slider_evt;
+    view->evt_han_data = vh;
+    view->evt_han      = vh_slider_evt;
 
     ku_view_t* bar = view->views->data[0];
     vh_anim_add(bar, NULL, NULL);
@@ -111,7 +117,7 @@ void vh_slider_add(ku_view_t* view, void (*on_event)(vh_slider_event_t))
 
 void vh_slider_set_enabled(ku_view_t* view, int flag)
 {
-    vh_slider_t* vh = view->handler_data;
+    vh_slider_t* vh = view->evt_han_data;
 
     if (flag)
     {

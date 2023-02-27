@@ -76,7 +76,7 @@ glsha_t ku_gl_create_texture_shader()
 	"{"
 	" highp float alpha = vUv.w;"
 	" highp vec4 col = texture2D(sampler[0], vUv.xy);"
-	" if (alpha < 1.0) col.w *= alpha;"
+	" if (alpha != 1.0) col.w = alpha;"
 	" gl_FragColor = col;"
 	"}";
 
@@ -136,8 +136,9 @@ gltex_t ku_gl_create_texture(int index, uint32_t w, uint32_t h)
 
     glActiveTexture(GL_TEXTURE0 + tex.index);
     glBindTexture(GL_TEXTURE_2D, tex.tx);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    /* !!! GL_LINEAR breaks session record/replay determinism, interpolated values can somehow differ */
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
@@ -169,9 +170,7 @@ void ku_gl_init(int max_dev_width, int max_dev_height)
 {
     GLenum err = glewInit();
     if (GLEW_OK != err)
-    {
-	printf("ERROR 5 %s\n", glewGetErrorString(err));
-    }
+	mt_log_debug("GLEW Init error %s\n", glewGetErrorString(err));
 
     kugl.shader = ku_gl_create_texture_shader();
     kugl.buffer = ku_gl_create_vertex_buffer();
@@ -195,7 +194,8 @@ void ku_gl_init(int max_dev_width, int max_dev_height)
 
     /* don't let it be bigger than max size */
 
-    if (binsize > value) binsize = value;
+    if (binsize > value)
+	binsize = value;
 
     mt_log_debug("texture size will be %i", binsize);
 
@@ -235,7 +235,8 @@ void ku_gl_add_textures(mt_vector_t* views, int force)
 	}
 
 	/* reset atlas */
-	if (kugl.atlas) REL(kugl.atlas);
+	if (kugl.atlas)
+	    REL(kugl.atlas);
 	kugl.atlas = ku_gl_atlas_new(kugl.texturesize, kugl.texturesize);
     }
 
@@ -245,7 +246,7 @@ void ku_gl_add_textures(mt_vector_t* views, int force)
     int reset = 0;
 
     /* add texture to atlas */
-    for (int index = 0; index < views->length; index++)
+    for (size_t index = 0; index < views->length; index++)
     {
 	ku_view_t* view = views->data[index];
 
@@ -328,7 +329,8 @@ void ku_gl_add_textures(mt_vector_t* views, int force)
     glBindTexture(GL_TEXTURE_2D, 0);
 
     /* in case of reset do the whole thing once again with forced reset*/
-    if (reset == 1) ku_gl_add_textures(views, 1);
+    if (reset == 1)
+	ku_gl_add_textures(views, 1);
 }
 
 /* upload vertexes */
@@ -338,7 +340,7 @@ void ku_gl_add_vertexes(mt_vector_t* views)
     ku_floatbuffer_reset(kugl.floatbuffer);
 
     /* add vertexes to buffer */
-    for (int index = 0; index < views->length; index++)
+    for (size_t index = 0; index < views->length; index++)
     {
 	ku_view_t* view = views->data[index];
 

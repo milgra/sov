@@ -93,7 +93,7 @@ void create_layers()
 
 	mt_vector_t* workspaces = VNEW(); // REL 1
 
-	for (int index = 0; index < sov.workspaces->length; index++)
+	for (size_t index = 0; index < sov.workspaces->length; index++)
 	{
 	    sway_workspace_t* ws = sov.workspaces->data[index];
 	    if (strcmp(ws->output, monitor->name) == 0) VADD(workspaces, ws);
@@ -137,7 +137,7 @@ void update(ku_event_t ev)
 
 	mt_vector_t* workspaces = VNEW();
 
-	for (int index = 0; index < sov.workspaces->length; index++)
+	for (size_t index = 0; index < sov.workspaces->length; index++)
 	{
 	    sway_workspace_t* ws = sov.workspaces->data[index];
 	    if (strcmp(ws->output, info->monitor->name) == 0) VADD(workspaces, ws);
@@ -185,7 +185,7 @@ void update(ku_event_t ev)
 
 	    if (sov.wlwindows->length > 0)
 	    {
-		for (int w = 0; w < sov.wlwindows->length; w++)
+		for (size_t w = 0; w < sov.wlwindows->length; w++)
 		{
 		    wl_window_t* window = sov.wlwindows->data[w];
 		    ku_wayland_delete_window(window);
@@ -215,7 +215,7 @@ void update(ku_event_t ev)
 
 		if (sov.wlwindows->length > 0)
 		{
-		    for (int w = 0; w < sov.wlwindows->length; w++)
+		    for (size_t w = 0; w < sov.wlwindows->length; w++)
 		    {
 			wl_window_t* window = sov.wlwindows->data[w];
 			ku_wayland_delete_window(window);
@@ -328,8 +328,8 @@ int main(int argc, char** argv)
     char cwd[PATH_MAX];
     if (getcwd(cwd, sizeof(cwd)) == NULL) printf("Cannot get working directory\n");
 
-    char* cfg_path_loc = cfg_par ? mt_path_new_normalize(cfg_par, cwd) : mt_path_new_normalize(CFG_PATH_LOC, getenv("HOME")); // REL 1
-    char* cfg_path_glo = STRNC(PKG_DATADIR);                                                                                  // REL 2
+    char* cfg_path_loc = cfg_par ? mt_path_new_normalize(cfg_par) : mt_path_new_normalize(CFG_PATH_LOC); // REL
+    char* cfg_path_glo = STRNC(PKG_DATADIR);                                                             // REL
 
     if (cfg_par) REL(cfg_par);
 
@@ -342,9 +342,9 @@ int main(int argc, char** argv)
     else
 	sov.cfg_path = cfg_path_glo;
 
-    sov.css_path  = mt_path_new_append(sov.cfg_path, "html/main.css");  // REL 6
-    sov.html_path = mt_path_new_append(sov.cfg_path, "html/main.html"); // REL 7
-    sov.img_path  = mt_path_new_append(sov.cfg_path, "img");            // REL 6
+    sov.css_path  = mt_path_new_append(sov.cfg_path, "html/main.css");  // REL
+    sov.html_path = mt_path_new_append(sov.cfg_path, "html/main.html"); // REL
+    sov.img_path  = mt_path_new_append(sov.cfg_path, "img");            // REL
 
     printf("style path    : %s\n", sov.cfg_path);
     printf("css path      : %s\n", sov.css_path);
@@ -361,14 +361,14 @@ int main(int argc, char** argv)
 
     /* init text rendering */
 
-    ku_text_init(); // DESTROY 1
+    ku_text_init(); // DESTROY
 
     ku_wayland_init(init, update, destroy, 0);
 
     /* cleanup */
 
-    REL(cfg_path_glo); // REL 2
-    REL(cfg_path_loc); // REL 1
+    REL(cfg_path_glo);
+    REL(cfg_path_loc);
     REL(sov.css_path);
     REL(sov.html_path);
     REL(sov.img_path);

@@ -33,11 +33,11 @@ void vh_drag_drag(ku_view_t* view, ku_view_t* item);
 
 #if __INCLUDE_LEVEL__ == 0
 
-void vh_drag_evt(ku_view_t* view, ku_event_t ev)
+int vh_drag_evt(ku_view_t* view, ku_event_t ev)
 {
     if (ev.type == KU_EVENT_MOUSE_MOVE && ev.drag)
     {
-	vh_drag_t* vh = view->handler_data;
+	vh_drag_t* vh = view->evt_han_data;
 
 	if (vh->dragged_view)
 	{
@@ -47,22 +47,26 @@ void vh_drag_evt(ku_view_t* view, ku_event_t ev)
 	    ku_view_set_frame(vh->dragged_view, frame);
 
 	    vh_drag_event_t event = {.id = VH_DRAG_MOVE, .vh = vh, .view = view, .dragged_view = vh->dragged_view};
-	    if (vh->on_event) (*vh->on_event)(event);
+	    if (vh->on_event)
+		(*vh->on_event)(event);
 	}
     }
     if (ev.type == KU_EVENT_MOUSE_UP && ev.drag)
     {
-	vh_drag_t* vh = view->handler_data;
+	vh_drag_t* vh = view->evt_han_data;
 
 	if (vh->dragged_view)
 	{
 	    vh_drag_event_t event = {.id = VH_DRAG_DROP, .vh = vh, .view = view, .dragged_view = vh->dragged_view};
-	    if (vh->on_event) (*vh->on_event)(event);
+	    if (vh->on_event)
+		(*vh->on_event)(event);
 
 	    REL(vh->dragged_view);
 	    vh->dragged_view = NULL;
 	}
     }
+
+    return 1;
 }
 
 void vh_drag_del(void* p)
@@ -78,19 +82,18 @@ void vh_drag_desc(void* p, int level)
 
 void vh_drag_attach(ku_view_t* view, void (*on_event)(vh_drag_event_t))
 {
-    assert(view->handler == NULL && view->handler_data == NULL);
+    assert(view->evt_han == NULL && view->evt_han_data == NULL);
 
     vh_drag_t* vh = CAL(sizeof(vh_drag_t), vh_drag_del, vh_drag_desc);
     vh->on_event  = on_event;
 
-    view->needs_touch  = 1;
-    view->handler_data = vh;
-    view->handler      = vh_drag_evt;
+    view->evt_han_data = vh;
+    view->evt_han      = vh_drag_evt;
 }
 
 void vh_drag_drag(ku_view_t* view, ku_view_t* item)
 {
-    vh_drag_t* vh = view->handler_data;
+    vh_drag_t* vh = view->evt_han_data;
 
     if (vh->dragged_view)
     {

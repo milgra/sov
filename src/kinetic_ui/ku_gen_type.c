@@ -17,7 +17,7 @@ void ku_gen_type_apply(mt_vector_t* views, void (*button_event)(vh_button_event_
 
 void ku_gen_type_apply(mt_vector_t* views, void (*button_event)(vh_button_event_t), void (*slider_event)(vh_slider_event_t))
 {
-    for (int index = 0; index < views->length; index++)
+    for (size_t index = 0; index < views->length; index++)
     {
 	ku_view_t* view = views->data[index];
 

@@ -27,7 +27,7 @@ void tg_css_add(ku_view_t* view);
 #include "mt_log.c"
 #include "mt_string.c"
 
-void tg_css_gen(ku_view_t* view)
+int tg_css_gen(ku_view_t* view)
 {
     if (view->frame.local.w >= 1.0 &&
 	view->frame.local.h >= 1.0)
@@ -96,6 +96,8 @@ void tg_css_gen(ku_view_t* view)
 	    view->texture.ready   = 1;
 	}
     }
+
+    return 1;
 }
 
 void tg_css_add(ku_view_t* view)

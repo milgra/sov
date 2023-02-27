@@ -1,8 +1,6 @@
 #ifndef mt_map_h
 #define mt_map_h
 
-/* TODO separate unit tests */
-
 #include "mt_vector.c"
 #include <stdio.h>
 #include <stdlib.h>
@@ -23,16 +21,16 @@ struct pair_t
 typedef struct bucket_t bucket_t;
 struct bucket_t
 {
-    unsigned int count;
-    pair_t*      pairs;
+    size_t  count;
+    pair_t* pairs;
 };
 
 typedef struct _mt_map_t mt_map_t;
 struct _mt_map_t
 {
-    unsigned int count_real;
-    unsigned int count;
-    bucket_t*    buckets;
+    size_t    count_real;
+    size_t    count;
+    bucket_t* buckets;
 };
 
 mt_map_t* mt_map_new(void);
@@ -44,12 +42,7 @@ void*     mt_map_get(mt_map_t* map, const char* key);
 void      mt_map_del(mt_map_t* map, const char* key);
 void      mt_map_keys(mt_map_t* map, mt_vector_t* res);
 void      mt_map_values(mt_map_t* map, mt_vector_t* res);
-void      mt_map_print_keys(mt_map_t* map);
 void      mt_map_describe(void* p, int level);
-
-#ifdef DEBUG
-void mt_map_test(void);
-#endif
 
 #endif
 
@@ -156,7 +149,7 @@ void mt_map_resize(mt_map_t* map)
 
     mt_vector_t* oldkeys = VNEW();
     mt_map_keys(map, oldkeys);
-    for (uint32_t index = 0; index < oldkeys->length; index++)
+    for (size_t index = 0; index < oldkeys->length; index++)
     {
 	char* key   = oldkeys->data[index];
 	void* value = mt_map_get(map, key);
@@ -423,7 +416,7 @@ void mt_map_printkeys(mt_map_t* map)
     mt_vector_t* keys = VNEW();
     mt_map_keys(map, keys);
     printf(" \n");
-    for (int index = 0; index < keys->length; index++)
+    for (size_t index = 0; index < keys->length; index++)
 	printf(" %s", (char*) keys->data[index]);
 }
 
@@ -433,7 +426,7 @@ void mt_map_describe(void* p, int level)
     mt_vector_t* keys = VNEW(); // REL 0
     mt_map_keys(map, keys);
     printf("{");
-    for (int index = 0; index < keys->length; index++)
+    for (size_t index = 0; index < keys->length; index++)
     {
 	char* key = (char*) keys->data[index];
 	printf("\n%*s(K)%s\n%*s(V)", level, " ", key, level, " ");

@@ -54,7 +54,7 @@ void vh_button_set_enabled(ku_view_t* view, int flag);
 void vh_button_on_anim(vh_anim_event_t event)
 {
     ku_view_t*   btnview = (ku_view_t*) event.userdata;
-    vh_button_t* vh      = btnview->handler_data;
+    vh_button_t* vh      = btnview->evt_han_data;
 
     // if offview alpha is 0 and state is released
 
@@ -67,9 +67,9 @@ void vh_button_on_anim(vh_anim_event_t event)
     }
 }
 
-void vh_button_evt(ku_view_t* view, ku_event_t ev)
+int vh_button_evt(ku_view_t* view, ku_event_t ev)
 {
-    vh_button_t* vh = view->handler_data;
+    vh_button_t* vh = view->evt_han_data;
 
     if (vh->enabled)
     {
@@ -79,8 +79,10 @@ void vh_button_evt(ku_view_t* view, ku_event_t ev)
 	    {
 		vh->state = VH_BUTTON_DOWN;
 
-		if (vh->offview) vh_anim_alpha(vh->offview, 1.0, 0.0, 10, AT_LINEAR);
-		if (vh->onview) vh_anim_alpha(vh->onview, 0.0, 1.0, 10, AT_LINEAR);
+		if (vh->offview)
+		    vh_anim_alpha(vh->offview, 1.0, 0.0, 10, AT_LINEAR);
+		if (vh->onview)
+		    vh_anim_alpha(vh->onview, 0.0, 1.0, 10, AT_LINEAR);
 	    }
 	}
 	else if (ev.type == KU_EVENT_MOUSE_UP)
@@ -90,36 +92,44 @@ void vh_button_evt(ku_view_t* view, ku_event_t ev)
 		if (vh->state == VH_BUTTON_UP)
 		{
 		    vh->state = VH_BUTTON_DOWN;
-		    if (vh->offview) vh_anim_alpha(vh->offview, 1.0, 0.0, 10, AT_LINEAR);
-		    if (vh->onview) vh_anim_alpha(vh->onview, 0.0, 1.0, 10, AT_LINEAR);
+		    if (vh->offview)
+			vh_anim_alpha(vh->offview, 1.0, 0.0, 10, AT_LINEAR);
+		    if (vh->onview)
+			vh_anim_alpha(vh->onview, 0.0, 1.0, 10, AT_LINEAR);
 		}
 		else
 		{
 		    vh->state = VH_BUTTON_UP;
-		    if (vh->offview) vh_anim_alpha(vh->offview, 0.0, 1.0, 10, AT_LINEAR);
-		    if (vh->onview) vh_anim_alpha(vh->onview, 1.0, 0.0, 10, AT_LINEAR);
+		    if (vh->offview)
+			vh_anim_alpha(vh->offview, 0.0, 1.0, 10, AT_LINEAR);
+		    if (vh->onview)
+			vh_anim_alpha(vh->onview, 1.0, 0.0, 10, AT_LINEAR);
 		}
 
 		vh_button_event_t event = {.id = VH_BUTTON_EVENT, .view = view, .vh = vh, .ev = ev};
-		if (vh->on_event) (*vh->on_event)(event);
+		if (vh->on_event)
+		    (*vh->on_event)(event);
 	    }
 	    else
 	    {
 		vh->state = VH_BUTTON_UP;
 
 		vh_button_event_t event = {.id = VH_BUTTON_EVENT, .view = view, .vh = vh, .ev = ev};
-		if (vh->on_event) (*vh->on_event)(event);
+		if (vh->on_event)
+		    (*vh->on_event)(event);
 
 		/* if (vh->offview) vh_anim_alpha(vh->offview, 1.0, 0.0, 10, AT_LINEAR); */
 		/* if (vh->onview) vh_anim_alpha(vh->onview, 0.0, 1.0, 10, AT_LINEAR); */
 	    }
 	}
     }
+
+    return 0;
 }
 
 void vh_button_set_state(ku_view_t* view, vh_button_state_t state)
 {
-    vh_button_t* vh = view->handler_data;
+    vh_button_t* vh = view->evt_han_data;
 
     if (vh->enabled)
     {
@@ -127,13 +137,17 @@ void vh_button_set_state(ku_view_t* view, vh_button_state_t state)
 
 	if (state)
 	{
-	    if (vh->offview) vh_anim_alpha(vh->offview, 1.0, 0.0, 10, AT_LINEAR);
-	    if (vh->onview) vh_anim_alpha(vh->onview, 0.0, 1.0, 10, AT_LINEAR);
+	    if (vh->offview)
+		vh_anim_alpha(vh->offview, 1.0, 0.0, 10, AT_LINEAR);
+	    if (vh->onview)
+		vh_anim_alpha(vh->onview, 0.0, 1.0, 10, AT_LINEAR);
 	}
 	else
 	{
-	    if (vh->offview) vh_anim_alpha(vh->offview, 0.0, 1.0, 10, AT_LINEAR);
-	    if (vh->onview) vh_anim_alpha(vh->onview, 1.0, 0.0, 10, AT_LINEAR);
+	    if (vh->offview)
+		vh_anim_alpha(vh->offview, 0.0, 1.0, 10, AT_LINEAR);
+	    if (vh->onview)
+		vh_anim_alpha(vh->onview, 1.0, 0.0, 10, AT_LINEAR);
 	}
     }
 }
@@ -150,7 +164,7 @@ void vh_button_desc(void* p, int level)
 
 void vh_button_add(ku_view_t* view, vh_button_type_t type, void (*on_event)(vh_button_event_t))
 {
-    assert(view->handler == NULL && view->handler_data == NULL);
+    assert(view->evt_han == NULL && view->evt_han_data == NULL);
 
     vh_button_t* vh = CAL(sizeof(vh_button_t), vh_button_del, vh_button_desc);
     vh->on_event    = on_event;
@@ -170,26 +184,28 @@ void vh_button_add(ku_view_t* view, vh_button_type_t type, void (*on_event)(vh_b
 	vh_anim_add(vh->onview, vh_button_on_anim, view);
     }
 
-    if (vh->offview) ku_view_set_texture_alpha(vh->offview, 1.0, 0);
-    if (vh->onview) ku_view_set_texture_alpha(vh->onview, 0.0, 0);
+    if (vh->offview)
+	ku_view_set_texture_alpha(vh->offview, 1.0, 0);
+    if (vh->onview)
+	ku_view_set_texture_alpha(vh->onview, 0.0, 0);
 
-    view->handler      = vh_button_evt;
-    view->handler_data = vh;
-    view->needs_touch  = 1;
-    view->blocks_touch = 1;
+    view->evt_han      = vh_button_evt;
+    view->evt_han_data = vh;
 }
 
 void vh_button_set_enabled(ku_view_t* view, int flag)
 {
-    vh_button_t* vh = view->handler_data;
+    vh_button_t* vh = view->evt_han_data;
 
     if (flag)
     {
-	if (vh->enabled == 0 && vh->offview) vh_anim_alpha(vh->offview, 0.3, 1.0, 10, AT_LINEAR);
+	if (vh->enabled == 0 && vh->offview)
+	    vh_anim_alpha(vh->offview, 0.3, 1.0, 10, AT_LINEAR);
     }
     else
     {
-	if (vh->enabled == 1 && vh->offview) vh_anim_alpha(vh->offview, 1.0, 0.3, 10, AT_LINEAR);
+	if (vh->enabled == 1 && vh->offview)
+	    vh_anim_alpha(vh->offview, 1.0, 0.3, 10, AT_LINEAR);
     }
 
     vh->enabled = flag;

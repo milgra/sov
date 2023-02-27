@@ -1,8 +1,6 @@
 #ifndef mt_string_h
 #define mt_string_h
 
-/* TODO separate unit tests */
-
 #include "mt_vector.c"
 #include <stdarg.h>
 #include <stdint.h>
@@ -11,13 +9,16 @@
 #define STRNC(x) mt_string_new_cstring(x)
 #define STRNF(x, ...) mt_string_new_format(x, __VA_ARGS__)
 
-char*        mt_string_new_format(int size, char* format, ...);
-char*        mt_string_new_cstring(char* string);
-char*        mt_string_reset(char* str);
-char*        mt_string_append(char* str, char* add);
-char*        mt_string_append_cp(char* str, uint32_t cp);
-char*        mt_string_append_sub(char* str, char* add, int from, int len);
-char*        mt_string_delete_utf_codepoints(char* str, int from, int len);
+char* mt_string_new_format(int size, char* format, ...);
+char* mt_string_new_cstring(char* string);
+char* mt_string_new_substring(char* string, size_t from, size_t len);
+char* mt_string_reset(char* str);
+
+char* mt_string_append(char* str, char* add);
+char* mt_string_append_cp(char* str, uint32_t cp);
+char* mt_string_append_sub(char* str, char* add, size_t from, size_t len);
+
+char*        mt_string_delete_utf_codepoints(char* str, size_t from, size_t len);
 mt_vector_t* mt_string_tokenize(char* str, char* del);
 void         mt_string_describe(void* p, int level);
 void         mt_string_describe_utf(char* str);
@@ -59,6 +60,20 @@ char* mt_string_new_cstring(char* string)
     return result;
 }
 
+/* TODO calculate UTF8 length */
+
+char* mt_string_new_substring(char* string, size_t from, size_t len)
+{
+    char* result = NULL;
+    if (string != NULL && len > from)
+    {
+	result = CAL((strlen(string) + 1) * sizeof(char), mt_string_del, mt_string_describe);
+	memcpy(result, string + from, len);
+	result[len] = '\0';
+    }
+    return result;
+}
+
 char* mt_string_reset(char* str)
 {
     str[0] = '\0';
@@ -69,19 +84,22 @@ char* mt_string_append(char* str, char* add)
 {
     size_t needed = strlen(str) + strlen(add) + 1;
 
-    if (strlen(str) < needed) str = mt_memory_realloc(str, needed);
+    if (strlen(str) < needed)
+	str = mt_memory_realloc(str, needed);
 
     str = utf8cat(str, add);
 
     return str;
 }
+
 char* mt_string_append_cp(char* str, uint32_t cp)
 {
     size_t size   = utf8size(str);
     size_t cpsize = utf8codepointsize(cp);
     size_t needed = strlen(str) + size + 1;
 
-    if (strlen(str) < needed) str = mt_memory_realloc(str, needed);
+    if (strlen(str) < needed)
+	str = mt_memory_realloc(str, needed);
 
     char* end = str + size - 1;
 
@@ -91,30 +109,32 @@ char* mt_string_append_cp(char* str, uint32_t cp)
     return str;
 }
 
-char* mt_string_append_sub(char* str, char* add, int from, int len)
+char* mt_string_append_sub(char* str, char* add, size_t from, size_t len)
 {
     size_t needed  = strlen(str) + len + 1;
     int    oldsize = strlen(str);
 
-    if (strlen(str) < needed) str = mt_memory_realloc(str, needed);
+    if (strlen(str) < needed)
+	str = mt_memory_realloc(str, needed);
     memcpy(str + oldsize, add + from, len);
     str[needed - 1] = '\0';
 
     return str;
 }
 
-char* mt_string_delete_utf_codepoints(char* str, int from, int len)
+char* mt_string_delete_utf_codepoints(char* str, size_t from, size_t len)
 {
     char* res = STRNC("");
 
     char*        curr = str;
     utf8_int32_t cp;
 
-    for (int index = 0; index < utf8len(str); index++)
+    for (size_t index = 0; index < utf8len(str); index++)
     {
 	curr = utf8codepoint(curr, &cp);
 
-	if (index < from || index > from + len) res = mt_string_append_cp(res, cp);
+	if (index < from || index > from + len)
+	    res = mt_string_append_cp(res, cp);
     }
 
     strcpy(str, res);
@@ -155,21 +175,21 @@ void mt_string_describe_utf(char* str)
 {
     char*        part = str;
     utf8_int32_t cp;
-    for (int i = 0; i < utf8len(str); i++)
+    for (size_t i = 0; i < utf8len(str); i++)
     {
 	part = utf8codepoint(part, &cp);
 	printf("%.4i \t| ", cp);
     }
     printf("\n");
     part = str;
-    for (int i = 0; i < utf8len(str); i++)
+    for (size_t i = 0; i < utf8len(str); i++)
     {
 	part = utf8codepoint(part, &cp);
 	printf("%c \t| ", cp);
     }
     part = str;
     printf("\n");
-    for (int i = 0; i < utf8len(str); i++)
+    for (size_t i = 0; i < utf8len(str); i++)
     {
 	part = utf8codepoint(part, &cp);
 	printf("%zu \t| ", utf8codepointsize(cp));

@@ -25,7 +25,7 @@ enum ku_recorder_mode_t
 
 struct ku_recorder_t
 {
-    int          index;
+    size_t       index;
     FILE*        file;
     mt_vector_t* eventqueue;
     void (*update)(ku_event_t);
@@ -51,7 +51,8 @@ void ku_recorder_replay(char* path)
 {
     kurec.mode = KU_REC_MODE_REPLAY;
     FILE* file = fopen(path, "r");
-    if (!file) printf("evrec player : cannot open file %s\n", path);
+    if (!file)
+	printf("evrec player : cannot open file %s\n", path);
 
     kurec.file = file;
 
@@ -59,10 +60,11 @@ void ku_recorder_replay(char* path)
     {
 	ku_event_t ev = ku_event_read(file);
 	VADDR(kurec.eventqueue, HEAP(ev));
-	if (feof(file)) break;
+	if (feof(file))
+	    break;
     }
 
-    printf("%i events read\n", kurec.eventqueue->length);
+    printf("%li events read\n", kurec.eventqueue->length);
 }
 
 void ku_recorder_destroy()
@@ -82,7 +84,7 @@ void ku_recorder_update_record(ku_event_t ev)
     if (ev.type == KU_EVENT_FRAME || ev.type == KU_EVENT_TIME || ev.type == KU_EVENT_WINDOW_SHOWN)
     {
 	/* record and send waiting events */
-	for (int index = 0; index < kurec.eventqueue->length; index++)
+	for (size_t index = 0; index < kurec.eventqueue->length; index++)
 	{
 	    ku_event_t* event = (ku_event_t*) kurec.eventqueue->data[index];
 	    event->frame      = ev.frame;

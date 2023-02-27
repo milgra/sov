@@ -11,7 +11,7 @@ typedef struct _vh_cv_scrl_t
     ku_view_t* hori_v;
     int        state; // 0 scroll 1 open 2 close
     int        steps;
-    uint32_t   item_cnt;
+    size_t     item_cnt;
     void*      userdata;
 } vh_cv_scrl_t;
 
@@ -23,7 +23,7 @@ void vh_cv_scrl_attach(
 void vh_cv_scrl_update(ku_view_t* view);
 void vh_cv_scrl_show(ku_view_t* view);
 void vh_cv_scrl_hide(ku_view_t* view);
-void vh_cv_scrl_set_item_count(ku_view_t* view, uint32_t count);
+void vh_cv_scrl_set_item_count(ku_view_t* view, size_t count);
 void vh_cv_scrl_scroll_v(ku_view_t* view, int y);
 void vh_cv_scrl_scroll_h(ku_view_t* view, int x);
 
@@ -60,20 +60,20 @@ void vh_cv_scrl_attach(
     ku_view_set_texture_alpha(vh->hori_v, 0.0, 0);
     ku_view_set_texture_alpha(vh->vert_v, 0.0, 0);
 
-    view->handler_data = vh;
+    view->evt_han_data = vh;
 }
 
-void vh_cv_scrl_set_item_count(ku_view_t* view, uint32_t count)
+void vh_cv_scrl_set_item_count(ku_view_t* view, size_t count)
 {
-    vh_cv_scrl_t* vh = view->handler_data;
+    vh_cv_scrl_t* vh = view->evt_han_data;
 
     vh->item_cnt = count;
 }
 
 void vh_cv_scrl_update(ku_view_t* view)
 {
-    vh_cv_scrl_t* vh  = view->handler_data;
-    vh_cv_body_t* bvh = vh->tbody_view->handler_data;
+    vh_cv_scrl_t* vh  = view->evt_han_data;
+    vh_cv_body_t* bvh = vh->tbody_view->evt_han_data;
 
     ku_rect_t vf = view->frame.local;
     ku_rect_t cf = bvh->content->frame.local;
@@ -137,7 +137,7 @@ void vh_cv_scrl_update(ku_view_t* view)
 
 void vh_cv_scrl_show(ku_view_t* view)
 {
-    vh_cv_scrl_t* vh = view->handler_data;
+    vh_cv_scrl_t* vh = view->evt_han_data;
 
     vh->state = 1;
     vh->steps = 0;
@@ -147,15 +147,15 @@ void vh_cv_scrl_show(ku_view_t* view)
 
 void vh_cv_scrl_hide(ku_view_t* view)
 {
-    vh_cv_scrl_t* vh = view->handler_data;
+    vh_cv_scrl_t* vh = view->evt_han_data;
     vh->state        = 2;
     vh->steps        = 0;
 }
 
 void vh_cv_scrl_scroll_v(ku_view_t* view, int y)
 {
-    /* vh_cv_scrl_t* vh  = view->handler_data; */
-    /* vh_cv_body_t* bvh = vh->tbody_view->handler_data; */
+    /* vh_cv_scrl_t* vh  = view->evt_han_data; */
+    /* vh_cv_body_t* bvh = vh->tbody_view->evt_han_data; */
 
     /* if (bvh->items->length > 0 && vh->item_cnt > 0) */
     /* { */
@@ -186,8 +186,8 @@ void vh_cv_scrl_scroll_v(ku_view_t* view, int y)
 
 void vh_cv_scrl_scroll_h(ku_view_t* view, int x)
 {
-    /* vh_cv_scrl_t* vh  = view->handler_data; */
-    /* vh_cv_body_t* bvh = vh->tbody_view->handler_data; */
+    /* vh_cv_scrl_t* vh  = view->evt_han_data; */
+    /* vh_cv_body_t* bvh = vh->tbody_view->evt_han_data; */
 
     /* if (bvh->items->length > 0 && vh->item_cnt > 0) */
     /* { */

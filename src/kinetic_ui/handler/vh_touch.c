@@ -30,14 +30,17 @@ void vh_touch_add(ku_view_t* view, void (*on_event)(vh_touch_event_t));
 
 #include "ku_event.c"
 
-void vh_touch_evt(ku_view_t* view, ku_event_t ev)
+int vh_touch_evt(ku_view_t* view, ku_event_t ev)
 {
     if (ev.type == KU_EVENT_MOUSE_DOWN)
     {
-	vh_touch_t*      vh    = view->handler_data;
+	vh_touch_t*      vh    = view->evt_han_data;
 	vh_touch_event_t event = {.id = VH_TOUCH_EVENT, .vh = vh, .view = view};
-	if (vh->on_event) (*vh->on_event)(event);
+	if (vh->on_event)
+	    (*vh->on_event)(event);
     }
+
+    return 0;
 }
 
 void vh_touch_del(void* p)
@@ -52,15 +55,13 @@ void vh_touch_desc(void* p, int level)
 
 void vh_touch_add(ku_view_t* view, void (*on_event)(vh_touch_event_t))
 {
-    assert(view->handler == NULL && view->handler_data == NULL);
+    assert(view->evt_han == NULL && view->evt_han_data == NULL);
 
     vh_touch_t* vh = CAL(sizeof(vh_touch_t), vh_touch_del, vh_touch_desc);
     vh->on_event   = on_event;
 
-    view->handler      = vh_touch_evt;
-    view->handler_data = vh;
-
-    view->needs_touch = 1;
+    view->evt_han      = vh_touch_evt;
+    view->evt_han_data = vh;
 }
 
 #endif

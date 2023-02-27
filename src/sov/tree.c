@@ -41,6 +41,7 @@ void sway_workspace_del(void* p)
 {
     sway_workspace_t* ws = p;
     REL(ws->windows);
+    if (ws->name) REL(ws->name);
     if (ws->output) REL(ws->output);
 }
 
@@ -80,11 +81,11 @@ sway_window_t* sway_window_new()
 
 char* sway_get_value(mt_vector_t* vec, int pos, char* path)
 {
-    for (int index = pos; index < vec->length; index++)
+    for (size_t index = pos; index < vec->length; index++)
     {
 	if (strcmp(vec->data[index], path) == 0) return vec->data[index + 1];
     }
-    for (int index = pos; index > -1; index--)
+    for (size_t index = pos; index-- > 0;)
     {
 	if (strcmp(vec->data[index], path) == 0) return vec->data[index + 1];
     }
@@ -98,7 +99,7 @@ void tree_reader_extract(char* ws_json, char* tree_json, mt_vector_t* workspaces
 
     // find workspaces
 
-    for (int index = 0; index < json->length; index += 2)
+    for (size_t index = 0; index < json->length; index += 2)
     {
 	char* key      = json->data[index];
 	char* type_prt = strstr(key, "/type");
@@ -117,7 +118,7 @@ void tree_reader_extract(char* ws_json, char* tree_json, mt_vector_t* workspaces
 	    char* ok  = mt_string_new_format(pathlen + 20, "%soutput", path);      // REL 7
 	    char* nk  = mt_string_new_format(pathlen + 20, "%snum", path);         // REL 8
 	    char* fk  = mt_string_new_format(pathlen + 20, "%sfocused", path);     // REL 9
-	    char* nmk = mt_string_new_format(pathlen + 20, "%sname", path);        // REL 7
+	    char* nmk = mt_string_new_format(pathlen + 20, "%sname", path);        // REL 10
 
 	    char* x  = sway_get_value(json, index, wx);
 	    char* y  = sway_get_value(json, index, wy);
@@ -162,7 +163,7 @@ void tree_reader_extract(char* ws_json, char* tree_json, mt_vector_t* workspaces
 
     int curr_wspc_n = 0;
 
-    for (int index = 0; index < json->length; index += 2)
+    for (size_t index = 0; index < json->length; index += 2)
     {
 	char* key      = json->data[index];
 	char* type_prt = strstr(key, "type");
@@ -218,7 +219,7 @@ void tree_reader_extract(char* ws_json, char* tree_json, mt_vector_t* workspaces
 
 	    mt_log_debug("Found window, appid %s title %s %i %i %i %i", wi->appid, wi->title, wi->x, wi->y, wi->width, wi->height);
 
-	    for (int wsi = 0; wsi < workspaces->length; wsi++)
+	    for (size_t wsi = 0; wsi < workspaces->length; wsi++)
 	    {
 		sway_workspace_t* ws = workspaces->data[wsi];
 

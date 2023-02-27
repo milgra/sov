@@ -11,11 +11,15 @@ enum vh_cv_evnt_event_id
 {
     VH_CV_EVENT_RESIZE,
     VH_CV_EVENT_CLICK,
+    VH_CV_EVENT_KEY_DOWN,
+    VH_CV_EVENT_KEY_UP
 };
 
 typedef struct _vh_cv_evnt_event_t
 {
     enum vh_cv_evnt_event_id id;
+    ku_view_t*               view;
+    ku_event_t               ev;
 } vh_cv_evnt_event_t;
 
 typedef struct _vh_cv_evnt_t
@@ -48,13 +52,13 @@ void vh_cv_evnt_zoom(ku_view_t* view, float delta);
 
 #define SCROLLBAR 20.0
 
-void vh_cv_evnt_evt(ku_view_t* view, ku_event_t ev)
+int vh_cv_evnt_evt(ku_view_t* view, ku_event_t ev)
 {
-    vh_cv_evnt_t* vh = view->handler_data;
+    vh_cv_evnt_t* vh = view->evt_han_data;
 
     if (ev.type == KU_EVENT_FRAME)
     {
-	vh_cv_body_t* bvh = vh->tbody_view->handler_data;
+	vh_cv_body_t* bvh = vh->tbody_view->evt_han_data;
 	ku_rect_t     cf  = bvh->content->frame.local;
 
 	vh->sx *= 0.8;
@@ -72,7 +76,8 @@ void vh_cv_evnt_evt(ku_view_t* view, ku_event_t ev)
 
 	if (hth >= view->frame.local.h)
 	{
-	    if (top > 0.001) dy -= top / 5.0; // scroll back top item
+	    if (top > 0.001)
+		dy -= top / 5.0; // scroll back top item
 	    if (bot < view->frame.local.h - 0.001)
 	    {
 		dy += (view->frame.local.h - bot) / 5.0; // scroll back bottom item
@@ -86,7 +91,8 @@ void vh_cv_evnt_evt(ku_view_t* view, ku_event_t ev)
 
 	if (wth >= view->frame.local.w)
 	{
-	    if (lft > 0.01) dx -= lft / 5.0;
+	    if (lft > 0.01)
+		dx -= lft / 5.0;
 	    if (rgt < view->frame.local.w - 0.01)
 	    {
 		dx += (view->frame.local.w - rgt) / 5.0;
@@ -108,14 +114,17 @@ void vh_cv_evnt_evt(ku_view_t* view, ku_event_t ev)
 
 	    vh_cv_body_zoom(vh->tbody_view, zoom, vh->mx, vh->my);
 	    vh_cv_evnt_event_t event = {.id = VH_CV_EVENT_RESIZE};
-	    if (vh->on_event) (*vh->on_event)(event);
+	    if (vh->on_event)
+		(*vh->on_event)(event);
 	}
 
-	if (vh->tscrl_view && vh->scroll_visible) vh_cv_scrl_update(vh->tscrl_view);
+	if (vh->tscrl_view && vh->scroll_visible)
+	    vh_cv_scrl_update(vh->tscrl_view);
 
-	vh_cv_scrl_t* svh = vh->tscrl_view->handler_data;
+	vh_cv_scrl_t* svh = vh->tscrl_view->evt_han_data;
 
-	if (svh->state > 0) vh_cv_scrl_update(vh->tscrl_view);
+	if (svh->state > 0)
+	    vh_cv_scrl_update(vh->tscrl_view);
     }
     else if (ev.type == KU_EVENT_SCROLL)
     {
@@ -185,7 +194,8 @@ void vh_cv_evnt_evt(ku_view_t* view, ku_event_t ev)
 	    vh_cv_scrl_scroll_h(vh->tscrl_view, ev.x - view->frame.global.x);
 	}
 	vh_cv_evnt_event_t event = {.id = VH_CV_EVENT_CLICK};
-	if (vh->on_event) (*vh->on_event)(event);
+	if (vh->on_event)
+	    (*vh->on_event)(event);
     }
     else if (ev.type == KU_EVENT_MOUSE_UP)
     {
@@ -193,12 +203,28 @@ void vh_cv_evnt_evt(ku_view_t* view, ku_event_t ev)
     }
     else if (ev.type == KU_EVENT_FOCUS)
     {
-	if (vh->tscrl_view) vh_cv_scrl_show(vh->tscrl_view);
+	if (vh->tscrl_view)
+	    vh_cv_scrl_show(vh->tscrl_view);
     }
     else if (ev.type == KU_EVENT_UNFOCUS)
     {
-	if (vh->tscrl_view) vh_cv_scrl_hide(vh->tscrl_view);
+	if (vh->tscrl_view)
+	    vh_cv_scrl_hide(vh->tscrl_view);
     }
+    else if (ev.type == KU_EVENT_KEY_DOWN)
+    {
+	vh_cv_evnt_event_t event = {.id = VH_CV_EVENT_KEY_DOWN, .view = view, .ev = ev};
+	if (vh->on_event)
+	    (*vh->on_event)(event);
+    }
+    else if (ev.type == KU_EVENT_KEY_UP)
+    {
+	vh_cv_evnt_event_t event = {.id = VH_CV_EVENT_KEY_UP, .view = view, .ev = ev};
+	if (vh->on_event)
+	    (*vh->on_event)(event);
+    }
+
+    return 0;
 }
 
 void vh_cv_evnt_del(void* p)
@@ -217,7 +243,7 @@ void vh_cv_evnt_attach(
     void*      userdata,
     void (*on_event)(vh_cv_evnt_event_t))
 {
-    assert(view->handler == NULL && view->handler_data == NULL);
+    assert(view->evt_han == NULL && view->evt_han_data == NULL);
 
     vh_cv_evnt_t* vh = CAL(sizeof(vh_cv_evnt_t), vh_cv_evnt_del, vh_cv_evnt_desc);
     vh->userdata     = userdata;
@@ -226,13 +252,13 @@ void vh_cv_evnt_attach(
     vh->on_event     = on_event;
     vh->zoom         = 1.0;
 
-    view->handler_data = vh;
-    view->handler      = vh_cv_evnt_evt;
+    view->evt_han_data = vh;
+    view->evt_han      = vh_cv_evnt_evt;
 }
 
 void vh_cv_evnt_zoom(ku_view_t* view, float delta)
 {
-    vh_cv_evnt_t* vh = view->handler_data;
+    vh_cv_evnt_t* vh = view->evt_han_data;
 
     vh->zoom += delta;
     vh->tbody_view->frame.dim_changed = 1;

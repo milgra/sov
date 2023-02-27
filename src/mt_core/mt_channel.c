@@ -7,11 +7,10 @@
 #ifndef mt_channel_h
 #define mt_channel_h
 
-/* TODO separate unit tests */
-
 #include "mt_memory.c"
 #include <assert.h>
 #include <pthread.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <time.h>
 
@@ -30,7 +29,6 @@ mt_channel_t* mt_channel_new(uint32_t size);
 void          mt_channel_del(void* pointer);
 char          mt_channel_send(mt_channel_t* ch, void* data);
 void*         mt_channel_recv(mt_channel_t* ch);
-void          mt_channel_test(void);
 
 #endif
 
@@ -84,10 +82,13 @@ char mt_channel_send(mt_channel_t* ch, void* data)
 
     if (ch->flags[ch->wpos] == 0)
     {
-	ch->flags[ch->wpos] = 1; // set flag, it doesn't have to be atomic, only the last bit counts
-	ch->boxes[ch->wpos] = data;
+	/* swap these rows to cause a race condition and a failing test */
+	ch->boxes[ch->wpos] = data; // first store data
+	ch->flags[ch->wpos] = 1;    // then set flag, it doesn't have to be atomic, only the last bit counts
+
 	ch->wpos += 1; // increment write index, doesn't have to be atomic, this thread uses it only
-	if (ch->wpos == ch->size) ch->wpos = 0;
+	if (ch->wpos == ch->size)
+	    ch->wpos = 0;
 
 	return 1;
     }
@@ -105,9 +106,11 @@ void* mt_channel_recv(mt_channel_t* ch)
 
 	ch->boxes[ch->rpos] = NULL; // empty box
 	ch->flags[ch->rpos] = 0;    // set flag, it doesn't have to be atomic, only the last bit counts
-	ch->rpos += 1;              // increment read index, it doesn't have to be atomic, this thread
 
-	if (ch->rpos == ch->size) ch->rpos = 0;
+	ch->rpos += 1; // increment read index, it doesn't have to be atomic, this thread uses it only
+
+	if (ch->rpos == ch->size)
+	    ch->rpos = 0;
 
 	return result;
     }

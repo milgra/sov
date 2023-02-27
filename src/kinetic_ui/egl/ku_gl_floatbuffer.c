@@ -9,8 +9,8 @@ typedef struct ku_floatbuffer_t ku_floatbuffer_t;
 struct ku_floatbuffer_t
 {
     GLfloat* data;
-    uint32_t pos;
-    uint32_t cap;
+    size_t   pos;
+    size_t   cap;
     char     changed;
 };
 
@@ -56,7 +56,7 @@ void ku_floatbuffer_reset(ku_floatbuffer_t* fb)
 
 void ku_floatbuffer_expand(ku_floatbuffer_t* fb)
 {
-    assert(fb->cap < UINT32_MAX / 2);
+    assert(fb->cap < SIZE_MAX / 2);
     fb->cap *= 2;
     fb->data = mt_memory_realloc(fb->data, sizeof(void*) * fb->cap);
 }

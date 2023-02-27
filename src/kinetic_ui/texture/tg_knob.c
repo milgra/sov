@@ -20,7 +20,7 @@ void tg_knob_set_angle(ku_view_t* view, float angle);
 
 #include "ku_draw.c"
 
-void tg_knob_gen(ku_view_t* view)
+int tg_knob_gen(ku_view_t* view)
 {
     tg_knob_t* tg = view->tex_gen_data;
 
@@ -65,7 +65,8 @@ void tg_knob_gen(ku_view_t* view)
 	    REL(bmp); // REL 0
 	}
 
-	if (tg->angle < 0) tg->angle += 6.28;
+	if (tg->angle < 0)
+	    tg->angle += 6.28;
 
 	ku_draw_insert(view->texture.bitmap, tg->back, 0, 0);
 
@@ -83,6 +84,8 @@ void tg_knob_gen(ku_view_t* view)
 	view->texture.changed = 1;
 	view->texture.ready   = 1;
     }
+
+    return 1;
 }
 
 void tg_knob_del(void* p)
@@ -106,10 +109,6 @@ void tg_knob_add(ku_view_t* view)
 
     view->tex_gen_data = tg;
     view->tex_gen      = tg_knob_gen;
-
-    view->needs_touch   = 1;
-    view->blocks_touch  = 1;
-    view->blocks_scroll = 1;
 }
 
 void tg_knob_set_angle(ku_view_t* view, float angle)

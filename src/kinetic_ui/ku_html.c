@@ -134,7 +134,7 @@ html_range_t ku_html_extract_string(char* str, uint32_t pos, uint32_t len)
     int start = 0;
     int end   = 0;
     int in    = 0;
-    for (int i = pos; i < pos + len; i++)
+    for (uint32_t i = pos; i < pos + len; i++)
     {
 	char c = str[i];
 	if (c == '"')
@@ -174,7 +174,7 @@ html_range_t ku_html_extract_value(tag_t tag, char* key, char* html)
 void ku_html_analyze_tags(char* html, tag_t* tags, uint32_t count)
 {
     int l = 0; // level
-    for (int i = 0; i < count; i++)
+    for (uint32_t i = 0; i < count; i++)
     {
 	tags[i].level = l++;
 

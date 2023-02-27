@@ -51,10 +51,7 @@ int main(int argc, char** argv)
 
     /* init config */
 
-    char cwd[PATH_MAX];
-    if (getcwd(cwd, sizeof(cwd)) == NULL) printf("Cannot get working directory\n");
-
-    char* cfg_path  = mt_path_new_normalize(cfg_par, cwd);
+    char* cfg_path  = mt_path_new_normalize(cfg_par);
     char* css_path  = mt_path_new_append(cfg_path, "html/main.css");  // REL 6
     char* html_path = mt_path_new_append(cfg_path, "html/main.html"); // REL 7
     char* img_path  = mt_path_new_append(cfg_path, "img");            // REL 6

@@ -67,7 +67,7 @@ void vh_cv_body_attach(
     ku_view_t* view,
     void*      userdata)
 {
-    assert(view->handler == NULL && view->handler_data == NULL);
+    assert(view->evt_han == NULL && view->evt_han_data == NULL);
 
     vh_cv_body_t* vh = CAL(sizeof(vh_cv_body_t), vh_cv_body_del, vh_cv_body_desc);
     vh->userdata     = userdata;
@@ -77,7 +77,7 @@ void vh_cv_body_attach(
     vh->cw = 1;
     vh->ch = 1;
 
-    view->handler_data = vh;
+    view->evt_han_data = vh;
 }
 
 void vh_cv_body_set_content_size(
@@ -85,7 +85,7 @@ void vh_cv_body_set_content_size(
     int        cw,
     int        ch)
 {
-    vh_cv_body_t* vh = view->handler_data;
+    vh_cv_body_t* vh = view->evt_han_data;
 
     vh->cw = cw;
     vh->ch = ch;
@@ -127,7 +127,7 @@ void vh_cv_body_move(
     float      dx,
     float      dy)
 {
-    vh_cv_body_t* vh = view->handler_data;
+    vh_cv_body_t* vh = view->evt_han_data;
 
     ku_rect_t frame = vh->content->frame.local;
     frame.x += dx;
@@ -141,7 +141,7 @@ void vh_cv_body_zoom(
     int        x,
     int        y)
 {
-    vh_cv_body_t* vh = view->handler_data;
+    vh_cv_body_t* vh = view->evt_han_data;
 
     ku_rect_t gf = vh->content->frame.global;
     ku_rect_t lf = vh->content->frame.local;
@@ -157,7 +157,8 @@ void vh_cv_body_zoom(
     float rh = ph / gf.h;
 
     vh->zoom = z;
-    if (vh->zoom < 0.001) vh->zoom = 0.001;
+    if (vh->zoom < 0.001)
+	vh->zoom = 0.001;
 
     float nw = vh->cw * vh->zoom;
     float nh = vh->ch * vh->zoom;

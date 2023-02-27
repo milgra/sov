@@ -23,7 +23,7 @@ void ku_gen_css_apply_style(ku_view_t* view, mt_map_t* style, char* imgpath)
     mt_vector_t* keys = VNEW(); // REL 0
     mt_map_keys(style, keys);
 
-    for (int index = 0; index < keys->length; index++)
+    for (size_t index = 0; index < keys->length; index++)
     {
 	char* key = keys->data[index];
 	char* val = MGET(style, key);
@@ -69,23 +69,34 @@ void ku_gen_css_apply_style(ku_view_t* view, mt_map_t* style, char* imgpath)
 	}
 	else if (strcmp(key, "word-wrap") == 0)
 	{
-	    if (strstr(val, "normal") != NULL) view->style.word_wrap = 0;
-	    if (strstr(val, "break-word") != NULL) view->style.word_wrap = 1;
-	    if (strstr(val, "initial") != NULL) view->style.word_wrap = 2;
-	    if (strstr(val, "inherit") != NULL) view->style.word_wrap = 3;
+	    if (strstr(val, "normal") != NULL)
+		view->style.word_wrap = 0;
+	    if (strstr(val, "break-word") != NULL)
+		view->style.word_wrap = 1;
+	    if (strstr(val, "initial") != NULL)
+		view->style.word_wrap = 2;
+	    if (strstr(val, "inherit") != NULL)
+		view->style.word_wrap = 3;
 	}
 	else if (strcmp(key, "text-align") == 0)
 	{
-	    if (strstr(val, "left") != NULL) view->style.text_align = 0;
-	    if (strstr(val, "center") != NULL) view->style.text_align = 1;
-	    if (strstr(val, "right") != NULL) view->style.text_align = 2;
-	    if (strstr(val, "justify") != NULL) view->style.text_align = 3;
+	    if (strstr(val, "left") != NULL)
+		view->style.text_align = 0;
+	    if (strstr(val, "center") != NULL)
+		view->style.text_align = 1;
+	    if (strstr(val, "right") != NULL)
+		view->style.text_align = 2;
+	    if (strstr(val, "justify") != NULL)
+		view->style.text_align = 3;
 	}
 	else if (strcmp(key, "vertical-align") == 0)
 	{
-	    if (strstr(val, "middle") != NULL) view->style.vertical_align = 0;
-	    if (strstr(val, "top") != NULL) view->style.vertical_align = 1;
-	    if (strstr(val, "bottom") != NULL) view->style.vertical_align = 2;
+	    if (strstr(val, "middle") != NULL)
+		view->style.vertical_align = 0;
+	    if (strstr(val, "top") != NULL)
+		view->style.vertical_align = 1;
+	    if (strstr(val, "bottom") != NULL)
+		view->style.vertical_align = 2;
 	}
 	else if (strcmp(key, "width") == 0)
 	{
@@ -253,7 +264,8 @@ void ku_gen_css_apply_style(ku_view_t* view, mt_map_t* style, char* imgpath)
 	    view->style.shadow_blur = atoi(val);
 	    char* color             = strstr(val + 1, " ");
 
-	    if (color) view->style.shadow_color = (int) strtol(color + 2, NULL, 16);
+	    if (color)
+		view->style.shadow_color = (int) strtol(color + 2, NULL, 16);
 	}
 	else if (strcmp(key, "align-items") == 0)
 	{
@@ -269,14 +281,6 @@ void ku_gen_css_apply_style(ku_view_t* view, mt_map_t* style, char* imgpath)
 		view->style.cjustify = JC_CENTER;
 	    }
 	}
-	// TODO remove non standard CSS
-	else if (strcmp(key, "blocks") == 0)
-	{
-	    if (strcmp(val, "no") == 0)
-	    {
-		view->blocks_touch = 0;
-	    }
-	}
     }
     /* printf("style for %s: ", view->id); */
     /* ku_view_desc_style(view->style); */
@@ -290,7 +294,7 @@ void ku_gen_css_apply(mt_vector_t* views, char* csspath, char* imgpath)
     mt_map_t* styles = ku_css_new(csspath);
     mt_map_t* style;
 
-    for (int index = 0; index < views->length; index++)
+    for (size_t index = 0; index < views->length; index++)
     {
 	ku_view_t* view = views->data[index];
 
