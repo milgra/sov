@@ -118,6 +118,7 @@ int main(int argc, char** argv)
 	1.0,
 	cols,
 	rows,
+	0,
 	workspaces,
 	bitmap);
 
