@@ -55,7 +55,7 @@
     margin-left: 4px;
     color: #FFFFFFFF;
     font-size: 14px;
-    font-family: "Terminus (TTF):style=Bold";
+    font-family: "Liberation Mono:style=Bold";
 }
 
 .content {
@@ -65,7 +65,7 @@
     color: #999999FF;
     vertical-align: top;
     font-size: 12px;
-    font-family: "Terminus (TTF):style=Bold";
+    font-family: "Liberation Mono:style=Bold";
     word-wrap: break-word;
     line-height: 12px;
 }
@@ -77,5 +77,5 @@
     top: -9px;
     color: #FFFFFFFF;
     font-size: 18px;
-    font-family: "Terminus (TTF):style=Bold";
+    font-family: "Liberation Mono:style=Bold";
 }
