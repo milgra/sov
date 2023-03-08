@@ -9,14 +9,13 @@ project(
 
 cc = meson.get_compiler('c')
 
-gl = cc.find_library('GL')
-egl = cc.find_library('EGL')
-png = cc.find_library('png')
-glew = cc.find_library('GLEW')
+egl = dependency('egl')
+png = dependency('libpng')
+glew = dependency('glew')
 math = cc.find_library('m')
-wegl = cc.find_library('wayland-egl')
-freetype = cc.find_library('freetype')
-
+wegl = dependency('wayland-egl')
+glesv2 = dependency('glesv2')
+freetype = dependency('freetype2')
 xkbcommon = dependency('xkbcommon')
 
 wayland_client      = dependency('wayland-client',version : '>=1.21.0')
@@ -61,7 +60,7 @@ sov_dependencies = [wayland_client,
 		    png,
 		    freetype,
 		    math,
-		    gl,
+		    glesv2,
 		    glew,
 		    xkbcommon,
 		    egl,
@@ -89,23 +88,8 @@ sov_inc = include_directories(
 	'src/mt_core_ext')
 
 if build_machine.system() == 'freebsd'
-   sov_inc = [
-   	   sov_inc,
-	   include_directories( 
-   	   '/usr/local/include',
-	   '/usr/local/include/GLES2',
-	   '/usr/local/include/EGL',
-	   '/usr/local/include/freetype2')]
    epoll = cc.find_library('epoll-shim')
    sov_dependencies += epoll
-else
-   sov_inc = [
-   	   sov_inc,
-	   include_directories( 
-   	   '/usr/include',
-	   '/usr/include/GLES2',
-	   '/usr/include/EGL',
-	   '/usr/include/freetype2')]
 endif
 
 com_sources = ['src/sov/jsmn.c',
