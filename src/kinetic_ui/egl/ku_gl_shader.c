@@ -1,7 +1,7 @@
 #ifndef ku_gl_shader_h
 #define ku_gl_shader_h
 
-#include <GL/glew.h>
+#include <GLES2/gl2.h>
 
 typedef struct _glsha_t
 {

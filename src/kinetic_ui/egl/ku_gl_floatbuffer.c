@@ -2,7 +2,7 @@
 #define ku_floatbuffer_h
 
 #include "mt_memory.c"
-#include <GL/glew.h>
+#include <GLES2/gl2.h>
 #include <string.h>
 
 typedef struct ku_floatbuffer_t ku_floatbuffer_t;
