@@ -87,7 +87,7 @@ sov_inc = include_directories(
 
 if build_machine.system() == 'freebsd'
    epoll = dependency('epoll-shim')
-   pthread = cc.find_library('pthread')
+   pthread = dependency('threads')
    sov_dependencies += pthread
    sov_dependencies += epoll
 endif
@@ -184,7 +184,8 @@ mt_core_test = executable(
 	    'src/mt_core_test/mt_channel_test.c',
 	    'src/mt_core_test/mt_path_test.c'
 	    ],
-	    include_directories: ['src/mt_core'])
+	    include_directories: ['src/mt_core']
+	    dependencies: sov_dependencies)
 
 test('MT_CORE_TEST', mt_core_test)
 
