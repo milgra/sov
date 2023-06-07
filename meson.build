@@ -86,7 +86,8 @@ sov_inc = include_directories(
 	'src/mt_core_ext')
 
 if build_machine.system() == 'freebsd'
-   epoll = cc.find_library('epoll-shim')
+   epoll = dependency('epoll-shim')
+   sov_dependencies += pthread
    sov_dependencies += epoll
 endif
 

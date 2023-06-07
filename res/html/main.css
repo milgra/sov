@@ -54,9 +54,10 @@
     margin-top: 4px;
     margin-left: 4px;
     margin-right: 4px;
+    margin-bottom: 2px;
     color: #FFFFFFFF;
-    font-size: 14px;
-    font-family: "Terminus (TTF):style=Bold";
+    font-size: 16px;
+    font-family: "Terminus:style=Bold:size=16";
 }
 
 .content {
@@ -66,8 +67,8 @@
     margin-right: 4px;
     color: #999999FF;
     vertical-align: top;
-    font-size: 12px;
-    font-family: "Terminus (TTF):style=Bold";
+    font-size: 14px;
+    font-family: "Terminus:style=Bold:size=14";
     word-wrap: break-word;
     line-height: 12px;
 }
@@ -79,5 +80,5 @@
     top: -9px;
     color: #FFFFFFFF;
     font-size: 18px;
-    font-family: "Terminus (TTF):style=Bold";
+    font-family: "Terminus:style=Bold:size=18";
 }

@@ -196,6 +196,8 @@ MIT, see [LICENSE](/LICENSE).
 
 ## TODO/BUGS ##
 
+right/left button seek
+pgup/pgdn button next/prev
 video on github page
 clear makepkg errors
 fix test and release workflows  
