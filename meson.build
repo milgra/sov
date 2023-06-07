@@ -87,6 +87,7 @@ sov_inc = include_directories(
 
 if build_machine.system() == 'freebsd'
    epoll = dependency('epoll-shim')
+   pthread = dependency('pthread')
    sov_dependencies += pthread
    sov_dependencies += epoll
 endif
