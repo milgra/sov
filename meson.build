@@ -184,7 +184,7 @@ mt_core_test = executable(
 	    'src/mt_core_test/mt_channel_test.c',
 	    'src/mt_core_test/mt_path_test.c'
 	    ],
-	    include_directories: ['src/mt_core']
+	    include_directories: ['src/mt_core'],
 	    dependencies: sov_dependencies)
 
 test('MT_CORE_TEST', mt_core_test)
