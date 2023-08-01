@@ -387,7 +387,7 @@ void ku_wayland_create_buffer(wl_window_t* info, int width, int height)
     info->bitmap.data = info->shm_data;
 
     struct wl_shm_pool* pool   = wl_shm_create_pool(wlc.shm, fd, size);
-    struct wl_buffer*   buffer = wl_shm_pool_create_buffer(pool, 0, width, height, stride, WL_SHM_FORMAT_ARGB8888);
+    struct wl_buffer*   buffer = wl_shm_pool_create_buffer(pool, 0, width, height, stride, WL_SHM_FORMAT_ABGR8888);
 
     wl_shm_pool_destroy(pool);
 
