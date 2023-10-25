@@ -20,7 +20,7 @@ xkbcommon = dependency('xkbcommon')
 wayland_client      = dependency('wayland-client',version : '>=1.21.0')
 wayland_cursor      = dependency('wayland-cursor')
 wayland_protos      = dependency('wayland-protocols')
-wayland_scanner_dep = dependency('wayland-scanner')
+wayland_scanner_dep = dependency('wayland-scanner', native : true)
 wayland_scanner     = find_program(
   wayland_scanner_dep.get_pkgconfig_variable('wayland_scanner')
 )
