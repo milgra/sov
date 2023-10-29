@@ -900,7 +900,7 @@ void ku_wayland_show_window(wl_window_t* info)
 
 	    zwlr_layer_surface_v1_add_listener(info->layer_surface, &layer_surface_listener, info);
 
-	    /* zwlr_layer_surface_v1_set_keyboard_interactivity(info->layer_surface, 1); */
+	    zwlr_layer_surface_v1_set_keyboard_interactivity(info->layer_surface, 1);
 
 	    wl_surface_commit(info->surface);
 	    /* wl_display_roundtrip(wlc.display); */

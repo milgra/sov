@@ -196,6 +196,8 @@ MIT, see [LICENSE](/LICENSE).
 
 ## TODO/BUGS ##
 
+dynamically update when monitor plugged in
+no last command in foot preview
 right/left button seek
 pgup/pgdn button next/prev
 video on github page
