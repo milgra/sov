@@ -32,13 +32,15 @@ struct sov
     char* css_path;
     char* html_path;
 
-    int   columns;
-    int   ratio;
-    char* anchor;
-    int   margin;
+    int      columns;
+    int      ratio;
+    char*    anchor;
+    int      margin;
+    uint32_t holdkey;
 
     int shown;
     int use_name;
+    int meta_down;
 } sov = {0};
 
 /* asks for sway workspaces and tree */
@@ -127,6 +129,23 @@ void create_layers()
     }
 }
 
+void delete_layers()
+{
+    ku_wayland_set_time_event_delay(0);
+    sov.request = 0;
+    sov.shown   = 0;
+
+    if (sov.wlwindows->length > 0)
+    {
+	for (size_t w = 0; w < sov.wlwindows->length; w++)
+	{
+	    wl_window_t* window = sov.wlwindows->data[w];
+	    ku_wayland_delete_window(window);
+	}
+	mt_vector_reset(sov.wlwindows);
+    }
+}
+
 /* window update */
 
 void update(ku_event_t ev)
@@ -179,27 +198,31 @@ void update(ku_event_t ev)
     {
 	if (ev.text[0] == '0')
 	{
-	    ku_wayland_set_time_event_delay(0);
-	    sov.request = 0;
-	    sov.shown   = 0;
-
-	    if (sov.wlwindows->length > 0)
+	    if (sov.holdkey)
 	    {
-		for (size_t w = 0; w < sov.wlwindows->length; w++)
-		{
-		    wl_window_t* window = sov.wlwindows->data[w];
-		    ku_wayland_delete_window(window);
-		}
-		mt_vector_reset(sov.wlwindows);
+		ku_wayland_set_time_event_delay(0);
+		sov.request = 0;
+	    }
+	    else
+	    {
+		delete_layers();
 	    }
 	}
-	else if (ev.text[0] == '1' && sov.wlwindows->length == 0 && sov.request == 0)
+	else if (ev.text[0] == '1')
 	{
-	    sov.request = 1;
-	    if (sov.timeout == 0)
+	    if (sov.wlwindows->length == 0 && sov.request == 0)
+	    {
+		sov.request = 1;
+		if (sov.timeout == 0)
+		    create_layers();
+		else
+		    ku_wayland_set_time_event_delay(sov.timeout);
+	    }
+	    else if (sov.shown == 1)
+	    {
+		delete_layers();
 		create_layers();
-	    else
-		ku_wayland_set_time_event_delay(sov.timeout);
+	    }
 	}
 	else if (ev.text[0] == '2')
 	{
@@ -209,25 +232,18 @@ void update(ku_event_t ev)
 	    }
 	    else
 	    {
-		sov.shown = 0;
-		ku_wayland_set_time_event_delay(0);
-		sov.request = 0;
-
-		if (sov.wlwindows->length > 0)
-		{
-		    for (size_t w = 0; w < sov.wlwindows->length; w++)
-		    {
-			wl_window_t* window = sov.wlwindows->data[w];
-			ku_wayland_delete_window(window);
-		    }
-		    mt_vector_reset(sov.wlwindows);
-		}
+		delete_layers();
 	    }
 	}
 	else if (ev.text[0] == '3')
 	{
 	    ku_wayland_exit();
 	}
+    }
+
+    if (ev.type == KU_EVENT_KEY_UP && ev.keycode == sov.holdkey)
+    {
+	delete_layers();
     }
 }
 
@@ -266,6 +282,7 @@ int main(int argc, char** argv)
 	"  -m, --margin=[size]                   Margin\n"
 	"  -r, --ratio=[ratio]                   Thumbnail to screen ratio, positive integer\n"
 	"  -t, --timeout=[millisecs]             Milliseconds to wait for showing up overlays, positive integer\n"
+	"  -k, --holdkey=[keycode]               Keycode of hold key, sov won't disappear while pressed ( usually the meta key )\n"
 	"\n";
 
     sov.ratio   = 8;
@@ -287,9 +304,10 @@ int main(int argc, char** argv)
 	{"anchor", optional_argument, NULL, 'a'},
 	{"margin", optional_argument, NULL, 'm'},
 	{"ratio", optional_argument, NULL, 's'},
-	{"timeout", optional_argument, NULL, 'r'}};
+	{"timeout", optional_argument, NULL, 'r'},
+	{"holdkey", optional_argument, NULL, 'k'}};
 
-    while ((c = getopt_long(argc, argv, "vhno:r:s:a:m:t:c:", long_options, &option_index)) != -1)
+    while ((c = getopt_long(argc, argv, "vhno:r:s:a:m:t:c:k:", long_options, &option_index)) != -1)
     {
 	switch (c)
 	{
@@ -307,6 +325,7 @@ int main(int argc, char** argv)
 	    case 'a': anc_par = mt_string_new_cstring(optarg); break;
 	    case 'm': mrg_par = mt_string_new_cstring(optarg); break;
 	    case 'c': sov.columns = atoi(optarg); break;
+	    case 'k': sov.holdkey = atoi(optarg); break;
 	    case 'r': sov.ratio = atoi(optarg); break;
 	    case 'n': sov.use_name = 1; break;
 	    default: fprintf(stderr, "%s", usage); return EXIT_FAILURE;
@@ -355,6 +374,7 @@ int main(int argc, char** argv)
     printf("margin        : %i\n", sov.margin);
     printf("timeout       : %i\n", sov.timeout);
     printf("columns       : %i\n", sov.columns);
+    printf("holdkey       : %i\n", sov.holdkey);
     printf("use_name      : %s\n", sov.use_name ? "true" : "false");
 
     sov.wlwindows = VNEW();

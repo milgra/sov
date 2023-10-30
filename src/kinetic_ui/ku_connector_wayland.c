@@ -1340,9 +1340,12 @@ static void keyboard_keymap(void* data, struct wl_keyboard* wl_keyboard, uint32_
     wlc.keyboard.xkb_state = xkb_state_new(wlc.keyboard.xkb_keymap);
 }
 
+static void keyboard_key(void* data, struct wl_keyboard* wl_keyboard, uint32_t serial, uint32_t time, uint32_t key, uint32_t _key_state);
+
 static void keyboard_enter(void* data, struct wl_keyboard* wl_keyboard, uint32_t serial, struct wl_surface* surface, struct wl_array* keys)
 {
-    /* mt_log_debug("keyboard enter"); */
+    uint32_t* key;
+    wl_array_for_each(key, keys) keyboard_key(data, wl_keyboard, serial, 0, *key, WL_KEYBOARD_KEY_STATE_PRESSED);
 }
 
 static void keyboard_leave(void* data, struct wl_keyboard* wl_keyboard, uint32_t serial, struct wl_surface* surface)
@@ -1358,6 +1361,12 @@ static void keyboard_key(void* data, struct wl_keyboard* wl_keyboard, uint32_t s
     enum wl_keyboard_key_state key_state = _key_state;
 
     xkb_keysym_t sym = xkb_state_key_get_one_sym(wlc.keyboard.xkb_state, key + 8);
+
+    /* char buf[128]; */
+    /* xkb_keysym_get_name(sym, buf, sizeof(buf)); */
+    /* fprintf(stderr, "sym: %-12s (%d), ", buf, sym); */
+    /* xkb_state_key_get_utf8(wlc.keyboard.xkb_state, key + 8, buf, sizeof(buf)); */
+    /* fprintf(stderr, "utf8: '%s'\n", buf); */
 
     /* switch (xkb_keysym_to_lower(sym)) */
 
