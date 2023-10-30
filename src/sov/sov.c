@@ -245,6 +245,38 @@ void update(ku_event_t ev)
     {
 	delete_layers();
     }
+
+    if (ev.type == KU_EVENT_MOUSE_DOWN)
+    {
+	wl_window_t* info = ev.window;
+
+	mt_vector_t* workspaces = VNEW(); // REL 1
+
+	for (size_t index = 0; index < sov.workspaces->length; index++)
+	{
+	    sway_workspace_t* ws = sov.workspaces->data[index];
+	    if (strcmp(ws->output, info->monitor->name) == 0) VADD(workspaces, ws);
+	}
+
+	int cols = sov.columns;
+	int rows = (int) ceilf((float) workspaces->length / cols);
+
+	int index = gen_calc_index(
+	    info->monitor->logical_width / sov.ratio,
+	    info->monitor->logical_height / sov.ratio,
+	    1.0,
+	    cols,
+	    rows,
+	    ev.x,
+	    ev.y);
+
+	char* command = STRNF(100, "swaymsg workspace %i", index + 1);
+	system(command);
+	REL(command);
+
+	delete_layers();
+	create_layers();
+    }
 }
 
 void destroy()

@@ -1216,6 +1216,7 @@ void ku_wayland_pointer_handle_button(void* data, struct wl_pointer* wl_pointer,
 	    event.button     = button == 272 ? 1 : 3;
 	    event.ctrl_down  = wlc.keyboard.control;
 	    event.shift_down = wlc.keyboard.shift;
+	    event.window     = window;
 
 	    if (state)
 	    {

@@ -198,8 +198,6 @@ MIT, see [LICENSE](/LICENSE).
 
 dynamically update when monitor plugged in
 no last command in foot preview
-right/left button seek
-pgup/pgdn button next/prev
 video on github page
 clear makepkg errors
 fix test and release workflows  

@@ -9,6 +9,7 @@ void gen_init(char* html_path, char* css_path, char* img_path);
 void gen_render(int twidth, int theight, float scale, int cols, int rows, int use_name, mt_vector_t* workspaces, ku_bitmap_t* bitmap);
 void gen_destroy();
 void gen_calc_size(int twidth, int theight, float scale, int cols, int rows, int* width, int* height);
+int  gen_calc_index(int twidth, int theight, float scale, int cols, int rows, int xpos, int ypos);
 
 #endif
 
@@ -98,6 +99,16 @@ void gen_calc_size(int twidth, int theight, float scale, int cols, int rows, int
 {
     *width  = cols * twidth + 2 * (cols + 1) * workspace->style.margin * scale;
     *height = rows * theight + 2 * (rows + 1) * workspace->style.margin * scale;
+}
+
+int gen_calc_index(int twidth, int theight, float scale, int cols, int rows, int xpos, int ypos)
+{
+    int col = xpos / ((cols * twidth + 2 * (cols + 1) * workspace->style.margin * scale) / cols);
+    int row = ypos / ((rows * theight + 2 * (rows + 1) * workspace->style.margin * scale) / rows);
+
+    mt_log_debug("col %i row %i", col, row);
+
+    return row * cols + col;
 }
 
 void gen_render(
