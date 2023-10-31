@@ -104,6 +104,9 @@ bindsym --release $mod+9 exec "echo 0 > /tmp/sovpipe"
 bindsym --release $mod+0 exec "echo 0 > /tmp/sovpipe"
 ```
 
+By default it shows up on mod + workspace number and disappears when you release mod or workspace number.
+If you want to make it stay while holding the mod key use the "holdkey" command line parameter with the keycode of the modkey ( 65515 for me ), you can listen for keycodes with the wev utility. 
+
 ### Usage with Systemd
 
 Add this line to your config file:
@@ -149,10 +152,12 @@ Additional options can be set as command line arguments :
 -m, --margin=[size]                   Margin from screen edge
 -r, --ratio=[ratio]                   Thumbnail to screen ratio, positive integer
 -t, --timeout=[millisecs]             Milliseconds to wait for showing up overlays, positive integer
+-k, --holdkey=[keycode]               Keycode of hold key, sov won't disappear while pressed, get value with wev
 
 -h, --help                            Show help message and quit.
 -v                                    Increase verbosity of messages, defaults to errors and warnings only.
 -s,                                   Location of html folder for styling.
+-n,                                   Use workspace name instead of workspace number.
 ```
 
 ## Technical Info ##
@@ -196,9 +201,5 @@ MIT, see [LICENSE](/LICENSE).
 
 ## TODO/BUGS ##
 
-right/left button seek
-pgup/pgdn button next/prev
-video on github page
-clear makepkg errors
-fix test and release workflows  
+dynamically update when new monitor plugged in/out
 auto tests with 2x scaling
