@@ -17,30 +17,30 @@
 
 struct sov
 {
-    mt_vector_t* workspaces; /* workspaces for current frame draw event */
-
-    int timeout;
-    int request; /* show requested */
-
-    mt_vector_t* wlwindows; /* wayland layers for each output */
-
-    struct monitor_info** monitors; /* available monitors */
+    struct monitor_info** monitors;
     int                   monitor_count;
+
+    mt_vector_t* workspaces;
+    mt_vector_t* wlwindows;
+
+    int use_ws_name;
+    int is_shown;
+    int is_show_requested;
+
+    uint32_t show_delay;
+    uint32_t holdkey;
 
     char* cfg_path;
     char* img_path;
     char* css_path;
     char* html_path;
 
-    int      columns;
-    int      ratio;
-    char*    anchor;
-    int      margin;
-    uint32_t holdkey;
+    int ratio;
+    int margin;
+    int columns;
 
-    int shown;
-    int use_name;
-    int meta_down;
+    char* anchor;
+
 } sov = {0};
 
 /* asks for sway workspaces and tree */
@@ -68,26 +68,16 @@ void sov_read_tree(mt_vector_t* workspaces)
     REL(tree_json);
 }
 
-void init(wl_event_t event)
-{
-    sov.monitors      = event.monitors;
-    sov.monitor_count = event.monitor_count;
-
-    gen_init(sov.html_path, sov.css_path, sov.img_path);
-}
+/* calculates overview dimensions for each monitor and creates layers */
 
 void create_layers()
 {
-    sov.shown = 1;
-    ku_wayland_set_time_event_delay(0);
+    sov.is_shown = 1;
 
-    if (sov.workspaces == NULL) sov.workspaces = VNEW(); // REL 0
     mt_vector_reset(sov.workspaces);
     mt_vector_reset(sov.wlwindows);
 
     sov_read_tree(sov.workspaces);
-
-    // show layer over all workspaces
 
     for (int m = 0; m < sov.monitor_count; m++)
     {
@@ -129,11 +119,13 @@ void create_layers()
     }
 }
 
+/* deletes all layers */
+
 void delete_layers()
 {
     ku_wayland_set_time_event_delay(0);
-    sov.request = 0;
-    sov.shown   = 0;
+    sov.is_show_requested = 0;
+    sov.is_shown          = 0;
 
     if (sov.wlwindows->length > 0)
     {
@@ -146,53 +138,68 @@ void delete_layers()
     }
 }
 
-/* window update */
+/* draws overview for given monitor */
+
+void draw_window(wl_window_t* info)
+{
+    mt_vector_t* workspaces = VNEW();
+
+    for (size_t index = 0; index < sov.workspaces->length; index++)
+    {
+	sway_workspace_t* ws = sov.workspaces->data[index];
+	if (strcmp(ws->output, info->monitor->name) == 0) VADD(workspaces, ws);
+    }
+
+    int cols        = sov.columns;
+    int rows        = (int) ceilf((float) workspaces->length / cols);
+    int use_ws_name = sov.use_ws_name;
+
+    mt_log_debug(
+	"Drawing layer %s : workspaces %i cols %i rows %i ratio %i",
+	info->monitor->name,
+	workspaces->length,
+	cols,
+	rows,
+	sov.ratio);
+
+    gen_render(
+	info->monitor->logical_width / sov.ratio,
+	info->monitor->logical_height / sov.ratio,
+	(float) info->monitor->scale,
+	cols,
+	rows,
+	use_ws_name,
+	workspaces,
+	&info->bitmap);
+
+    ku_wayland_draw_window(info, 0, 0, info->width, info->height);
+
+    REL(workspaces);
+}
+
+void init(wl_event_t event)
+{
+    sov.monitors      = event.monitors;
+    sov.monitor_count = event.monitor_count;
+
+    gen_init(sov.html_path, sov.css_path, sov.img_path);
+}
 
 void update(ku_event_t ev)
 {
-    if (ev.type == KU_EVENT_WINDOW_SHOWN)
-    {
-	wl_window_t* info = ev.window;
-
-	mt_vector_t* workspaces = VNEW();
-
-	for (size_t index = 0; index < sov.workspaces->length; index++)
-	{
-	    sway_workspace_t* ws = sov.workspaces->data[index];
-	    if (strcmp(ws->output, info->monitor->name) == 0) VADD(workspaces, ws);
-	}
-
-	int cols     = sov.columns;
-	int rows     = (int) ceilf((float) workspaces->length / cols);
-	int use_name = sov.use_name;
-
-	mt_log_debug(
-	    "Drawing layer %s : workspaces %i cols %i rows %i ratio %i",
-	    info->monitor->name,
-	    workspaces->length,
-	    cols,
-	    rows,
-	    sov.ratio);
-
-	gen_render(
-	    info->monitor->logical_width / sov.ratio,
-	    info->monitor->logical_height / sov.ratio,
-	    (float) info->monitor->scale,
-	    cols,
-	    rows,
-	    use_name,
-	    workspaces,
-	    &info->bitmap);
-
-	ku_wayland_draw_window(info, 0, 0, info->width, info->height);
-
-	REL(workspaces);
-    }
-
+    /* time event from delaying timer, create and show layers
+       and that triggers window_shown event */
     if (ev.type == KU_EVENT_TIME)
     {
+	ku_wayland_set_time_event_delay(0);
 	create_layers();
     }
+
+    /* draw overview for given window */
+    if (ev.type == KU_EVENT_WINDOW_SHOWN) draw_window(ev.window);
+
+    /* if we have a holdkey and it is released delete layers */
+    if (ev.type == KU_EVENT_KEY_UP && ev.keycode == sov.holdkey) delete_layers();
 
     if (ev.type == KU_EVENT_STDIN)
     {
@@ -200,33 +207,49 @@ void update(ku_event_t ev)
 	{
 	    if (sov.holdkey)
 	    {
+		/* when a combo is released and we have a hold key delete delaying timer */
 		ku_wayland_set_time_event_delay(0);
-		sov.request = 0;
+		sov.is_show_requested = 0;
 	    }
 	    else
 	    {
+		/* simply delete layers by default when combo is released */
 		delete_layers();
 	    }
 	}
 	else if (ev.text[0] == '1')
 	{
-	    if (sov.wlwindows->length == 0 && sov.request == 0)
+	    if (sov.wlwindows->length == 0 && sov.is_show_requested == 0)
 	    {
-		sov.request = 1;
-		if (sov.timeout == 0)
+		sov.is_show_requested = 1;
+		if (sov.show_delay == 0)
+		{
+		    /* if no timeout create layers instantly */
 		    create_layers();
+		}
 		else
-		    ku_wayland_set_time_event_delay(sov.timeout);
+		{
+		    /* start displaying timer */
+		    ku_wayland_set_time_event_delay(sov.show_delay);
+		}
 	    }
-	    else if (sov.shown == 1)
+	    else if (sov.is_shown == 1)
 	    {
-		delete_layers();
-		create_layers();
+		/* if layers are already displayed just redraw contents */
+		mt_vector_reset(sov.workspaces);
+		sov_read_tree(sov.workspaces);
+
+		for (size_t w = 0; w < sov.wlwindows->length; w++)
+		{
+		    wl_window_t* info = sov.wlwindows->data[w];
+		    draw_window(info);
+		}
 	    }
 	}
 	else if (ev.text[0] == '2')
 	{
-	    if (sov.shown == 0)
+	    /* toggle layers */
+	    if (sov.is_shown == 0)
 	    {
 		create_layers();
 	    }
@@ -241,13 +264,10 @@ void update(ku_event_t ev)
 	}
     }
 
-    if (ev.type == KU_EVENT_KEY_UP && ev.keycode == sov.holdkey)
-    {
-	delete_layers();
-    }
-
     if (ev.type == KU_EVENT_MOUSE_DOWN)
     {
+	/* switch to workspace when clicked */
+
 	wl_window_t* info = ev.window;
 
 	mt_vector_t* workspaces = VNEW(); // REL 1
@@ -293,7 +313,7 @@ int main(int argc, char** argv)
     printf("Sway Overview v" SOV_VERSION
 	   " by Milan Toth ( www.milgra.com )\n"
 	   "If you like this app try :\n"
-	   "- Wayland Control Panel ( github.com/milgra/wcp )\n"
+	   "- Wayland Control Panel ( github.com/milgra/wcp)\n"
 	   "- Visual Music Player (github.com/milgra/vmp)\n"
 	   "- Multimedia File Manager (github.com/milgra/mmfm)\n"
 	   "- SwayOS (swayos.github.io)\n"
@@ -314,7 +334,7 @@ int main(int argc, char** argv)
 	"  -m, --margin=[size]                   Margin\n"
 	"  -r, --ratio=[ratio]                   Thumbnail to screen ratio, positive integer\n"
 	"  -t, --timeout=[millisecs]             Milliseconds to wait for showing up overlays, positive integer\n"
-	"  -k, --holdkey=[keycode]               Keycode of hold key, sov won't disappear while pressed ( usually the meta key )\n"
+	"  -k, --holdkey=[keycode]               Keycode of hold key, sov won't disappear while pressed, get value with wev\n"
 	"\n";
 
     sov.ratio   = 8;
@@ -351,7 +371,7 @@ int main(int argc, char** argv)
 		    return EXIT_FAILURE;
 		}
 		break;
-	    case 't': sov.timeout = atoi(optarg); break;
+	    case 't': sov.show_delay = atoi(optarg); break;
 	    case 'h': printf("%s", usage); return EXIT_SUCCESS;
 	    case 'v': mt_log_inc_verbosity(); break;
 	    case 'a': anc_par = mt_string_new_cstring(optarg); break;
@@ -359,7 +379,7 @@ int main(int argc, char** argv)
 	    case 'c': sov.columns = atoi(optarg); break;
 	    case 'k': sov.holdkey = atoi(optarg); break;
 	    case 'r': sov.ratio = atoi(optarg); break;
-	    case 'n': sov.use_name = 1; break;
+	    case 'n': sov.use_ws_name = 1; break;
 	    default: fprintf(stderr, "%s", usage); return EXIT_FAILURE;
 	}
     }
@@ -404,12 +424,13 @@ int main(int argc, char** argv)
     printf("ratio         : %i\n", sov.ratio);
     printf("anchor        : %s\n", sov.anchor);
     printf("margin        : %i\n", sov.margin);
-    printf("timeout       : %i\n", sov.timeout);
+    printf("timeout       : %i\n", sov.show_delay);
     printf("columns       : %i\n", sov.columns);
     printf("holdkey       : %i\n", sov.holdkey);
-    printf("use_name      : %s\n", sov.use_name ? "true" : "false");
+    printf("use_name      : %s\n", sov.use_ws_name ? "true" : "false");
 
-    sov.wlwindows = VNEW();
+    sov.wlwindows  = VNEW();
+    sov.workspaces = VNEW();
 
     /* init text rendering */
 
@@ -424,6 +445,9 @@ int main(int argc, char** argv)
     REL(sov.css_path);
     REL(sov.html_path);
     REL(sov.img_path);
+
+    REL(sov.wlwindows);
+    REL(sov.workspaces);
 
     ku_text_destroy();
 
