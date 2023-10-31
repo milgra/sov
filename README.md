@@ -201,5 +201,5 @@ MIT, see [LICENSE](/LICENSE).
 
 ## TODO/BUGS ##
 
-dynamically update when new monitor plugged in/out
-auto tests with 2x scaling
+dynamically update when new monitor plugged in/out 
+auto tests with 2x scaling 
