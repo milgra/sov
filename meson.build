@@ -1,7 +1,7 @@
 project(
   'sov',
   'c',
-  version: '0.93',
+  version: '0.94',
   license: 'MIT',
   default_options: ['c_std=gnu99',
   		    'warning_level=3']
