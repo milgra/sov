@@ -162,6 +162,8 @@ void draw_window(wl_window_t* info)
 	rows,
 	sov.ratio);
 
+    ku_bitmap_reset(&info->bitmap);
+
     gen_render(
 	info->monitor->logical_width / sov.ratio,
 	info->monitor->logical_height / sov.ratio,
