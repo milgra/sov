@@ -162,6 +162,8 @@ void draw_window(wl_window_t* info)
 	rows,
 	sov.ratio);
 
+    ku_bitmap_reset(&info->bitmap);
+
     gen_render(
 	info->monitor->logical_width / sov.ratio,
 	info->monitor->logical_height / sov.ratio,
@@ -294,8 +296,14 @@ void update(ku_event_t ev)
 	system(command);
 	REL(command);
 
-	delete_layers();
-	create_layers();
+	mt_vector_reset(sov.workspaces);
+	sov_read_tree(sov.workspaces);
+
+	for (size_t w = 0; w < sov.wlwindows->length; w++)
+	{
+	    wl_window_t* info = sov.wlwindows->data[w];
+	    draw_window(info);
+	}
     }
 }
 
