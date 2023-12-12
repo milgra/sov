@@ -20,7 +20,7 @@ Watch the introduction/user guide [video on youtube](https://www.youtube.com/wat
 Sway overview is an overview applciation for the sway tiling window manager. Tiling window managers are about simplicity so by default they don't have any kind of overview feature. It is okay under five workspaces because you can just remember where specific windows were opened but over 5 workspaces it can get really complicated.
 Sway overview draws a schematic layout of all your workspaces on each output. It contains all windows, window titles and window contents.
 Thumbnail based overview solutions can become confusing quickly when the thumbnails become too small to recognize, sway overview won't.
-The common usage of Sway overview is to bound its appereance to the desktop switcher button with a little latency.
+The common usage of Sway overview is to bound its appereance to the desktop switcher buttons with a little latency.
 Sway overview can be structured via html, styled via css.
 
 ## Installation
