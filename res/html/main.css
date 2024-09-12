@@ -57,7 +57,7 @@
     margin-bottom: 2px;
     color: #FFFFFFFF;
     font-size: 16px;
-    font-family: "Terminus:style=Bold:size=16";
+    font-family: "Ubuntu Mono:style=Bold:size=14";
 }
 
 .content {
@@ -68,7 +68,7 @@
     color: #999999FF;
     vertical-align: top;
     font-size: 14px;
-    font-family: "Terminus:style=Bold:size=14";
+    font-family: "Ubuntu Mono:style=Bold:size=12";
     word-wrap: break-word;
     line-height: 12px;
 }
@@ -80,5 +80,5 @@
     top: -9px;
     color: #FFFFFFFF;
     font-size: 18px;
-    font-family: "Terminus:style=Bold:size=18";
+    font-family: "Ubuntu Mono:style=Bold:size=16";
 }
