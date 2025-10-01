@@ -51,7 +51,7 @@ or use the AUR
 Then run these commands:
 
 ```
-git clone git@github.com:milgra/sov.git
+git clone https://github.com/milgra/sov.git
 cd sov
 meson setup build --buildtype=release
 ninja -C build
